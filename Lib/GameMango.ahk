@@ -1,7 +1,11 @@
 #Requires AutoHotkey v2.0
 #Include Image.ahk
+
 global macroStartTime := A_TickCount
 global stageStartTime := A_TickCount
+
+global completedChallengeMaps := Map()
+global currentMap := ""
 
 LoadKeybindSettings()  ; Load saved keybinds
 Hotkey(F1Key, (*) => moveRobloxWindow())
@@ -10,7 +14,8 @@ Hotkey(F3Key, (*) => Reload())
 Hotkey(F4Key, (*) => TogglePause())
 
 F5:: {
-    ClickReplay()
+    global currentMap := "Demon Forest"
+    RestartStage()
 }
 
 F6:: {
@@ -19,15 +24,13 @@ F6:: {
     ClipWait(0.5)  ; Optional: wait for it to clear
 
     A_Clipboard := x ", " y
-    ClipWait(1)  ; Wait for the clipboard to be ready
+    ClipWait(0.5)  ; Wait for the clipboard to be ready
 
     if (A_Clipboard = x ", " y) {
-        ToolTip("Copied: " x ", " y)
+        AddToLog("Copied: " x ", " y)
     } else {
-        ToolTip("Failed to copy coordinates.")
+        AddToLog("Failed to copy coordinates.")
     }
-
-    SetTimer(() => ToolTip(), -1000)
 }
 
 F7:: {
@@ -87,7 +90,7 @@ StoryMode() {
     StoryMovement()
     
     ; Start stage
-    while !(ok := FindText(&X, &Y, 12, 241, 147, 277, 0, 0, CreateRoom)) {
+    while !(ok := FindText(&X, &Y, 11, 240, 149, 277, 0.10, 0.10, CreateRoom)) {
         Reconnect() ; Added Disconnect Check
         StoryMovement()
     }
@@ -213,48 +216,44 @@ CheckForNextText() {
 }
 
 MonitorEndScreen() {
-    global mode, StoryDropdown, StoryActDropdown, ReturnLobbyBox, MatchMaking, challengeStartTime, inChallengeMode
+    global mode, StoryDropdown, StoryActDropdown, challengeStartTime, inChallengeMode, challengeStageCount
 
     Loop {
         Sleep(3000)  
-        
-        FixClick(560, 560)
-        FixClick(560, 560)
-
-        if (ok := FindText(&X, &Y, 300, 190, 360, 250, 0, 0, UnitExit)) {
-            ClickUntilGone(0, 0, 300, 190, 360, 250, UnitExit, -4, -35)
-            Sleep(1500)
-        }
 
         CloseChat()
 
-        if (ok := FindText(&X, &Y, 260, 400, 390, 450, 0, 0, NextText)) {
-            ClickUntilGone(0, 0, 260, 400, 390, 450, NextText, 0, -40)
-            Sleep(1500)
-        }   
-
         ; Now handle each mode
-        if (ok := FindText(&X, &Y, 80, 85, 739, 224, 0, 0, LobbyText)) {
-            AddToLog("Found Lobby Text - Current Mode: " (inChallengeMode ? "Challenge" : mode))
+        if (ok := FindText(&X, &Y, 399, 412, 513, 444, 0, 0, LobbyText)) {
+            AddToLog("Found Lobby Text - Current Mode: " (inChallengeMode ? "Ranger Stages" : mode))
             Sleep(2000)
 
-            ; Challenge mode logic first
+            ; Logic to track challenge progress
             if (inChallengeMode) {
-                 AddToLog("Challenge completed - returning to " mode " mode")
-                inChallengeMode := false
-                challengeStartTime := A_TickCount
-                ClickUntilGone(0, 0, 80, 85, 739, 224, LobbyText, 0, -35)
-                return CheckLobby()
+                ; This should be triggered after finishing a challenge stage
+                challengeStageCount++
+                AddToLog("Completed " challengeStageCount "/3 Ranger Stages.")
+                if (challengeStageCount >= 3) {
+                    AddToLog("Completed all 3 Ranger Stages. Returning to " mode)
+                    inChallengeMode := false
+                    challengeStartTime := A_TickCount  ; Reset timer for next ranger stage trigger
+                    ClickReturnToLobby()
+                    return CheckLobby()
+                } else {
+                    ; Proceed to the next challenge stage
+                    ClickNextLevel()
+                    return RestartStage()
+                }
             }
 
             ; Check if it's time for challenge mode
             if (!inChallengeMode && ChallengeBox.Value) {
                 timeElapsed := A_TickCount - challengeStartTime
                 if (timeElapsed >= 1800000) {
-                    AddToLog("30 minutes passed - switching to Challenge mode")
+                    AddToLog("30 minutes passed - switching to Ranger Stages")
                     inChallengeMode := true
                     challengeStartTime := A_TickCount
-                    ClickUntilGone(0, 0, 80, 85, 739, 224, LobbyText, 0, -35)
+                    challengeStageCount := 0  ; Reset stage count for new ranger stage session
                     return CheckLobby()
                 }
             }
@@ -344,11 +343,11 @@ HandleStageEnd() {
         ClickUntilGone(0, 0, 300, 190, 360, 250, UnitExit, -4, -35)
     }
 
-    if (ok := FindText(&X, &Y, 150, 180, 350, 260, 0, 0, DefeatText) or (ok:=FindText(&X, &Y, 150, 180, 350, 260, 0, 0, DefeatText2))) {
+    if (ok := FindText(&X, &Y, 377, 228, 536, 276, 0.05, 0.80, DefeatText)) {
         isWin := false
     }
 
-    if (ok := FindText(&X, &Y, 150, 180, 350, 260, 0, 0, VictoryText) or (ok:=FindText(&X, &Y, 150, 180, 350, 260, 0, 0, VictoryText2))) {
+    if (ok := FindText(&X, &Y, 397, 222, 538, 273, 0.05, 0.80, VictoryText)) {
         isWin := true
     }
 
@@ -467,7 +466,7 @@ StartStory(map, act) {
     ; Scroll if needed
     if (StoryMap.scrolls > 0) {
         AddToLog("Scrolling down " StoryMap.scrolls " for " map)
-        MouseMove(700, 210)
+        MouseMove(230, 175)
         loop StoryMap.scrolls {
             SendInput("{WheelDown}")
             Sleep(250)
@@ -485,7 +484,7 @@ StartStory(map, act) {
     ; Scroll if needed for act
     if (StoryAct.scrolls > 0) {
         AddToLog("Scrolling down " StoryAct.scrolls " times for " act)
-        MouseMove(300, 240)
+        MouseMove(400, 175)
         loop StoryAct.scrolls {
             SendInput("{WheelDown}")
             Sleep(250)
@@ -503,16 +502,24 @@ StartStory(map, act) {
 GetMapData(type, name) {
     data := Map(
         "StoryMap", Map(
-            "Planet Greenie", {x: 630, y: 250, scrolls: 0}
+            "Voocha Village", {x: 230, y: 165, scrolls: 0},
+            "Green Planet", {x: 230, y: 230, scrolls: 0},
+            "Demon Forest", {x: 230, y: 290, scrolls: 0},
+            "Leaf Village", {x: 230, y: 360, scrolls: 0},
+            "Z City", {x: 230, y: 360, scrolls: 1}
         ),
         "StoryAct", Map(
-            "Infinity", {x: 285, y: 235, scrolls: 0},
-            "Act 1", {x: 285, y: 270, scrolls: 0},
-            "Act 2", {x: 285, y: 305, scrolls: 0},
-            "Act 3", {x: 285, y: 340, scrolls: 0},
-            "Act 4", {x: 285, y: 385, scrolls: 0},
-            "Act 5", {x: 300, y: 350, scrolls: 1},
-            "Act 6", {x: 300, y: 385, scrolls: 1}
+            "Act 1", {x: 400, y: 180, scrolls: 0},
+            "Act 2", {x: 400, y: 245, scrolls: 0},
+            "Act 3", {x: 400, y: 300, scrolls: 0},
+            "Act 4", {x: 400, y: 225, scrolls: 1},
+            "Act 5", {x: 400, y: 275, scrolls: 1},
+            "Act 6", {x: 400, y: 200, scrolls: 2},
+            "Act 7", {x: 400, y: 250, scrolls: 2},
+            "Act 8", {x: 400, y: 300, scrolls: 2},
+
+            "Act 9", {x: 400, y: 235, scrolls: 3},
+            "Act 10", {x: 400, y: 290, scrolls: 3},
         ),
         "RaidMap", Map(
             "Ant Kingdom", {x: 630, y: 250, scrolls: 0}
@@ -843,20 +850,18 @@ DetectMap() {
         }
 
         ; Check for vote screen
-        if (ok := FindText(&X, &Y, 355, 168, 450, 196, 0, 0, VoteStart))  {
+        if (ok := FindText(&X, &Y, 355, 168, 450, 196, 0, 0, VoteStart) or PixelGetColor(492, 47) = 0x5ED800) {
             AddToLog("No Map Found or Movement Unnecessary")
-            UpdateMap("No Map Found") ; For Webhook
             return "no map found"
         }
 
         mapPatterns := Map(
-            "Planet Greenie", PlanetGreenie
+            "Demon Forest", DemonForest
         )
 
         for mapName, pattern in mapPatterns {
             if (ok := FindText(&X, &Y, 10, 90, 415, 160, 0, 0, pattern)) {
                 AddToLog("Detected map: " mapName)
-                UpdateMap(mapName) ; For Webhook
                 return mapName
             }
         }
@@ -889,22 +894,16 @@ HandleMapMovement(MapName) {
 }
     
 RestartStage() {
-    global inChallengeMode
+    global currentMap
 
-    currentMap := DetectMap()
+    if (currentMap = "") {
+        currentMap := DetectMap()
+    } else {
+        AddToLog("Current Map: " currentMap)
+    }
 
     ; Wait for loading
     CheckLoaded()
-
-    if (!inChallengeMode) {
-        if (!IsCorrectMap(currentMap)) {
-            AddToLog("Incorrect map detected, teleporting to lobby")
-            return TpLobby()
-        }
-    }
-
-    ; Do initial setup and map-specific movement during vote timer
-    BasicSetup()
     
     if (currentMap != "no map found") {
         HandleMapMovement(currentMap)
@@ -942,7 +941,7 @@ Reconnect() {
             AddToLog("Connecting to private server...")
             Run(psLink)
         } else {
-            Run("roblox://placeID=" 8304191830)
+            Run("roblox://placeID=" 72829404259339)
         }
 
         Sleep 2000
@@ -975,7 +974,7 @@ RejoinPrivateServer() {
         AddToLog("Connecting to private server...")
         Run(psLink)
     } else {
-        Run("roblox://placeID=8304191830")  ; Public server if no PS file or empty
+        Run("roblox://placeID=72829404259339")  ; Public server if no PS file or empty
     }
 
     Sleep(5000)
@@ -1014,6 +1013,7 @@ CheckForXp(closeLeaderboard := false) {
 }
 
 CheckLobby() {
+    global currentMap
     loop {
         Sleep 1000
         if (ok := FindText(&X, &Y, 50, 317, 81, 350, 0, 0, AreaText)) {
@@ -1026,6 +1026,7 @@ CheckLobby() {
     }
     Sleep(SleepTime())
     AddToLog("Returned to lobby, restarting selected mode")
+    currentMap := ""
     return StartSelectedMode()
 }
 
@@ -1061,7 +1062,7 @@ CheckLoaded() {
         Sleep(1000)
         
         ; Check for vote screen
-        if (ok := FindText(&X, &Y, 355, 168, 450, 196, 0, 0, VoteStart) or PixelGetColor(320, 60) = 0x00EE00) {
+        if (ok := FindText(&X, &Y, 355, 168, 450, 196, 0, 0, VoteStart) or PixelGetColor(492, 47) = 0x5ED800) {
             AddToLog("Successfully Loaded In")
             Sleep(1000)
             break
@@ -1090,7 +1091,7 @@ StartSelectedMode() {
     global inChallengeMode, firstStartup, challengeStartTime
 
     if (ChallengeBox.Value && firstStartup) {
-        AddToLog("Auto Challenge enabled - starting with challenge")
+        AddToLog("Auto Ranger Stage enabled - starting with Ranger Stage")
         inChallengeMode := true
         firstStartup := false
         challengeStartTime := A_TickCount  ; Set initial challenge time

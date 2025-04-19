@@ -9,7 +9,7 @@ global repoName := "anime-rangers-x "
 global currentVersion := "0.1"
 
 ; Basic Application Info
-global aaTitle := "Ryn's Anime Rangers X"
+global aaTitle := "Ryn's Anime Rangers X "
 global version := "v" . currentVersion
 global rblxID := "ahk_exe RobloxPlayerBeta.exe"
 ;Coordinate and Positioning Variables
@@ -37,6 +37,7 @@ global currentTime := GetCurrentTime()
 ;Auto Challenge
 global challengeStartTime := A_TickCount
 global inChallengeMode := false
+global challengeStageCount := 0
 global firstStartup := true
 ;Gui creation
 global uiBorders := []
@@ -85,11 +86,11 @@ uiBorders.Push(arMainUI.Add("Text", "x1363 y0 w1 h697 +Background" uiTheme[3])) 
 uiBackgrounds.Push(arMainUI.Add("Text", "x3 y3 w1360 h27 +Background" uiTheme[2])) ;Title Top
 uiBorders.Push(arMainUI.Add("Text", "x0 y30 w1363 h1 +Background" uiTheme[3])) ;Title bottom
 uiBorders.Push(arMainUI.Add("Text", "x803 y100 w560 h1 +Background" uiTheme[3])) ;Mode bottom
-uiBorders.Push(arMainUI.Add("Text", "x803 y443 w560 h1 +Background" uiTheme[3])) ;Placement bottom
+uiBorders.Push(arMainUI.Add("Text", "x803 y550 w560 h1 +Background" uiTheme[3])) ;Placement bottom
 uiBorders.Push(arMainUI.Add("Text", "x803 y150 w560 h1 +Background" uiTheme[3])) ;Process bottom
-uiBorders.Push(arMainUI.Add("Text", "x803 y530 w560 h1 +Background" uiTheme[3])) ;Process bottom
+uiBorders.Push(arMainUI.Add("Text", "x803 y632 w560 h1 +Background" uiTheme[3])) ;Process bottom
 uiBorders.Push(arMainUI.Add("Text", "x802 y30 w1 h667 +Background" uiTheme[3])) ;Roblox Right
-uiBorders.Push(arMainUI.Add("Text", "x0 y697 w1364 h1 +Background" uiTheme[3], "")) ;Roblox second bottom
+uiBorders.Push(arMainUI.Add("Text", "x0 y632 w1364 h1 +Background" uiTheme[3], "")) ;Roblox second bottom
 
 global robloxHolder := arMainUI.Add("Text", "x3 y33 w797 h597 +Background" uiTheme[5], "") ;Roblox window box
 global exitButton := arMainUI.Add("Picture", "x1330 y1 w32 h32 +BackgroundTrans", Exitbutton) ;Exit image
@@ -277,24 +278,25 @@ guideBtn.OnEvent("Click", OpenGuide)
 global settingsBtn := arMainUI.Add("Button", "x1200 y5 w90 h20", "Settings")
 settingsBtn.OnEvent("Click", ShowSettingsGUI)
 
-placementSaveBtn := arMainUI.Add("Button", "x807 y480 w80 h20", "Save")
+placementSaveBtn := arMainUI.Add("Button", "x807 y585 w80 h20", "Save")
 placementSaveBtn.OnEvent("Click", SaveSettings)
 
 arMainUI.SetFont("s9")
 
 ;Normal Options
-global NextLevelBox := arMainUI.Add("Checkbox", "x900 y451 cffffff Checked", "Next Level")
-global ReturnLobbyBox := arMainUI.Add("Checkbox", "x900 y451 cffffff Checked", "Return To Lobby")
-global MatchMaking := arMainUI.Add("Checkbox", "x900 y476 cffffff Hidden Checked", "Matchmaking") 
+global NextLevelBox := arMainUI.Add("Checkbox", "x900 y560 cffffff Checked", "Next Level")
+global ReturnLobbyBox := arMainUI.Add("Checkbox", "x900 y560 cffffff Checked", "Return To Lobby")
+global MatchMaking := arMainUI.Add("Checkbox", "x900 y580 cffffff Hidden Checked", "Matchmaking") 
 ;Auto Settings
-global AutoSettings := arMainUI.Add("GroupBox", "x660 y630 w135 h60 +Center c" uiTheme[1], "Auto Settings")
-global ChallengeBox := arMainUI.Add("CheckBox", "x665 y655 cffffff", "Auto Challenge")
-
+global ChallengeBox := arMainUI.Add("CheckBox", "x900 y610 cffffff", "Auto Challenge")
 ; General Settings
-LobbySleepText := arMainUI.Add("Text", "x1220 y460 w130 h20 +Center", "Lobby Sleep Timer")
-global LobbySleepTimer := arMainUI.Add("DropDownList", "x1235 y480 w100 h180 Choose1", ["No Delay", "5 Seconds", "10 Seconds", "15 Seconds", "20 Seconds", "25 Seconds", "30 Seconds", "35 Seconds", "40 Seconds", "45 Seconds", "50 Seconds", "55 Seconds", "60 Seconds"])
+LobbySleepText := arMainUI.Add("Text", "x1220 y565 w130 h20 +Center", "Lobby Sleep Timer")
+global LobbySleepTimer := arMainUI.Add("DropDownList", "x1235 y585 w100 h180 Choose1", ["No Delay", "5 Seconds", "10 Seconds", "15 Seconds", "20 Seconds", "25 Seconds", "30 Seconds", "35 Seconds", "40 Seconds", "45 Seconds", "50 Seconds", "55 Seconds", "60 Seconds"])
+StoryDifficultyText := arMainUI.Add("Text", "x1020 y565 w130 h20 +Center", "Story Difficulty")
+global StoryDifficulty := arMainUI.Add("DropDownList", "x1035 y585 w100 h180 Choose1", ["Normal", "Hard", "Nightmare"])
 
-placementSaveText := arMainUI.Add("Text", "x807 y460 w80 h20", "Save Config")
+
+placementSaveText := arMainUI.Add("Text", "x807 y565 w80 h20", "Save Config")
 
 Hotkeytext := arMainUI.Add("Text", "x807 y35 w500 h30", "Below are the default hotkey settings ")
 Hotkeytext2 := arMainUI.Add("Text", "x807 y50 w500 h30", "F1:Fix Roblox Window|F2:Start Macro|F3:Stop Macro|F4:Pause Macro")
@@ -328,6 +330,8 @@ InfinityCastleDropdown.Visible := false
 MatchMaking.Visible := false
 ReturnLobbyBox.Visible := false
 NextLevelBox.Visible := false
+StoryDifficulty.Visible := false
+StoryDifficultyText.Visible := false
 Hotkeytext.Visible := false
 Hotkeytext2.Visible := false
 
@@ -339,7 +343,7 @@ RaidDropdown.OnEvent("Change", OnRaidChange)
 ConfirmButton.OnEvent("Click", OnConfirmClick)
 ;------MAIN UI------MAIN UI------MAIN UI------MAIN UI------MAIN UI------MAIN UI------MAIN UI------MAIN UI------MAIN UI------MAIN UI------MAIN UI------MAIN UI
 readInSettings()
-arMainUI.Show("w1366 h700")
+arMainUI.Show("w1366 h633")
 WinMove(0, 0,,, "ahk_id " aaMainUIHwnd)
 forceRobloxSize()  ; Initial force size and position
 ;------UNIT CONFIGURATION ;------UNIT CONFIGURATION ;------UNIT CONFIGURATION ;------UNIT CONFIGURATION ;------UNIT CONFIGURATION ;------UNIT CONFIGURATION ;------UNIT CONFIGURATION

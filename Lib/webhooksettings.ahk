@@ -14,7 +14,6 @@ global mode := ""
 global StartTime := A_TickCount 
 global stageStartTime := A_TickCount
 global macroStartTime := A_TickCount
-global detectedMap := "No Map Found"
 
 if (!FileExist("Settings")) {
     DirCreate("Settings")
@@ -138,19 +137,8 @@ UpdateStreak(isWin) {
     lastResult := isWin ? "win" : "lose"
 }
 
-UpdateMap(mapName) {
-    global detectedMap
-    
-    ; Initialize detectedMap if it doesn't exist
-    if (!IsSet(detectedMap)) {
-        detectedMap := "No Map Found"
-    }
-    
-    detectedMap := mapName
-}
-
 SendWebhookWithTime(isWin, stageLength) {
-    global currentStreak, Wins, loss, WebhookURL, webhook, macroStartTime, detectedMap
+    global currentStreak, Wins, loss, WebhookURL, webhook, macroStartTime, currentMap
     
     ; Update streak
     UpdateStreak(isWin)
@@ -178,7 +166,7 @@ SendWebhookWithTime(isWin, stageLength) {
     sessionData := "⌛ Macro Runtime: " macroLength "`n"
     . "⏱️ Stage Length: " stageLength "`n"
     . "🔄 Current Streak: " (currentStreak > 0 ? currentStreak " Win Streak" : Abs(currentStreak) " Loss Streak") "`n"
-    . "🗺️ Current Map: " detectedMap "`n"
+    . "🗺️ Current Map: " currentMap "`n"
     . ":video_game: Current Mode: " mode "`n"
     . ":white_check_mark: Successful Runs: " Wins "`n"
     . "❌ Failed Runs: " loss "`n"

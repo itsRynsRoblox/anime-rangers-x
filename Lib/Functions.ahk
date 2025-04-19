@@ -132,6 +132,8 @@ OnConfirmClick(*) {
         MatchMaking.Visible := false
         ReturnLobbyBox.Visible := (StoryActDropdown.Text = "Infinity")
         NextLevelBox.Visible := (StoryActDropdown.Text != "Infinity")
+        StoryDifficulty.Visible := (StoryActDropdown.Text != "Infinity")
+        StoryDifficultyText.Visible := (StoryActDropdown.Text != "Infinity")
     }
     ; For Legend mode, check if both Legend and Act are selected
     else if (ModeDropdown.Text = "Legend") {

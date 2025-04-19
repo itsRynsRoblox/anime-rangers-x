@@ -15,7 +15,6 @@ if !(A_IsAdmin || DllCall("GetCommandLine","str")~=" /restart(?!\S)") {
 
 SendMode "Event"
 
-#Include %A_ScriptDir%\Lib/ScriptGuard1.ahk
 #Include %A_ScriptDir%\Lib/Image.ahk
 #Include %A_ScriptDir%\Lib\Toggles.ahk
 #Include %A_ScriptDir%\lib/GUI.ahk
