@@ -387,7 +387,7 @@ HandleStageEnd() {
 }
 
 StoryMovement() {
-    FixClick(65, 300)
+    FixClick(65, 335)
     Sleep (1000)
     FixClick(400, 300)
     Sleep (1000)
@@ -736,7 +736,7 @@ DetectMap() {
     Loop {
         ; Check if we waited more than 5 minute for votestart
         if (A_TickCount - startTime > 300000) {
-            if (ok := FindText(&X, &Y, 50, 317, 81, 350, 0, 0, AreaText)) {
+            if (ok := FindText(&X, &Y, 47, 342, 83, 374, 0, 0, AreaText)) {
                 AddToLog("Found in lobby - restarting selected mode")
                 return StartSelectedMode()
             }
@@ -857,7 +857,7 @@ Reconnect() {
                 moveRobloxWindow()
                 Sleep (2000)
             }
-            if (ok := FindText(&X, &Y, 50, 317, 81, 350, 0, 0, AreaText)) {
+            if (ok := FindText(&X, &Y, 47, 342, 83, 374, 0, 0, AreaText)) {
                 AddToLog("Reconnected Successfully!")
                 return StartSelectedMode()
             } else {
@@ -891,7 +891,7 @@ RejoinPrivateServer() {
             Sleep(1000)
         }
 
-        if (ok := FindText(&X, &Y, 50, 317, 81, 350, 0, 0, AreaText)) {
+        if (ok := FindText(&X, &Y, 47, 342, 83, 374, 0, 0, AreaText)) {
             AddToLog("Reconnected Successfully!")
             return StartSelectedMode()
         }
@@ -913,17 +913,17 @@ CheckForXp() {
 CheckLobby() {
     global currentMap
     loop {
-        Sleep 1000
-        if (ok := FindText(&X, &Y, 50, 317, 81, 350, 0, 0, AreaText)) {
+        if (ok := FindText(&X, &Y, 47, 342, 83, 374, 0, 0, AreaText)) {
             break
         }
         if (CheckForEndGameScreens()) {
             return MonitorStage()
         }
         Reconnect()
+        Sleep (1000)
     }
-    Sleep(SleepTime())
     AddToLog("Returned to lobby, restarting selected mode")
+    Sleep(SleepTime())
     currentMap := ""
     return StartSelectedMode()
 }
@@ -937,7 +937,7 @@ CheckForEndGameScreens() {
 }
 
 CheckForLobbyText() {
-    if (ok := FindText(&X, &Y, 50, 317, 81, 350, 0, 0, AreaText)) {
+    if (ok := FindText(&X, &Y, 47, 342, 83, 374, 0, 0, AreaText)) {
         return true
     }
     return false
@@ -946,7 +946,7 @@ CheckForLobbyText() {
 CheckForLobby() {
     loop {
         Sleep 1000
-        if (ok := FindText(&X, &Y, 50, 317, 81, 350, 0, 0, AreaText)) {
+        if (ok := FindText(&X, &Y, 47, 342, 83, 374, 0, 0, AreaText)) {
             break
         }
         Reconnect()

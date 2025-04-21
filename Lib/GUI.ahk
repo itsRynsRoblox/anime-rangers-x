@@ -6,7 +6,7 @@
 ;Update Checker
 global repoOwner := "itsRynsRoblox"
 global repoName := "anime-rangers-x "
-global currentVersion := "1.0.2"
+global currentVersion := "1.0.4"
 
 ; Basic Application Info
 global aaTitle := "Ryn's Anime Rangers X "
