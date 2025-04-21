@@ -18,11 +18,11 @@ readInSettings() {
     global mode
 
     ; General Unit Settings
-    global LobbySleepTimer
+    global LobbySleepTimer, StoryDifficulty
 
 
     ; General settings
-    global ChallengeBox, MatchMaking, ReturnLobbyBox
+    global ChallengeBox, MatchMaking, ReturnLobbyBox, NextLevelBox
 
     try {
         settingsFile := setupFilePath()
@@ -41,15 +41,16 @@ readInSettings() {
             parts := StrSplit(line, "=")
             switch parts[1] {
                 case "Mode": mode := parts[2]
-
                 case "Sleep": LobbySleepTimer.Value := parts[2] ; Set the dropdown value
                 case "Matchmake": MatchMaking.Value := parts[2] ; Set the checkbox value
                 case "Challenge": ChallengeBox.Value := parts[2] ; Set the checkbox value
-
+                case "Next": NextLevelBox.Value := parts[2] ; Set the checkbox value
                 case "ToLobby": ReturnLobbyBox.Value := parts[2] ; Set the checkbox value
+                case "Difficulty": StoryDifficulty.Value := parts[2] ; Set the dropdown value
             }
         }
         AddToLog("Configuration settings loaded successfully")
+        LoadMapSkipLocal()
     } 
 }
 
@@ -59,10 +60,10 @@ SaveSettings(*) {
     global mode
 
     ; General Unit Settings
-    global LobbySleepTimer
+    global LobbySleepTimer, StoryDifficulty
 
     ; General settings
-    global ChallengeBox, MatchMaking, ReturnLobbyBox
+    global ChallengeBox, MatchMaking, ReturnLobbyBox, NextLevelBox
 
     try {
         settingsFile := A_ScriptDir "\Settings\Configuration.txt"
@@ -93,8 +94,15 @@ SaveSettings(*) {
         content .= "`n[ReturnToLobby]"
         content .= "`nToLobby=" ReturnLobbyBox.Value "`n"
 
+        content .= "`n[NextLevel]"
+        content .= "`nNext=" NextLevelBox.Value "`n"
+
+        content .= "`n[StoryDifficulty]"
+        content .= "`nDifficulty=" StoryDifficulty.Value "`n"
+
         FileAppend(content, settingsFile)
         AddToLog("Configuration settings saved successfully")
+        SaveMapSkipLocal()
     }
 }
 

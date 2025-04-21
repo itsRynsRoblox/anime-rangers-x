@@ -138,7 +138,7 @@ UpdateStreak(isWin) {
 }
 
 SendWebhookWithTime(isWin, stageLength) {
-    global currentStreak, Wins, loss, WebhookURL, webhook, macroStartTime, currentMap
+    global currentStreak, Wins, loss, WebhookURL, webhook, macroStartTime, currentMap, inChallengeMode
     
     ; Update streak
     UpdateStreak(isWin)
@@ -163,15 +163,15 @@ SendWebhookWithTime(isWin, stageLength) {
     macroLength := FormatStageTime(A_TickCount - macroStartTime)
     
     ; Build session data
-    sessionData := "⌛ Macro Runtime: " macroLength "`n"
-    . "⏱️ Stage Length: " stageLength "`n"
-    . "🔄 Current Streak: " (currentStreak > 0 ? currentStreak " Win Streak" : Abs(currentStreak) " Loss Streak") "`n"
-    . "🗺️ Current Map: " currentMap "`n"
-    . ":video_game: Current Mode: " mode "`n"
-    . ":white_check_mark: Successful Runs: " Wins "`n"
-    . "❌ Failed Runs: " loss "`n"
-    . ":bar_chart: Total Runs: " (loss+Wins) "`n"
-    . ":scales: Win Rate: " Format("{:.1f}%", (Wins/(Wins+loss))*100) "`n"
+    sessionData := "⏳ Macro Runtime: " macroLength "`n"
+    . "🕒 Stage Duration: " stageLength "`n"
+    . "🔥 Current Streak: " (currentStreak > 0 ? currentStreak " Win Streak" : Abs(currentStreak) " Loss Streak") "`n"
+    . "🗺️ Map: " currentMap "`n"
+    . "🎮 Mode: " (inChallengeMode ? "Ranger Stage" : ModeDropdown.Text) "`n"
+    . "✅ Wins: " Wins "`n"
+    . "❌ Fails: " loss "`n"
+    . "📊 Total Runs: " (loss + Wins) "`n"
+    . "🏆 Win Rate: " Format("{:.1f}%", (Wins / (Wins + loss)) * 100) "`n"
     isWin ? 0x0AB02D : 0xB00A0A,
     isWin ? "win" : "lose"
     

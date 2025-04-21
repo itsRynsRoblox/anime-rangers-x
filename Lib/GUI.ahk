@@ -6,7 +6,7 @@
 ;Update Checker
 global repoOwner := "itsRynsRoblox"
 global repoName := "anime-rangers-x "
-global currentVersion := "0.1"
+global currentVersion := "1.0.2"
 
 ; Basic Application Info
 global aaTitle := "Ryn's Anime Rangers X "
@@ -38,7 +38,9 @@ global currentTime := GetCurrentTime()
 global challengeStartTime := A_TickCount
 global inChallengeMode := false
 global challengeStageCount := 0
+global challengeMapIndex := 1
 global firstStartup := true
+global challengeMapList := ["Voocha Village", "Green Planet", "Demon Forest", "Leaf Village", "Z City"]
 ;Gui creation
 global uiBorders := []
 global uiBackgrounds := []
@@ -46,7 +48,7 @@ global uiTheme := []
 global UnitData := []
 global arMainUI := Gui("+AlwaysOnTop -Caption")
 global lastlog := ""
-global aaMainUIHwnd := arMainUI.Hwnd
+global arMainUIHwnd := arMainUI.Hwnd
 ;Theme colors
 uiTheme.Push("0xffffff")  ; Header color
 uiTheme.Push("0c000a")  ; Background color
@@ -102,7 +104,7 @@ global windowTitle := arMainUI.Add("Text", "x10 y3 w1200 h29 +BackgroundTrans", 
 
 arMainUI.Add("Text", "x805 y110 w558 h25 +Center +BackgroundTrans", "Activity Log") ;Process header
 arMainUI.SetFont("norm s11 c" uiTheme[1]) ;Font
-global process1 := arMainUI.Add("Text", "x810 y152 w600 h18 +BackgroundTrans c" uiTheme[7], "➤ Original Creator: Ryn") ;Processes
+global process1 := arMainUI.Add("Text", "x810 y152 w600 h18 +BackgroundTrans c" uiTheme[7], "➤ Original Creator: Ryn (@TheRealTension)") ;Processes
 global process2 := arMainUI.Add("Text", "xp yp+22 w600 h18 +BackgroundTrans", "") ;Processes 
 global process3 := arMainUI.Add("Text", "xp yp+22 w600 h18 +BackgroundTrans", "")
 global process4 := arMainUI.Add("Text", "xp yp+22 w600 h18 +BackgroundTrans", "")
@@ -137,7 +139,7 @@ ShowSettingsGUI(*) {
     }
     
     settingsGuiOpen := true
-    SettingsGUI := Gui("-MinimizeBox +Owner" aaMainUIHwnd)  
+    SettingsGUI := Gui("-MinimizeBox +Owner" arMainUIHwnd)  
     SettingsGui.Title := "Settings"
     SettingsGUI.OnEvent("Close", OnSettingsGuiClose)
     SettingsGUI.BackColor := uiTheme[2]
@@ -222,10 +224,50 @@ OpenDebug(*) {
     DebugGUI.SetFont("s16 bold", "Segoe UI")
     DebugGUI.Add("GroupBox","h400 w240 cwhite +Center", "Welcome to Debug")
     DebugGUI.SetFont("s10 bold", "Segoe UI")
-    ScreenResChecker := DebugGUI.Add("Button", "x40 y100 w200 cWhite +Center", "Screen Resolution")
+    ScreenResChecker := DebugGUI.Add("Button", "x40 y60 w200 cWhite +Center", "Screen Resolution")
     ScreenResChecker.OnEvent("Click", (*) => GetScreenInfo())
 
+    MouseMovementChecker := DebugGUI.Add("Button", "x40 y140 w200 cWhite +Center", "Mouse")
+    MouseMovementChecker.OnEvent("Click", (*) => MouseMovementDebug())
+
+    FindTextWorkingChecker := DebugGUI.Add("Button", "x40 y220 w200 cWhite +Center", "FindText")
+    FindTextWorkingChecker.OnEvent("Click", (*) => OpenFindTextDebug())
+
+    ImageSearchDebugChecker := DebugGUI.Add("Button", "x40 y300 w200 cWhite +Center", "ImageSearch")
+    ImageSearchDebugChecker.OnEvent("Click", (*) => ImageSearchDebug())
+
+    DebugGUI.SetFont("s8 bold", "Segoe UI")
+    DebugGUI.Add("Text"," x25 y100 cwhite +Center", "Check If Your Computer Settings Are Correct")
+    DebugGUI.Add("Text"," x25 y180 cwhite +Center", "Check If The Macro Can Move Your Mouse")
+    DebugGUI.Add("Text"," x50 y260 cwhite +Center", "Check If FindText() function work")
+    DebugGUI.Add("Text"," x42.5 y340 cwhite +Center", "Check If ImageSearch() function work")
     DebugGUI.Show("w290")
+}
+
+ImageSearchDebug(){
+    ImageSearchThing := Gui("+AlwaysOnTop")
+    ImageSearchThing.BackColor := "0c000a"
+    Sleep (1000)
+    ImageSearchThing.Add("Picture", "", FindTextDebugImage)
+    ImageSearchThing.Show("w300")
+    Sleep (1000)
+    if (ok := ImageSearch(&X, &Y, 0, 0, 1000, 1000, FindTextDebugImage)){
+        ImageSearchThing.Add("Text","cWhite +Center","Image Found This Is A Good Step To Debugging")
+    } else{
+       ImageSearchThing.Add("Text","cWhite +Center","Image Not Found Please Contact Support Or Check Resolution Debug")
+    }
+    ImageSearchThing.Show("w300 h100")
+
+}
+
+MouseMovementDebug(){
+    MouseMove(0,0)
+    MouseDebug := Gui("+AlwaysOnTop")
+    MouseDebug.BackColor := "0c000a"
+    sleep 1000
+    MouseDebug.Add("Text", "w300 cWhite +Center","If your mouse didnt move its likely due to Riot/Vanguard Anticheat Pleas turn it off")
+    MouseDebug.Show("w300")
+    
 }
 
 GetScreenInfo() {
@@ -245,35 +287,43 @@ GetScreenInfo() {
 }
 
 OpenGuide(*) {
-    GuideGUI := Gui("+AlwaysOnTop")
-    GuideGUI.SetFont("s10 bold", "Segoe UI")
-    GuideGUI.Title := "Anime Rangers Guide"
+    NewGuideGUI := Gui("+AlwaysOnTop")
+    NewGuideGUI.SetFont("s10 bold", "Segoe UI")
+    NewGuideGUI.Title := "Anime Ranger Guides"
 
-    GuideGUI.BackColor := "0c000a"
-    GuideGUI.MarginX := 20
-    GuideGUI.MarginY := 20
+    NewGuideGUI.BackColor := "0c000a"
+    NewGuideGUI.MarginX := 20
+    NewGuideGUI.MarginY := 20
 
     ; Add Guide content
-    GuideGUI.SetFont("s16 bold", "Segoe UI")
+    NewGuideGUI.SetFont("s16 bold", "Segoe UI")
+    NewGuideGUI.Add("GroupBox","h280 w240 cwhite +Center", "Anime Ranger Guides")
+    NewGuideGUI.SetFont("s10 bold", "Segoe UI")
 
-    GuideGUI.Add("Text", "x0 w800 cWhite +Center", "2 - In your ROBLOX settings, make sure your keyboard is set to click to move and your graphics are set to 1 and enable UI navigation")
-    GuideGUI.Add("Picture", "x50 w700 cWhite +Center", "Images\Clicktomove.png")
-    GuideGUI.Add("Picture", "x50 w700 cWhite +Center", "Images\graphics1.png")
-    GuideGUI.Add("Text", "x0 w800 cWhite +Center", "3 - Set up the unit setup however you want, however I'd avoid hill only units       if you can since it might break")
+    RobloxSettings := NewGuideGUI.Add("Button", "x40 y60 w200 cWhite +Center", "Roblox Settings")
+    RobloxSettings.OnEvent("Click", (*) => OpenRobloxSettings())
 
-    GuideGUI.Add("Text", "x0 w800 cWhite +Center", "4 - Rejoin Anime Rangers to reset the camera and press F2 to start the macro. Good luck!" )
+    RangerSettings := NewGuideGUI.Add("Button", "x40 y140 w200 cWhite +Center", "Anime Ranger Settings")
+    RangerSettings.OnEvent("Click", (*) => OpenRangerSettings())
 
-    GuideGUI.Show("w800")
+    NewGuideGUI.SetFont("s8 bold", "Segoe UI")
+    NewGuideGUI.Add("Text"," x50 y100 cwhite +Center", "View Recommended Roblox Settings")
+    NewGuideGUI.Add("Text"," x40 y180 cwhite +Center", "View Recommended Ranger Settings")
+
+    NewGuideGUI.Show("w290")
 }
 
 arMainUI.SetFont("s9 Bold c" uiTheme[1])
 
 ;DEBUG
-DebugButton := arMainUI.Add("Button", "x1000 y5 w90 h20 +Center", "Debug")
+DebugButton := arMainUI.Add("Button", "x900 y5 w90 h20 +Center", "Debug")
 DebugButton.OnEvent("Click", (*) => OpenDebug())
 
-global guideBtn := arMainUI.Add("Button", "x1100 y5 w90 h20", "Guide")
+global guideBtn := arMainUI.Add("Button", "x1000 y5 w90 h20", "Guides")
 guideBtn.OnEvent("Click", OpenGuide)
+
+global mapButton := arMainUI.Add("Button", "x1100 y5 w90 h20", "Map Skips")
+mapButton.OnEvent("Click", (*) => OpenMapSkipPriorityPicker())
 
 global settingsBtn := arMainUI.Add("Button", "x1200 y5 w90 h20", "Settings")
 settingsBtn.OnEvent("Click", ShowSettingsGUI)
@@ -288,12 +338,13 @@ global NextLevelBox := arMainUI.Add("Checkbox", "x900 y560 cffffff Checked", "Ne
 global ReturnLobbyBox := arMainUI.Add("Checkbox", "x900 y560 cffffff Checked", "Return To Lobby")
 global MatchMaking := arMainUI.Add("Checkbox", "x900 y580 cffffff Hidden Checked", "Matchmaking") 
 ;Auto Settings
-global ChallengeBox := arMainUI.Add("CheckBox", "x900 y610 cffffff", "Auto Challenge")
+global ChallengeBox := arMainUI.Add("CheckBox", "x900 y610 cffffff", "Auto Ranger Stage")
 ; General Settings
 LobbySleepText := arMainUI.Add("Text", "x1220 y565 w130 h20 +Center", "Lobby Sleep Timer")
 global LobbySleepTimer := arMainUI.Add("DropDownList", "x1235 y585 w100 h180 Choose1", ["No Delay", "5 Seconds", "10 Seconds", "15 Seconds", "20 Seconds", "25 Seconds", "30 Seconds", "35 Seconds", "40 Seconds", "45 Seconds", "50 Seconds", "55 Seconds", "60 Seconds"])
-StoryDifficultyText := arMainUI.Add("Text", "x1020 y565 w130 h20 +Center", "Story Difficulty")
-global StoryDifficulty := arMainUI.Add("DropDownList", "x1035 y585 w100 h180 Choose1", ["Normal", "Hard", "Nightmare"])
+
+StoryDifficultyText := arMainUI.Add("Text", "x890 y585 w80 h20 +Center", "Difficulty")
+global StoryDifficulty := arMainUI.Add("DropDownList", "x970 y580 w100 h180 Choose1", ["Normal", "Hard", "Nightmare"])
 
 
 placementSaveText := arMainUI.Add("Text", "x807 y565 w80 h20", "Save Config")
@@ -310,7 +361,7 @@ DiscordButton.OnEvent("Click", (*) => OpenDiscord())
 ;--------------MODE SELECT;--------------MODE SELECT;--------------MODE SELECT;--------------MODE SELECT;--------------MODE SELECT;--------------MODE SELECT
 global modeSelectionGroup := arMainUI.Add("GroupBox", "x808 y38 w500 h45 Background" uiTheme[2], "Mode Select")
 arMainUI.SetFont("s10 c" uiTheme[6])
-global ModeDropdown := arMainUI.Add("DropDownList", "x818 y53 w140 h180 Choose0 +Center", ["Story", "Legend", "Raid"])
+global ModeDropdown := arMainUI.Add("DropDownList", "x818 y53 w140 h180 Choose0 +Center", ["Story", "Boss Event", "Challenge", "Easter Event"])
 global StoryDropdown := arMainUI.Add("DropDownList", "x968 y53 w150 h180 Choose0 +Center", ["Voocha Village", "Green Planet", "Demon Forest", "Leaf Village", "Z City"])
 global StoryActDropdown := arMainUI.Add("DropDownList", "x1128 y53 w80 h180 Choose0 +Center", ["Act 1", "Act 2", "Act 3", "Act 4", "Act 5", "Act 6", "Act 7", "Act 8", "Act 9", "Act 10"])
 global LegendDropDown := arMainUI.Add("DropDownlist", "x968 y53 w150 h180 Choose0 +Center", [""] )
@@ -344,7 +395,7 @@ ConfirmButton.OnEvent("Click", OnConfirmClick)
 ;------MAIN UI------MAIN UI------MAIN UI------MAIN UI------MAIN UI------MAIN UI------MAIN UI------MAIN UI------MAIN UI------MAIN UI------MAIN UI------MAIN UI
 readInSettings()
 arMainUI.Show("w1366 h633")
-WinMove(0, 0,,, "ahk_id " aaMainUIHwnd)
+WinMove(0, 0,,, "ahk_id " arMainUIHwnd)
 forceRobloxSize()  ; Initial force size and position
 ;------UNIT CONFIGURATION ;------UNIT CONFIGURATION ;------UNIT CONFIGURATION ;------UNIT CONFIGURATION ;------UNIT CONFIGURATION ;------UNIT CONFIGURATION ;------UNIT CONFIGURATION
 ;------FUNCTIONS;------FUNCTIONS;------FUNCTIONS;------FUNCTIONS;------FUNCTIONS;------FUNCTIONS;------FUNCTIONS;------FUNCTIONS;------FUNCTIONS;------FUNCTIONS;------FUNCTIONS
@@ -434,7 +485,7 @@ sizeDown() {
     }
 }
 moveRobloxWindow() {
-    global aaMainUIHwnd, offsetX, offsetY, rblxID
+    global arMainUIHwnd, offsetX, offsetY, rblxID
     
     if !WinExist(rblxID) {
         AddToLog("Waiting for Roblox window...")
@@ -445,7 +496,7 @@ moveRobloxWindow() {
     sizeDown()
     
     ; Then move relative to main UI
-    WinGetPos(&x, &y, &w, &h, aaMainUIHwnd)
+    WinGetPos(&x, &y, &w, &h, arMainUIHwnd)
     WinMove(x + offsetX, y + offsetY,,, rblxID)
     WinActivate(rblxID)
 }
@@ -504,4 +555,77 @@ checkSizeTimer() {
             moveRobloxWindow()
         }
     }
+}
+
+OpenFindTextDebug(*) {
+    GuideGUI := Gui("+AlwaysOnTop")
+    GuideGUI.SetFont("s10 bold", "Segoe UI")
+    GuideGUI.Title := "Find Text Debug"
+
+    FindTextOrder := GuideGUI.Add("GroupBox", "x20 y25 w180 h100 +Center cWhite", "FindText Debug")
+    FindTextDebugButton := GuideGUI.Add("Button", "x65 y80 h20 w90 cWhite +Center", "Debug")
+
+    GuideGUI.BackColor := "0c000a"
+    GuideGUI.MarginX := 20
+    GuideGUI.MarginY := 20
+
+    FindTextDropdown := GuideGUI.Add("DropDownList", "x60 y50 w100 h180", ["Create Room", "Boss Event"])
+    FindTextDebugButton.OnEvent("Click", (*) => TestFindText(FindTextDropdown.Text))
+
+    GuideGUI.Show()
+}
+
+TestFindText(text := "") {
+    if (WinExist(rblxID)) {
+        WinActivate(rblxID)
+    }
+    if (text = "Create Room") {
+        if (FindText(&X, &Y, 12, 241, 148, 275, 0.05, 0.20, CreateRoom)) {
+            AddToLog("Found the FindText() for " text)
+            FixClick(X, Y - 35, "Right")
+            return true
+        }
+    }
+    else if (text = "Boss Event") {
+        if (FindText(&X, &Y, 400, 375, 508, 404, 0.05, 0.20, BossPlayText)) {
+            AddToLog("Found the FindText() for " text)
+            FixClick(X, Y - 35, "Right")
+            return true
+        }
+    }
+    AddToLog("Didn't find the FindText() for " text)
+    return false
+}
+
+OpenRobloxSettings(*) {
+    GuideGUI := Gui("+AlwaysOnTop")
+    GuideGUI.SetFont("s10 bold", "Segoe UI")
+    GuideGUI.Title := "Roblox Settings"
+
+    GuideGUI.BackColor := "0c000a"
+    GuideGUI.MarginX := 20
+    GuideGUI.MarginY := 20
+
+    ; Add Guide content
+    GuideGUI.SetFont("s16 bold", "Segoe UI")
+
+    GuideGUI.Add("Picture", "x50 w700   cWhite +Center", "Images\Clicktomove.png")
+    GuideGUI.Add("Picture", "x50 w700   cWhite +Center", "Images\graphics1.png")
+    GuideGUI.Show("w800")
+}
+
+OpenRangerSettings(*) {
+    GuideGUI := Gui("+AlwaysOnTop")
+    GuideGUI.SetFont("s10 bold", "Segoe UI")
+    GuideGUI.Title := "Anime Rangers Settings"
+
+    GuideGUI.BackColor := "0c000a"
+    GuideGUI.MarginX := 20
+    GuideGUI.MarginY := 20
+
+    ; Add Guide content
+    GuideGUI.SetFont("s16 bold", "Segoe UI")
+
+    GuideGUI.Add("Text", "x0 w800 cWhite +Center", "Currently there is no recommended settings for Anime Rangers")
+    GuideGUI.Show("w800")
 }

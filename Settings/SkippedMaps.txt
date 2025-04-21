@@ -1,0 +1,6 @@
+[SkippedMaps]
+Map2=None
+Map3=None
+Map4=None
+Map5=None
+Map6=None

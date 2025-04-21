@@ -14,26 +14,18 @@ Hotkey(F3Key, (*) => Reload())
 Hotkey(F4Key, (*) => TogglePause())
 
 F5:: {
-    global currentMap := "Demon Forest"
-    RestartStage()
+
 }
 
 F6:: {
-    MouseGetPos(&x, &y)
-    A_Clipboard := ""  ; Clear the clipboard first
-    ClipWait(0.5)  ; Optional: wait for it to clear
 
-    A_Clipboard := x ", " y
-    ClipWait(0.5)  ; Wait for the clipboard to be ready
-
-    if (A_Clipboard = x ", " y) {
-        AddToLog("Copied: " x ", " y)
-    } else {
-        AddToLog("Failed to copy coordinates.")
-    }
 }
 
 F7:: {
+    GetMousePos()
+}
+
+F8:: {
     Run (A_ScriptDir "\Lib\FindText.ahk")
 }
 
@@ -57,7 +49,7 @@ TogglePause(*) {
 }
 
 CheckForTerminationConditions() {
-    if (CheckForXp() || CheckForReturnToLobby() || CheckForNextText()) {
+    if (CheckForXp() || CheckForReturnToLobby()) {
         AddToLog("Stage ended during upgrades, proceeding to results")
         return MonitorStage()
     }
@@ -65,17 +57,6 @@ CheckForTerminationConditions() {
     if (CheckForLobbyText()) {
         return CheckLobby()
     }
-}
-
-ChallengeMode() {    
-    AddToLog("Moving to Challenge mode")
-    ChallengeMovement()
-
-    while !(ok := FindText(&X, &Y, 325, 520, 489, 587, 0, 0, ModeCancel)) {
-        Reconnect() ; Added Disconnect Check
-        ChallengeMovement()
-    }
-    RestartStage()
 }
 
 StoryMode() {
@@ -90,54 +71,134 @@ StoryMode() {
     StoryMovement()
     
     ; Start stage
-    while !(ok := FindText(&X, &Y, 11, 240, 149, 277, 0.10, 0.10, CreateRoom)) {
+    while !(ok := FindText(&X, &Y, 12, 241, 148, 275, 0.05, 0.20, CreateRoom)) {
+        AddToLog("Looking for Create Room button...")
+        FixClick(80, 325) ; Click Leave
         Reconnect() ; Added Disconnect Check
         StoryMovement()
     }
+
+    ; Closes Player leaderboard
+    FixClick(640, 70)
+    Sleep(500)
+
+    FixClick(25, 225) ; Create Room
+    Sleep(1000)
+
+    while !(ok := FindText(&X, &Y, 325, 163, 409, 193, 0.05, 0.20, StoryChapter)) {
+        AddToLog("Looking for Story Chapter Text...")
+        FixClick(615, 155) ; Click X on Join
+        Sleep(1000)
+        FixClick(25, 225) ; Create Room
+        Sleep(1000)
+        Reconnect() ; Added Disconnect Check
+    }
+
     AddToLog("Starting " currentStoryMap " - " currentStoryAct)
     StartStory(currentStoryMap, currentStoryAct)
 
-    ; Handle play mode selection
-    if (StoryActDropdown.Text != "Infinity") {
-        PlayHere()  ; Always PlayHere for normal story acts
-    } else {
-        if (MatchMaking.Value) {
-            FindMatch()
-        } else {
-            PlayHere()
-        }
+    PlayHere()
+    RestartStage()
+}
+
+BossEvent() {    
+    BossEventMovement()
+
+    while !(ok := FindText(&X, &Y, 400, 375, 508, 404, 0.05, 0.20, BossPlayText)) {
+        Reconnect() ; Added Disconnect Check
+        BossEventMovement()
     }
 
+    StartBossEvent()
+    RestartStage()
+}
+
+ChallengeMode() {    
+    ChallengeMovement()
+
+    while !(ok := FindText(&X, &Y, 343, 467, 461, 496, 0.05, 0.20, Back)) {
+        Reconnect() ; Added Disconnect Check
+        FixClick(598, 425) ; Click Back
+        ChallengeMovement()
+    }
+
+    CreateChallenge()
+    RestartStage()
+}
+
+EasterEvent() {    
+    EasterMovement()
+
+    while !(ok := FindText(&X, &Y, 343, 467, 461, 496, 0.05, 0.20, Back)) {
+        Reconnect() ; Added Disconnect Check
+        FixClick(598, 425) ; Click Back
+        EasterMovement()
+    }
+
+    CreateChallenge()
     RestartStage()
 }
 
 
 LegendMode() {
-    global LegendDropdown, LegendActDropdown
-    
-    ; Get current map and act
-    currentLegendMap := LegendDropdown.Text
-    currentLegendAct := LegendActDropdown.Text
+    global challengeMapIndex, challengeMapList
+
+    ; Keep skipping until a valid map is found or end of list
+    while (challengeMapIndex <= challengeMapList.Length && ShouldSkipMap(challengeMapList[challengeMapIndex])) {
+        AddToLog(challengeMapList[challengeMapIndex] " is set to be skipped. Skipping...")
+        challengeMapIndex++
+        Sleep(1000)
+    }
+
+    ; Check if we ran out of maps
+    if (challengeMapIndex > challengeMapList.Length) {
+        AddToLog("No more valid maps to run.")
+        inChallengeMode := false
+        challengeStartTime := A_TickCount  ; Reset timer for next ranger stage trigger
+        challengeMapIndex := 1  ; Reset map index for next session
+        return CheckLobby()
+    }
+
+    currentLegendMap := challengeMapList[challengeMapIndex]
+    currentLegendAct := "Act 1"
     
     ; Execute the movement pattern
     AddToLog("Moving to position for " currentLegendMap)
     StoryMovement()
     
     ; Start stage
-    while !(ok := FindText(&X, &Y, 325, 520, 489, 587, 0, 0, ModeCancel)) {
+    while !(ok := FindText(&X, &Y, 12, 241, 148, 275, 0.05, 0.20, CreateRoom)) {
+        if (debugMessages) {
+            AddToLog("Debug: Looking for create room text...")
+        }
+        FixClick(80, 325) ; Click Leave
         Reconnect() ; Added Disconnect Check
         StoryMovement()
     }
+
+    ; Closes Player leaderboard
+    FixClick(640, 70)
+    Sleep(500)
+
+    FixClick(25, 225) ; Create Room
+    Sleep(1000)
+
+    while !(ok := FindText(&X, &Y, 325, 163, 409, 193, 0.05, 0.20, StoryChapter)) {
+        if (debugMessages) {
+            AddToLog("Debug: Looking for story chapters Text...")
+        }
+        FixClick(615, 155) ; Click X on Join
+        Sleep(1000)
+        FixClick(25, 225) ; Create Room
+        Sleep(1000)
+        Reconnect() ; Added Disconnect Check
+    }
+
     AddToLog("Starting " currentLegendMap " - " currentLegendAct)
     StartLegend(currentLegendMap, currentLegendAct)
 
     ; Handle play mode selection
-    if (MatchMaking.Value) {
-        FindMatch()
-    } else {
-        PlayHere()
-    }
-
+    PlayHere()
     RestartStage()
 }
 
@@ -159,13 +220,8 @@ RaidMode() {
     }
     AddToLog("Starting " currentRaidMap " - " currentRaidAct)
     StartRaid(currentRaidMap, currentRaidAct)
-    ; Handle play mode selection
-    if (MatchMaking.Value) {
-        FindMatch()
-    } else {
-        PlayHere()
-    }
 
+    PlayHere()
     RestartStage()
 }
 
@@ -208,15 +264,9 @@ CheckForReturnToLobby() {
     return false
 }
 
-CheckForNextText() {
-    if (ok := FindText(&X, &Y, 260, 400, 390, 450, 0, 0, NextText)) {
-        return true
-    }
-    return false
-}
-
 MonitorEndScreen() {
-    global mode, StoryDropdown, StoryActDropdown, challengeStartTime, inChallengeMode, challengeStageCount
+    global StoryDropdown, StoryActDropdown
+    global challengeStartTime, inChallengeMode, challengeStageCount, challengeMapIndex, challengeMapList
 
     Loop {
         Sleep(3000)  
@@ -224,21 +274,32 @@ MonitorEndScreen() {
         CloseChat()
 
         ; Now handle each mode
-        if (ok := FindText(&X, &Y, 399, 412, 513, 444, 0, 0, LobbyText)) {
-            AddToLog("Found Lobby Text - Current Mode: " (inChallengeMode ? "Ranger Stages" : mode))
+        if (ok := FindText(&X, &Y, 135, 399, 539, 456, 0, 0, LobbyText)) {
+            AddToLog("Found Lobby Text - Current Mode: " (inChallengeMode ? "Ranger Stages" : ModeDropdown.Text))
             Sleep(2000)
 
             ; Logic to track challenge progress
             if (inChallengeMode) {
-                ; This should be triggered after finishing a challenge stage
                 challengeStageCount++
-                AddToLog("Completed " challengeStageCount "/3 Ranger Stages.")
+                AddToLog("Completed " challengeStageCount " out of 3 ranger stages for " challengeMapList[challengeMapIndex])
                 if (challengeStageCount >= 3) {
-                    AddToLog("Completed all 3 Ranger Stages. Returning to " mode)
-                    inChallengeMode := false
-                    challengeStartTime := A_TickCount  ; Reset timer for next ranger stage trigger
-                    ClickReturnToLobby()
-                    return CheckLobby()
+                    AddToLog("Completed all 3 ranger stages for " challengeMapList[challengeMapIndex])
+
+                    challengeStageCount := 0
+                    challengeMapIndex++
+
+                    if (challengeMapIndex > challengeMapList.Length) {
+                        AddToLog("All maps completed, returning to " ModeDropdown.Text)
+                        inChallengeMode := false
+                        challengeStartTime := A_TickCount  ; Reset timer for next ranger stage trigger
+                        challengeMapIndex := 1  ; Reset map index for next session
+                        ClickReturnToLobby()
+                        return CheckLobby()
+                    } else {
+                        AddToLog("Returning to lobby to start next map: " challengeMapList[challengeMapIndex])
+                        ClickReturnToLobby()
+                        return CheckLobby()
+                    }
                 } else {
                     ; Proceed to the next challenge stage
                     ClickNextLevel()
@@ -250,38 +311,31 @@ MonitorEndScreen() {
             if (!inChallengeMode && ChallengeBox.Value) {
                 timeElapsed := A_TickCount - challengeStartTime
                 if (timeElapsed >= 1800000) {
-                    AddToLog("30 minutes passed - switching to Ranger Stages")
+                    AddToLog("30 minutes has passed - switching to Ranger Stages")
                     inChallengeMode := true
                     challengeStartTime := A_TickCount
                     challengeStageCount := 0  ; Reset stage count for new ranger stage session
+                    ClickReturnToLobby()
                     return CheckLobby()
                 }
             }
 
             if (mode = "Story") {
                 AddToLog("Handling Story mode end")
-                if (StoryActDropdown.Text != "Infinity") {
-                    if (NextLevelBox.Value && lastResult = "win") {
-                        AddToLog("Next level")
-                        ClickNextLevel()
-                    } else {
-                        AddToLog("Replay level")
-                        ClickReplay()
-                    }
+                if (NextLevelBox.Value && lastResult = "win") {
+                    AddToLog("Next level")
+                    ClickNextLevel()
+                } else {
+                    AddToLog("Replay level")
+                    ClickReplay()
                 }
                 return RestartStage()
             }
             else {
                 AddToLog("Handling end case")
-                if (ReturnLobbyBox.Value) {
-                    AddToLog("Return to lobby enabled")
-                    ClickReturnToLobby()
-                    return CheckLobby()
-                } else {
-                    AddToLog("Replaying")
-                    ClickReplay()
-                    return RestartStage()
-                }
+                AddToLog("Replaying")
+                ClickReplay()
+                return RestartStage()
             }
         }
         Reconnect()
@@ -290,44 +344,17 @@ MonitorEndScreen() {
 
 
 MonitorStage() {
-global mode, StoryActDropdown
 
-    lastClickTime := A_TickCount
-    
-    Loop {
-        Sleep(1000)
-        
-        if (mode = "Story" && StoryActDropdown.Text = "Infinity") || (mode = "Winter Event") {
-            timeElapsed := A_TickCount - lastClickTime
-            if (timeElapsed >= 30000) {
-                AddToLog("Performing anti-AFK click")
-                FixClick(560, 560)
-                lastClickTime := A_TickCount
-            }
-        }
+    CloseChat() ; Close chat if open
 
-        if (ok := FindText(&X, &Y, 300, 190, 360, 250, 0, 0, UnitExit)) {
-            ClickUntilGone(0, 0, 300, 190, 360, 250, UnitExit, -4, -35)
-        }
-
-        CloseChat() ; Close chat if open
-
-        if CheckForXp(true) {
-            HandleStageEnd()
-        }
-
-        CheckEndAndRoute()
+    while !CheckForXp() {
+        ClickThroughDrops()
         Reconnect()
+        Sleep(1000)
     }
-}
 
-PerformAntiAFK(lastClickTime) {
-    if (A_TickCount - lastClickTime >= 60000) {
-        AddToLog("Performing anti-AFK click")
-        Loop 3 {
-            FixClick(560, 560)
-        }
-        return A_TickCount ; Return the updated lastClickTime
+    if (CheckForXp()) {
+        return HandleStageEnd()
     }
 }
 
@@ -338,10 +365,6 @@ HandleStageEnd() {
 
     stageEndTime := A_TickCount
     stageLength := FormatStageTime(stageEndTime - stageStartTime)
-
-    if (ok := FindText(&X, &Y, 300, 190, 360, 250, 0, 0, UnitExit)) {
-        ClickUntilGone(0, 0, 300, 190, 360, 250, UnitExit, -4, -35)
-    }
 
     if (ok := FindText(&X, &Y, 377, 228, 536, 276, 0.05, 0.80, DefeatText)) {
         isWin := false
@@ -358,10 +381,7 @@ HandleStageEnd() {
         AddToLog("Defeat detected - Stage Length: " stageLength)
         loss += 1
     }
-
-    SendInput("{Tab}") ; Open Player leaderboard
     SendWebhookWithTime(isWin, stageLength)
-    SendInput("{Tab}") ; Open Player leaderboard
     Sleep (500)
     return MonitorEndScreen() 
 }
@@ -369,44 +389,41 @@ HandleStageEnd() {
 StoryMovement() {
     FixClick(65, 300)
     Sleep (1000)
+    FixClick(400, 300)
+    Sleep (1000)
 }
 
-EventMovement() {
-    FixClick(592, 204) ; Close Matchmaking UI (Just in case)
-    Sleep (200)
-    FixClick(85, 295) ; Click Play
-    sleep (1000)
-    SendInput ("{a up}")
-    Sleep 100
-    SendInput ("{a down}")
-    Sleep 6000
-    SendInput ("{a up}")
-    KeyWait "a" ; Wait for "d" to be fully processed
-    Sleep 1200
-}
-
-OppositeStoryMovement() {
-    FixClick(85, 295)
-    Sleep(1000)
-    SendInput("{s down}")
-    Sleep(300)
-    SendInput("{s up}")
-    Sleep(300)
-    SendInput("{d down}")
-    SendInput("{s down}")
-    Sleep(4500)
-    SendInput("{d up}")
-    SendInput("{s up}")
-    Sleep(500)
+BossEventMovement() {
+    FixClick(775, 260) ; Click Boss Event
+    Sleep (1000)
 }
 
 ChallengeMovement() {
-    FixClick(765, 475)
-    Sleep (500)
-    FixClick(300, 415)
+    FixClick(25, 325) ; Click Areas
+    Sleep (1000)
+    FixClick(357, 287) ; Teleport to Challenges
+    Sleep (1000)
     SendInput ("{a down}")
-    sleep (7000)
+    Sleep (1500)
     SendInput ("{a up}")
+}
+
+EasterMovement() {
+    FixClick(25, 325) ; Click Areas
+    Sleep (1000)
+    FixClick(357, 225) ; Teleport to Challenges
+    Sleep (1000)
+    SendInput ("{s down}")
+    Sleep (1000)
+    SendInput ("{s up}")
+    KeyWait ("s")
+    Sleep (1000)
+    SendInput ("{d down}")
+    Sleep (1000)
+    SendInput ("{d up}")
+    KeyWait ("d")
+    Sleep (1000)
+    SendInput ("{E}")
 }
 
 RaidMovement() {
@@ -438,27 +455,8 @@ InfCastleMovement() {
     Sleep (500)
 }
 
-CursedWombMovement() {
-    FixClick(85, 295)
-    Sleep (500)
-    SendInput ("{a down}")
-    sleep (3000)
-    SendInput ("{a up}")
-    sleep (1000)
-    SendInput ("{s down}")
-    sleep (4000)
-    SendInput ("{s up}")
-}
-
 StartStory(map, act) {
     AddToLog("Selecting map: " map " and act: " act)
-    
-    ; Closes Player leaderboard
-    FixClick(640, 70)
-    Sleep(500)
-
-    FixClick(22, 227) ; Create Room
-    Sleep(500)
 
     ; Get Story map 
     StoryMap := GetMapData("StoryMap", map)
@@ -495,6 +493,9 @@ StartStory(map, act) {
     ; Click on the act
     FixClick(StoryAct.x, StoryAct.y)
     Sleep(1000)
+
+    FixClick(615, 250) ; Click nightmare
+    Sleep(1000)
     
     return true
 }
@@ -517,7 +518,6 @@ GetMapData(type, name) {
             "Act 6", {x: 400, y: 200, scrolls: 2},
             "Act 7", {x: 400, y: 250, scrolls: 2},
             "Act 8", {x: 400, y: 300, scrolls: 2},
-
             "Act 9", {x: 400, y: 235, scrolls: 3},
             "Act 10", {x: 400, y: 290, scrolls: 3},
         ),
@@ -532,15 +532,23 @@ GetMapData(type, name) {
             "Act 5", {x: 285, y: 375, scrolls: 0}
         ),
         "LegendMap", Map(
-            "Magic Hills", {x: 630, y: 240, scrolls: 0}
+            "Voocha Village", {x: 230, y: 165, scrolls: 0},
+            "Green Planet", {x: 230, y: 230, scrolls: 0},
+            "Demon Forest", {x: 230, y: 290, scrolls: 0},
+            "Leaf Village", {x: 230, y: 360, scrolls: 0},
+            "Z City", {x: 230, y: 360, scrolls: 1}
         ),
         "LegendAct", Map(
-            "Act 1", {x: 285, y: 235, scrolls: 0},
-            "Act 2", {x: 285, y: 270, scrolls: 0},
-            "Act 3", {x: 285, y: 305, scrolls: 0},
-            "Act 4", {x: 285, y: 340, scrolls: 0},
-            "Act 5", {x: 285, y: 375, scrolls: 0},
-            "Act 6", {x: 285, y: 395, scrolls: 0},
+            "Act 1", {x: 400, y: 180, scrolls: 0},
+            "Act 2", {x: 400, y: 245, scrolls: 0},
+            "Act 3", {x: 400, y: 300, scrolls: 0},
+            "Act 4", {x: 400, y: 225, scrolls: 1},
+            "Act 5", {x: 400, y: 275, scrolls: 1},
+            "Act 6", {x: 400, y: 200, scrolls: 2},
+            "Act 7", {x: 400, y: 250, scrolls: 2},
+            "Act 8", {x: 400, y: 300, scrolls: 2},
+            "Act 9", {x: 400, y: 235, scrolls: 3},
+            "Act 10", {x: 400, y: 290, scrolls: 3},
             "Random", GetRandomAct()
         )
     )
@@ -560,7 +568,10 @@ StartLegend(map, act) {
     FixClick(640, 70)
     Sleep(500)
 
-    FixClick(660, 140) ; Click Legend Stages
+    FixClick(22, 227) ; Create Room
+    Sleep(500)
+
+    FixClick(476, 466) ; Click Legend Stages
     Sleep(500)
 
     ; Get Legend Stage Map 
@@ -569,7 +580,7 @@ StartLegend(map, act) {
     ; Scroll if needed
     if (LegendMap.scrolls > 0) {
         AddToLog("Scrolling down " LegendMap.scrolls " for " map)
-        MouseMove(700, 210)
+        MouseMove(230, 175)
         loop LegendMap.scrolls {
             SendInput("{WheelDown}")
             Sleep(250)
@@ -587,7 +598,7 @@ StartLegend(map, act) {
     ; Scroll if needed for act
     if (LegendAct.scrolls > 0) {
         AddToLog("Scrolling down " LegendAct.scrolls " times for " act)
-        MouseMove(300, 240)
+        MouseMove(400, 175)
         loop LegendAct.scrolls {
             SendInput("{WheelDown}")
             Sleep(250)
@@ -604,9 +615,21 @@ StartLegend(map, act) {
 
 PlayHere() {
     FixClick(485, 410)  ;Create
-    Sleep (500)
+    Sleep (1500)
     FixClick(400, 475) ;Start
     Sleep (1200)
+}
+
+CreateChallenge() {
+    FixClick(284, 259) ; Click Create Challenge
+    Sleep(1500)
+    FixClick(400, 475) ;Start
+    Sleep (1000)
+}
+
+StartBossEvent() {
+    FixClick(450, 355) ; Click Play
+    Sleep(1500)
 }
 
 StartRaid(map, act) {
@@ -655,110 +678,6 @@ StartRaid(map, act) {
     return true
 }
 
-
-FindMatch() {
-    startTime := A_TickCount
-
-    Loop {
-        FixClick(400, 435)  ; Play Here or Find Match 
-        Sleep(300)
-        FixClick(460, 330)  ; Click Find Match
-        Sleep(300)
-        
-        ; Try captcha
-        if (!CaptchaDetect(252, 292, 300, 50, 400, 335)) {
-            AddToLog("Captcha not detected, retrying...")
-            FixClick(585, 190)  ; Click close
-            Sleep(1000)
-            continue
-        }
-        FixClick(300, 385)  ; Enter captcha
-        return true
-    }
-}
-
-GetStoryDownArrows(map) {
-    switch map {
-        case "Planet Greenie": return 2
-        case "Walled City": return 3
-        case "Snowy Town": return 4
-        case "Sand Village": return 5
-        case "Navy Bay": return 6
-        case "Fiend City": return 7
-        case "Spirit World": return 8
-        case "Ant Kingdom": return 9
-        case "Magic Town": return 10
-        case "Haunted Academy": return 11
-        case "Magic Hills": return 12
-        case "Space Center": return 13
-        case "Alien Spaceship": return 14
-        case "Fabled Kingdom": return 15
-        case "Ruined City": return 16
-        case "Puppet Island": return 17
-        case "Virtual Dungeon": return 18
-        case "Snowy Kingdom": return 19
-        case "Dungeon Throne": return 20
-        case "Mountain Temple": return 21
-        case "Rain Village": return 22
-        case "Shibuya District": return 23
-    }
-}
-
-GetStoryActDownArrows(StoryActDropdown) {
-    switch StoryActDropdown {
-        case "Infinity": return 1
-        case "Act 1": return 2
-        case "Act 2": return 3
-        case "Act 3": return 4
-        case "Act 4": return 5
-        case "Act 5": return 6
-        case "Act 6": return 7
-    }
-}
-
-
-
-
-GetLegendDownArrows(map) {
-    switch map {
-        case "Magic Hills": return 1
-        case "Space Center": return 3
-        case "Fabled Kingdom": return 4
-        case "Virtual Dungeon": return 6
-        case "Dungeon Throne": return 7
-        case "Rain Village": return 8
-    }
-}
-
-GetLegendActDownArrows(LegendActDropdown) {
-    switch LegendActDropdown {
-        case "Act 1": return 1
-        case "Act 2": return 2
-        case "Act 3": return 3
-        case "Random": 
-            return Random(1, 3) ; Generates a random number between 1 and 3
-    }
-}
-
-GetRaidDownArrows(map) {
-    switch map {
-        case "Ant Kingdom": return 1
-        case "Sacred Planet": return 2
-        case "Strange Town": return 3
-        case "Ruined City": return 4
-    }
-}
-
-GetRaidActDownArrows(RaidActDropdown) {
-    switch RaidActDropdown {
-        case "Act 1": return 1
-        case "Act 2": return 2
-        case "Act 3": return 3
-        case "Act 4": return 4
-        case "Act 5": return 5
-    }
-}
-
 Zoom() {
     MouseMove(400, 300)
     Sleep 100
@@ -781,23 +700,6 @@ Zoom() {
     
     ; Move mouse back to center
     MouseMove(400, 300)
-}
-
-TpSpawn() {
-    FixClick(26, 570) ;click settings
-    Sleep 300
-    FixClick(400, 215)
-    Sleep 300
-    loop 4 {
-        Sleep 150
-        SendInput("{WheelDown 1}") ;scroll
-    }
-    Sleep 300
-    FixClick(583, 147)
-    Sleep 300
-
-    ;
-
 }
 
 TpLobby() {
@@ -823,15 +725,8 @@ CloseChat() {
 }
 
 BasicSetup() {
-    SendInput("{Tab}") ; Closes Player leaderboard
-    Sleep 300
-    FixClick(564, 72) ; Closes Player leaderboard
-    Sleep 300
     CloseChat()
     Sleep 300
-    Zoom()
-    Sleep 300
-    TpSpawn()
 }
 
 DetectMap() {
@@ -846,21 +741,28 @@ DetectMap() {
                 return StartSelectedMode()
             }
             AddToLog("Could not detect map after 5 minutes - proceeding without movement")
-            return "no map found"
+            return "No Map Found"
         }
 
         ; Check for vote screen
         if (ok := FindText(&X, &Y, 355, 168, 450, 196, 0, 0, VoteStart) or PixelGetColor(492, 47) = 0x5ED800) {
             AddToLog("No Map Found or Movement Unnecessary")
-            return "no map found"
+            return "No Map Found"
         }
 
         mapPatterns := Map(
-            "Demon Forest", DemonForest
+            "Voocha Village", VoochaVillage,
+            "Green Planet", GreenPlanet,
+            "Demon Forest", DemonForest,
+            "Leaf Village", LeafVillage,
+            "Z City", ZCity,
+
+            "Cursed Town", CursedTown,
+            "Egg Island", EggIsland
         )
 
         for mapName, pattern in mapPatterns {
-            if (ok := FindText(&X, &Y, 10, 90, 415, 160, 0, 0, pattern)) {
+            if (ok := FindText(&X, &Y, 11, 159, 450, 285, 0, 0, pattern)) {
                 AddToLog("Detected map: " mapName)
                 return mapName
             }
@@ -872,7 +774,7 @@ DetectMap() {
 
 IsCorrectMap(mapName) {
     if (ModeDropdown.Text = "Story") {
-        if (mapName = "no map found") {
+        if (mapName = "No Map Found") {
             return false
         }
         return mapName = StoryDropdown.Text
@@ -905,7 +807,7 @@ RestartStage() {
     ; Wait for loading
     CheckLoaded()
     
-    if (currentMap != "no map found") {
+    if (currentMap != "No Map Found") {
         HandleMapMovement(currentMap)
     }
 
@@ -945,16 +847,16 @@ Reconnect() {
         }
 
         Sleep 2000
-        if WinExist(rblxID) {
-            WinActivate(rblxID)
-            forceRobloxSize()
-            moveRobloxWindow()
-            Sleep (1000)
-        }
         loop {
             FixClick(490, 400)
             AddToLog("Reconnecting to Roblox...")
             Sleep 15000
+            if WinExist(rblxID) {
+                WinActivate(rblxID)
+                forceRobloxSize()
+                moveRobloxWindow()
+                Sleep (2000)
+            }
             if (ok := FindText(&X, &Y, 50, 317, 81, 350, 0, 0, AreaText)) {
                 AddToLog("Reconnected Successfully!")
                 return StartSelectedMode()
@@ -999,11 +901,7 @@ RejoinPrivateServer() {
 }
 
 
-CheckForXp(closeLeaderboard := false) {
-    if (closeLeaderboard) {
-        FixClick(564, 72)
-        Sleep(1200)
-    }
+CheckForXp() {
     ; Check for lobby text
     if (ok := FindText(&X, &Y, 118, 181, 219, 217, 0, 0, GameEnded)) {
         FixClick(560, 560)
@@ -1031,7 +929,7 @@ CheckLobby() {
 }
 
 CheckForEndGameScreens() {
-    if (CheckForXp(true) || CheckForReturnToLobby() || CheckForNextText()) {
+    if (CheckForXp() || CheckForReturnToLobby()) {
         AddToLog("Detected end game screen when should have already returned to lobby")
         CloseChat()
         return true
@@ -1058,6 +956,9 @@ CheckForLobby() {
 }
 
 CheckLoaded() {
+    startTime := A_TickCount
+    timeout := 120 * 1000 ; Convert to milliseconds
+
     loop {
         Sleep(1000)
         
@@ -1066,6 +967,12 @@ CheckLoaded() {
             AddToLog("Successfully Loaded In")
             Sleep(1000)
             break
+        }
+
+        ; Failsafe check
+        if (A_TickCount - startTime > timeout) {
+            AddToLog("Failed to load within 2 minutes. Rejoining the game.")
+            return RejoinPrivateServer()
         }
 
         Reconnect()
@@ -1090,23 +997,35 @@ StartedGame() {
 StartSelectedMode() {
     global inChallengeMode, firstStartup, challengeStartTime
 
+    FixClick(640, 70) ; Closes Player leaderboard
+    Sleep(500)
+
     if (ChallengeBox.Value && firstStartup) {
         AddToLog("Auto Ranger Stage enabled - starting with Ranger Stage")
         inChallengeMode := true
         firstStartup := false
         challengeStartTime := A_TickCount  ; Set initial challenge time
-        ChallengeMode()
+        LegendMode()
         return
     }
 
     ; If we're in challenge mode, do challenge
     if (inChallengeMode) {
-        AddToLog("Starting Challenge Mode")
-        ChallengeMode()
+        AddToLog("Starting Ranger Stages")
+        LegendMode()
         return
     }    
     else if (ModeDropdown.Text = "Story") {
         StoryMode()
+    }
+    else if (ModeDropdown.Text = "Boss Event") {
+        BossEvent()
+    }
+    else if (ModeDropdown.Text = "Challenge") {
+        ChallengeMode()
+    }
+    else if (ModeDropdown.Text = "Easter Event") {
+        EasterEvent()
     }
 }
 
@@ -1135,14 +1054,6 @@ ValidateMode() {
 
 GetNavKeys() {
     return StrSplit(FileExist("Settings\UINavigation.txt") ? FileRead("Settings\UINavigation.txt", "UTF-8") : "\,#,}", ",")
-}
-
-CheckEndAndRoute() {
-    if (ok := FindText(&X, &Y, 140, 130, 662, 172, 0, 0, LobbyText)) {
-        AddToLog("Found end screen")
-        return MonitorEndScreen()
-    }
-    return false
 }
 
 ClickUntilGone(x, y, searchX1, searchY1, searchX2, searchY2, textToFind, offsetX:=0, offsetY:=0, textToFind2:="") {
@@ -1200,17 +1111,28 @@ SleepTime() {
 }
 
 ClickReplay() {
-    ClickUntilGone(0, 0, 399, 412, 513, 444, LobbyText, -250, -35)
+    xCoord := (ModeDropdown.Text != "Story" || StoryDropdown.Text = "Z City") ? -120 : -250
+    ClickUntilGone(0, 0, 135, 399, 539, 456, LobbyText, xCoord, -35)
 }
 
 ClickNextLevel() {
-    ClickUntilGone(0, 0, 399, 412, 513, 444, LobbyText, -120, -35)
+    ClickUntilGone(0, 0, 135, 399, 539, 456, LobbyText, -120, -35)
 }
 
 ClickReturnToLobby() {
-    ClickUntilGone(0, 0, 399, 412, 513, 444, LobbyText, 0, -35)
+    ClickUntilGone(0, 0, 135, 399, 539, 456, LobbyText, 0, -35)
 }
 
 ClickStartStory() {
     ClickUntilGone(0, 0, 320, 468, 486, 521, StartStoryButton, 0, -35)
+}
+
+ClickThroughDrops() {
+    if (debugMessages) {
+        AddToLog("Clicking through item drops...")
+    }
+    Loop 5 {
+        FixClick(400, 495)
+        Sleep(500)
+    }
 }

@@ -130,10 +130,21 @@ OnConfirmClick(*) {
         AddToLog("Selected " StoryDropdown.Text " - " StoryActDropdown.Text)
         mode := "Story"
         MatchMaking.Visible := false
-        ReturnLobbyBox.Visible := (StoryActDropdown.Text = "Infinity")
         NextLevelBox.Visible := (StoryActDropdown.Text != "Infinity")
         StoryDifficulty.Visible := (StoryActDropdown.Text != "Infinity")
         StoryDifficultyText.Visible := (StoryActDropdown.Text != "Infinity")
+    }
+    else if (ModeDropdown.Text = "Boss Event") {
+        mode := "Boss Event"
+        AddToLog("Selected Boss Event")
+    }
+    else if (ModeDropdown.Text = "Challenge") {
+        mode := "Challenge"
+        AddToLog("Selected Challenge Mode")
+    }
+    else if (ModeDropdown.Text = "Easter Event") {
+        mode := "Easter Event"
+        AddToLog("Selected Easter Event")
     }
     ; For Legend mode, check if both Legend and Act are selected
     else if (ModeDropdown.Text = "Legend") {
@@ -166,16 +177,11 @@ OnConfirmClick(*) {
     mode := "Infinity Castle"
     AddToLog("Selected Infinity Castle - " InfinityCastleDropdown.Text)
     MatchMaking.Visible := false  
-    ReturnLobbyBox.Visible := false
-    }
-    else {
+    } else {
         mode := ModeDropdown.Text
         AddToLog("Selected " ModeDropdown.Text " mode")
         MatchMaking.Visible := false
-        ReturnLobbyBox.Visible := false
     }
-
-    AddToLog("Don't forget to enable UI Navigation and Click to Move!")
 
     ; Hide all controls if validation passes
     ModeDropdown.Visible := false
@@ -351,4 +357,19 @@ StringJoin(array, delimiter := ", ") {
         result .= value
     }
     return result
+}
+
+GetMousePos() {
+    MouseGetPos(&x, &y)
+    A_Clipboard := ""  ; Clear the clipboard first
+    ClipWait(0.5)  ; Optional: wait for it to clear
+
+    A_Clipboard := x ", " y
+    ClipWait(0.5)  ; Wait for the clipboard to be ready
+
+    if (A_Clipboard = x ", " y) {
+        AddToLog("Copied: " x ", " y)
+    } else {
+        AddToLog("Failed to copy coordinates.")
+    }
 }
