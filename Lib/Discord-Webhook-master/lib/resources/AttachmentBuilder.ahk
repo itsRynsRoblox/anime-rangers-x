@@ -17,14 +17,8 @@ Class AttachmentBuilder {
 			catch 
 				Throw Error("AttachmentBuilder: File does not exist",,param)
 		this.fileName := "image.png", this.file := param, this.isBitmap := 1
-        try {
             loop files param
                 this.file := A_LoopFileFullPath, this.fileName := A_LoopFileName, this.isBitmap := 0
-        }
-        catch {
-            AddToLog("AttachmentBuilder would have crashed.")
-            return
-        }
 		this.attachmentName := "attachment://" this.fileName, this.contentType := this.isBitmap ? "image/png" : AttachmentBuilder.MimeType(this.fileName)
 	}
     static MimeType(path) {

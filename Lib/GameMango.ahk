@@ -48,17 +48,6 @@ TogglePause(*) {
     }
 }
 
-CheckForTerminationConditions() {
-    if (CheckForXp() || CheckForReturnToLobby()) {
-        AddToLog("Stage ended during upgrades, proceeding to results")
-        return MonitorStage()
-    }
-    Reconnect()
-    if (CheckForLobbyText()) {
-        return CheckLobby()
-    }
-}
-
 StoryMode() {
     global StoryDropdown, StoryActDropdown
     
@@ -141,7 +130,7 @@ EasterEvent() {
 
 
 LegendMode() {
-    global challengeMapIndex, challengeMapList
+    global challengeMapIndex, challengeMapList, challengeStageCount, inChallengeMode
 
     ; Keep skipping until a valid map is found or end of list
     while (challengeMapIndex <= challengeMapList.Length && ShouldSkipMap(challengeMapList[challengeMapIndex])) {
@@ -156,6 +145,7 @@ LegendMode() {
         inChallengeMode := false
         challengeStartTime := A_TickCount  ; Reset timer for next ranger stage trigger
         challengeMapIndex := 1  ; Reset map index for next session
+        challengeStageCount := 0  ; Reset stage count for new ranger stage session
         return CheckLobby()
     }
 
@@ -222,38 +212,6 @@ RaidMode() {
     StartRaid(currentRaidMap, currentRaidAct)
 
     PlayHere()
-    RestartStage()
-}
-
-InfinityCastleMode() {
-    global InfinityCastleDropdown
-    
-    ; Get current difficulty
-    currentDifficulty := InfinityCastleDropdown.Text
-    
-    ; Execute the movement pattern
-    AddToLog("Moving to position for Infinity Castle")
-    InfCastleMovement()
-    
-    ; Start stage
-    while !(ok := FindText(&X, &Y, 325, 520, 489, 587, 0, 0, ModeCancel)) {
-        Reconnect() ; Added Disconnect Check
-        InfCastleMovement()
-    }
-    AddToLog("Starting Infinity Castle - " currentDifficulty)
-
-    ; Select difficulty with direct clicks
-    if (currentDifficulty = "Normal") {
-        FixClick(418, 375)  ; Click Easy Mode
-    } else {
-        FixClick(485, 375)  ; Click Hard Mode
-    }
-    
-    ;Start Inf Castle
-    if (ok := FindText(&X, &Y, 325, 520, 489, 587, 0, 0, ModeCancel)) {
-        ClickUntilGone(0, 0, 325, 520, 489, 587, ModeCancel, -10, -120)
-    }
-
     RestartStage()
 }
 
@@ -424,6 +382,7 @@ EasterMovement() {
     KeyWait ("d")
     Sleep (1000)
     SendInput ("{E}")
+    Sleep (2000)
 }
 
 RaidMovement() {
@@ -438,21 +397,6 @@ RaidMovement() {
     SendInput ("{w down}")
     Sleep(5000)
     SendInput ("{w up}")
-}
-
-InfCastleMovement() {
-    FixClick(765, 475)
-    Sleep (300)
-    FixClick(370, 330)
-    Sleep (500)
-    SendInput ("{w down}")
-    Sleep (500)
-    SendInput ("{w up}")
-    Sleep (500)
-    SendInput ("{a down}")
-    sleep (4000)
-    SendInput ("{a up}")
-    Sleep (500)
 }
 
 StartStory(map, act) {
@@ -702,21 +646,6 @@ Zoom() {
     MouseMove(400, 300)
 }
 
-TpLobby() {
-    FixClick(26, 570) ;click settings
-    Sleep 300
-    FixClick(400, 215)
-    Sleep 300
-    loop 4 {
-        Sleep 250
-        SendInput("{WheelDown 1}") ;scroll
-    }
-    Sleep 300
-    FixClick(525, 415)
-    Sleep 300
-    return CheckLobby()
-}
-
 CloseChat() {
     if (ok := FindText(&X, &Y, 123, 50, 156, 79, 0, 0, OpenChat)) {
         AddToLog "Closing Chat"
@@ -771,29 +700,6 @@ DetectMap() {
         Reconnect()
     }
 }
-
-IsCorrectMap(mapName) {
-    if (ModeDropdown.Text = "Story") {
-        if (mapName = "No Map Found") {
-            return false
-        }
-        return mapName = StoryDropdown.Text
-    } else if (ModeDropdown.Text = "Legend") {
-        return mapName = LegendDropdown.Text
-    } else if (ModeDropdown.Text = "Raid") {
-        return RaidDropdown.Text
-    } else {
-        return true
-    }
-}
-
-HandleMapMovement(MapName) {
-    AddToLog("Executing Movement for: " MapName)
-    
-    switch MapName {
-  
-    }
-}
     
 RestartStage() {
     global currentMap
@@ -806,13 +712,12 @@ RestartStage() {
 
     ; Wait for loading
     CheckLoaded()
-    
-    if (currentMap != "No Map Found") {
-        HandleMapMovement(currentMap)
-    }
 
     ; Wait for game to actually start
     StartedGame()
+
+    ;Summon Units
+    SummonUnits()
     
     ; Monitor stage progress
     MonitorStage()
@@ -916,7 +821,8 @@ CheckLobby() {
         if (ok := FindText(&X, &Y, 47, 342, 83, 374, 0, 0, AreaText)) {
             break
         }
-        if (CheckForEndGameScreens()) {
+        if (CheckForXp()) {
+            AddToLog("Detected end game screen when should have already returned to lobby")
             return MonitorStage()
         }
         Reconnect()
@@ -926,21 +832,6 @@ CheckLobby() {
     Sleep(SleepTime())
     currentMap := ""
     return StartSelectedMode()
-}
-
-CheckForEndGameScreens() {
-    if (CheckForXp() || CheckForReturnToLobby()) {
-        AddToLog("Detected end game screen when should have already returned to lobby")
-        CloseChat()
-        return true
-    }
-}
-
-CheckForLobbyText() {
-    if (ok := FindText(&X, &Y, 47, 342, 83, 374, 0, 0, AreaText)) {
-        return true
-    }
-    return false
 }
 
 CheckForLobby() {
@@ -1134,5 +1025,178 @@ ClickThroughDrops() {
     Loop 5 {
         FixClick(400, 495)
         Sleep(500)
+    }
+}
+
+GetPlacementOrder() {
+    placements := []
+
+    Loop 6 {
+        slotNum := A_Index
+        order := "placement" slotNum
+        order := %order%
+        order := Integer(order.Text)
+        placements.Push({slot: slotNum, order: order})
+    }
+
+    for i, _ in placements {
+        j := i
+        while (j > 1 && placements[j].order < placements[j - 1].order) {
+            temp := placements[j]
+            placements[j] := placements[j - 1]
+            placements[j - 1] := temp
+            j--
+        }
+    }
+
+    orderedSlots := []
+    for item in placements
+        orderedSlots.Push(item.slot)
+
+    return orderedSlots
+}
+
+SummonUnits() {
+    placementPoints := UnitUpgradePoints()
+    
+    ; Collect enabled slots
+    enabledSlots := []
+    for slotNum in GetPlacementOrder() {
+        enabled := "enabled" slotNum
+        enabled := %enabled%
+        enabled := enabled.Value
+        if (enabled) {
+            enabledSlots.Push(slotNum)
+        }
+    }
+
+    if (enabledSlots.Length = 0) {
+        if (debugMessages) {
+            AddToLog("No units enabled - monitoring stage")
+        }
+        return
+    }
+
+    if (AutoPlay.Value && !ShouldUpgradeUnits.Value) {
+        AddToLog("Autoplay is enabled and auto upgrade is disabled - monitoring stage")
+        return
+    }
+
+    if (ShouldUpgradeUnits.Value) {
+        if (ok := !FindText(&X, &Y, 609, 463, 723, 495, 0.05, 0.20, UnitManagerBack)) {
+            AddToLog("Unit Manager isn't open - opening it")
+            SendInput("{T}")
+            Sleep(1000)
+        }
+    }
+
+    ; Loop through placement points and assign them to enabled slots in order
+    pointIndex := 1
+    while true {
+        for slotIndex, slotNum in enabledSlots {
+            point := placementPoints[pointIndex]
+
+            if (!AutoPlay.Value) {
+                SendInput("{" slotNum "}")
+                Sleep 50
+            }
+
+            if (ShouldUpgradeUnits.Value) {
+                FixClick(point.x, point.y)
+                Sleep 50
+            }
+
+            if CheckForXp() || CheckForReturnToLobby() {
+                return MonitorStage()
+            }
+
+            Reconnect()
+            Sleep(500) ; Prevent spamming
+
+            ; Move to the next placement point, loop back if at the end
+            pointIndex++
+            if (pointIndex > placementPoints.Length) {
+                pointIndex := 1
+            }
+        }
+    }
+}
+
+UseUnitPoints() {
+    ; Define all possible points for the slots
+    allPoints := [
+        { x: 280, y: 530 },
+        { x: 330, y: 530 },
+        { x: 375, y: 530 },
+        { x: 425, y: 530 },
+        { x: 470, y: 530 },
+        { x: 520, y: 530 }
+    ]
+
+    points := []
+
+    ; Collect enabled slots
+    enabledSlots := []
+    for slotNum in GetPlacementOrder() {
+        enabled := "enabled" slotNum
+        enabled := %enabled%
+        enabled := enabled.Value
+        if (enabled) {
+            enabledSlots.Push(slotNum)
+        }
+    }
+    
+
+    for slotNum in enabledSlots {
+        points.Push(allPoints[slotNum])
+    }
+
+    return points
+}
+
+UnitUpgradePoints() {
+    ; Define all possible points for the slots
+    allPoints := [
+        { x: 715, y: 190 },
+        { x: 715, y: 275 },
+        { x: 715, y: 350 },
+
+        { x: 715, y: 190 },
+        { x: 715, y: 275 },
+        { x: 715, y: 350 }
+    ]
+
+    points := []
+
+    ; Collect enabled slots
+    enabledSlots := []
+    for slotNum in GetPlacementOrder() {
+        enabled := "enabled" slotNum
+        enabled := %enabled%
+        enabled := enabled.Value
+        if (enabled) {
+            enabledSlots.Push(slotNum)
+        }
+    }
+    
+
+    for slotNum in enabledSlots {
+        points.Push(allPoints[slotNum])
+    }
+
+    return points
+}
+
+ScrollToBottom() {
+    loop 3 {
+        SendInput("{WheelDown}")
+        Sleep(250)
+    }
+}
+
+ScrollToTop() {
+    loop 3 {
+        SendInput("{WheelUp}")
+        Sleep(250)
     }
 }

@@ -145,8 +145,8 @@ SendWebhookWithTime(isWin, stageLength) {
 
     ; Check if webhook file exists first
     if (!FileExist(WebhookURLFile)) {
-    AddToLog("No webhook configured - skipping webhook")
-    return  ; Just return if no webhook file
+        AddToLog("No webhook configured - skipping webhook")
+        return  ; Just return if no webhook file
     }
 
     ; Read webhook URL from file

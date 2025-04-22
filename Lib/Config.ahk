@@ -20,9 +20,13 @@ readInSettings() {
     ; General Unit Settings
     global LobbySleepTimer, StoryDifficulty
 
-
     ; General settings
     global ChallengeBox, MatchMaking, ReturnLobbyBox, NextLevelBox
+
+    ;Unit Settings
+    global enabled1, enabled2, enabled3, enabled4, enabled5, enabled6
+    global placement1, placement2, placement3, placement4, placement5, placement6
+    global AutoPlay, ShouldUpgradeUnits
 
     try {
         settingsFile := setupFilePath()
@@ -41,12 +45,28 @@ readInSettings() {
             parts := StrSplit(line, "=")
             switch parts[1] {
                 case "Mode": mode := parts[2]
+
+                case "Enabled1": enabled1.Value := parts[2]
+                case "Enabled2": enabled2.Value := parts[2]
+                case "Enabled3": enabled3.Value := parts[2]
+                case "Enabled4": enabled4.Value := parts[2]
+                case "Enabled5": enabled5.Value := parts[2]
+                case "Enabled6": enabled6.Value := parts[2]
+                case "Placement1": placement1.Text := parts[2]
+                case "Placement2": placement2.Text := parts[2]
+                case "Placement3": placement3.Text := parts[2]
+                case "Placement4": placement4.Text := parts[2]
+                case "Placement5": placement5.Text := parts[2]
+                case "Placement6": placement6.Text := parts[2]
+
                 case "Sleep": LobbySleepTimer.Value := parts[2] ; Set the dropdown value
                 case "Matchmake": MatchMaking.Value := parts[2] ; Set the checkbox value
                 case "Challenge": ChallengeBox.Value := parts[2] ; Set the checkbox value
                 case "Next": NextLevelBox.Value := parts[2] ; Set the checkbox value
                 case "ToLobby": ReturnLobbyBox.Value := parts[2] ; Set the checkbox value
                 case "Difficulty": StoryDifficulty.Value := parts[2] ; Set the dropdown value
+                case "Play": AutoPlay.Value := parts[2] ; Set the checkbox value
+                case "Upgrade": ShouldUpgradeUnits.Value := parts[2] ; Set the checkbox value
             }
         }
         AddToLog("Configuration settings loaded successfully")
@@ -64,6 +84,11 @@ SaveSettings(*) {
 
     ; General settings
     global ChallengeBox, MatchMaking, ReturnLobbyBox, NextLevelBox
+
+    ;Unit Settings
+    global enabled1, enabled2, enabled3, enabled4, enabled5, enabled6
+    global placement1, placement2, placement3, placement4, placement5, placement6
+    global AutoPlay, ShouldUpgradeUnits
 
     try {
         settingsFile := A_ScriptDir "\Settings\Configuration.txt"
@@ -99,6 +124,28 @@ SaveSettings(*) {
 
         content .= "`n[StoryDifficulty]"
         content .= "`nDifficulty=" StoryDifficulty.Value "`n"
+
+        content .= "`n[Autoplay]"
+        content .= "`nPlay=" AutoPlay.Value "`n"
+
+        content .= "`n[AutoUpgrade]"
+        content .= "`nUpgrade=" ShouldUpgradeUnits.Value "`n"
+
+        ; Save settings for each unit
+        content .= "`n[UnitSettings]"
+        content .= "`n`nEnabled1=" enabled1.Value
+        content .= "`nEnabled2=" enabled2.Value
+        content .= "`nEnabled3=" enabled3.Value
+        content .= "`nEnabled4=" enabled4.Value
+        content .= "`nEnabled5=" enabled5.Value
+        content .= "`nEnabled6=" enabled6.Value
+
+        content .= "`n`nPlacement1=" placement1.Text
+        content .= "`nPlacement2=" placement2.Text
+        content .= "`nPlacement3=" placement3.Text
+        content .= "`nPlacement4=" placement4.Text
+        content .= "`nPlacement5=" placement5.Text
+        content .= "`nPlacement6=" placement6.Text
 
         FileAppend(content, settingsFile)
         AddToLog("Configuration settings saved successfully")

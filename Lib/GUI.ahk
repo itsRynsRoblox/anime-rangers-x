@@ -6,7 +6,7 @@
 ;Update Checker
 global repoOwner := "itsRynsRoblox"
 global repoName := "anime-rangers-x "
-global currentVersion := "1.0.4"
+global currentVersion := "1.1"
 
 ; Basic Application Info
 global aaTitle := "Ryn's Anime Rangers X "
@@ -87,10 +87,10 @@ uiBorders.Push(arMainUI.Add("Text", "x1363 y0 w1 h630 +Background" uiTheme[3])) 
 uiBorders.Push(arMainUI.Add("Text", "x1363 y0 w1 h697 +Background" uiTheme[3])) ;Second Right line
 uiBackgrounds.Push(arMainUI.Add("Text", "x3 y3 w1360 h27 +Background" uiTheme[2])) ;Title Top
 uiBorders.Push(arMainUI.Add("Text", "x0 y30 w1363 h1 +Background" uiTheme[3])) ;Title bottom
-uiBorders.Push(arMainUI.Add("Text", "x803 y100 w560 h1 +Background" uiTheme[3])) ;Mode bottom
+
 uiBorders.Push(arMainUI.Add("Text", "x803 y550 w560 h1 +Background" uiTheme[3])) ;Placement bottom
-uiBorders.Push(arMainUI.Add("Text", "x803 y150 w560 h1 +Background" uiTheme[3])) ;Process bottom
-uiBorders.Push(arMainUI.Add("Text", "x803 y632 w560 h1 +Background" uiTheme[3])) ;Process bottom
+uiBorders.Push(arMainUI.Add("Text", "x803 y385 w560 h1 +Background" uiTheme[3])) ;Process bottom
+uiBorders.Push(arMainUI.Add("Text", "x803 y420 w560 h1 +Background" uiTheme[3])) ;Process bottom
 uiBorders.Push(arMainUI.Add("Text", "x802 y30 w1 h667 +Background" uiTheme[3])) ;Roblox Right
 uiBorders.Push(arMainUI.Add("Text", "x0 y632 w1364 h1 +Background" uiTheme[3], "")) ;Roblox second bottom
 
@@ -102,26 +102,14 @@ minimizeButton.OnEvent("Click", (*) => minimizeUI()) ;Minimize gui
 arMainUI.SetFont("Bold s16 c" uiTheme[1], "Verdana") ;Font
 global windowTitle := arMainUI.Add("Text", "x10 y3 w1200 h29 +BackgroundTrans", aaTitle "" . "" version) ;Title
 
-arMainUI.Add("Text", "x805 y110 w558 h25 +Center +BackgroundTrans", "Activity Log") ;Process header
+arMainUI.Add("Text", "x805 y390 w558 h25 +Center +BackgroundTrans", "Activity Log") ;Process header
 arMainUI.SetFont("norm s11 c" uiTheme[1]) ;Font
-global process1 := arMainUI.Add("Text", "x810 y152 w600 h18 +BackgroundTrans c" uiTheme[7], "➤ Original Creator: Ryn (@TheRealTension)") ;Processes
+global process1 := arMainUI.Add("Text", "x810 y420 w600 h18 +BackgroundTrans c" uiTheme[7], "➤ Original Creator: Ryn (@TheRealTension)") ;Processes
 global process2 := arMainUI.Add("Text", "xp yp+22 w600 h18 +BackgroundTrans", "") ;Processes 
 global process3 := arMainUI.Add("Text", "xp yp+22 w600 h18 +BackgroundTrans", "")
 global process4 := arMainUI.Add("Text", "xp yp+22 w600 h18 +BackgroundTrans", "")
 global process5 := arMainUI.Add("Text", "xp yp+22 w600 h18 +BackgroundTrans", "")
-global process6 := arMainUI.Add("Text", "xp yp+22 w600 h18 +BackgroundTrans", "")
-global process7 := arMainUI.Add("Text", "xp yp+22 w600 h18 +BackgroundTrans", "")
-global process8 := arMainUI.Add("Text", "xp yp+22 w600 h18 +BackgroundTrans", "")
-global process9 := arMainUI.Add("Text", "xp yp+22 w600 h18 +BackgroundTrans", "")
-global process10 := arMainUI.Add("Text", "xp yp+22 w600 h18 +BackgroundTrans", "")
-global process11 := arMainUI.Add("Text", "xp yp+22 w600 h18 +BackgroundTrans", "")
-global process12 := arMainUI.Add("Text", "xp yp+22 w600 h18 +BackgroundTrans", "")
-global process13 := arMainUI.Add("Text", "xp yp+22 w600 h18 +BackgroundTrans", "") 
-global process14 := arMainUI.Add("Text", "xp yp+22 w600 h18 +BackgroundTrans", "") 
-global process15 := arMainUI.Add("Text", "xp yp+22 w600 h18 +BackgroundTrans", "") 
-global process16 := arMainUI.Add("Text", "xp yp+22 w600 h18 +BackgroundTrans", "") 
-global process17 := arMainUI.Add("Text", "xp yp+22 w600 h18 +BackgroundTrans", "") 
-global process18 := arMainUI.Add("Text", "xp yp+22 w600 h18 +BackgroundTrans", "")   
+global process6 := arMainUI.Add("Text", "xp yp+22 w600 h18 +BackgroundTrans", "") 
 WinSetTransColor(uiTheme[5], arMainUI) ;Roblox window box
 
 ;--------------SETTINGS;--------------SETTINGS;--------------SETTINGS;--------------SETTINGS;--------------SETTINGS;--------------SETTINGS;--------------SETTINGS
@@ -339,6 +327,8 @@ global ReturnLobbyBox := arMainUI.Add("Checkbox", "x900 y560 cffffff Checked", "
 global MatchMaking := arMainUI.Add("Checkbox", "x900 y580 cffffff Hidden Checked", "Matchmaking") 
 ;Auto Settings
 global ChallengeBox := arMainUI.Add("CheckBox", "x900 y610 cffffff", "Auto Ranger Stage")
+global AutoPlay := arMainUI.Add("CheckBox", "x1050 y610 cffffff", "Autoplay")
+global ShouldUpgradeUnits := arMainUI.Add("CheckBox", "x1140 y610 cffffff", "Auto Upgrade")
 ; General Settings
 LobbySleepText := arMainUI.Add("Text", "x1220 y565 w130 h20 +Center", "Lobby Sleep Timer")
 global LobbySleepTimer := arMainUI.Add("DropDownList", "x1235 y585 w100 h180 Choose1", ["No Delay", "5 Seconds", "10 Seconds", "15 Seconds", "20 Seconds", "25 Seconds", "30 Seconds", "35 Seconds", "40 Seconds", "45 Seconds", "50 Seconds", "55 Seconds", "60 Seconds"])
@@ -393,30 +383,62 @@ LegendDropDown.OnEvent("Change", OnLegendChange)
 RaidDropdown.OnEvent("Change", OnRaidChange)
 ConfirmButton.OnEvent("Click", OnConfirmClick)
 ;------MAIN UI------MAIN UI------MAIN UI------MAIN UI------MAIN UI------MAIN UI------MAIN UI------MAIN UI------MAIN UI------MAIN UI------MAIN UI------MAIN UI
+;------UNIT CONFIGURATION ;------UNIT CONFIGURATION ;------UNIT CONFIGURATION ;------UNIT CONFIGURATION ;------UNIT CONFIGURATION ;------UNIT CONFIGURATION ;------UNIT CONFIGURATION
+AddUnitCard(arMainUI, index, x, y) {
+    unit := {}
+ 
+    unit.Background := arMainUI.Add("Text", Format("x{} y{} w550 h45 +Background{}", x, y, uiTheme[4]))
+    unit.BorderTop := arMainUI.Add("Text", Format("x{} y{} w550 h2 +Background{}", x, y, uiTheme[3]))
+    unit.BorderBottom := arMainUI.Add("Text", Format("x{} y{} w552 h2 +Background{}", x, y+45, uiTheme[3]))
+    unit.BorderLeft := arMainUI.Add("Text", Format("x{} y{} w2 h45 +Background{}", x, y, uiTheme[3]))
+    unit.BorderRight := arMainUI.Add("Text", Format("x{} y{} w2 h45 +Background{}", x+85, y, uiTheme[3]))
+    unit.BorderRight := arMainUI.Add("Text", Format("x{} y{} w2 h45 +Background{}", x+300, y, uiTheme[3]))
+    unit.BorderRight := arMainUI.Add("Text", Format("x{} y{} w2 h45 +Background{}", x+550, y, uiTheme[3]))
+    arMainUI.SetFont("s11 Bold c" uiTheme[1])
+    unit.Title := arMainUI.Add("Text", Format("x{} y{} w60 h25 +BackgroundTrans", x+30, y+18), "Slot " index)
+
+    arMainUI.SetFont("s9 c" uiTheme[1])
+    unit.PlacementText := arMainUI.Add("Text", Format("x{} y{} w200 h20 +BackgroundTrans", x+100, y+2), "Summon && Upgrade Priority")
+    
+    UnitData.Push(unit)
+    return unit
+}
+
+;Create Unit slot
+y_start := 85
+y_spacing := 50
+Loop 6 {
+    AddUnitCard(arMainUI, A_Index, 808, y_start + ((A_Index-1)*y_spacing))
+}
+
+enabled1 := arMainUI.Add("CheckBox", "x818 y105 w15 h15", "")
+enabled2 := arMainUI.Add("CheckBox", "x818 y155 w15 h15", "")
+enabled3 := arMainUI.Add("CheckBox", "x818 y205 w15 h15", "")
+enabled4 := arMainUI.Add("CheckBox", "x818 y255 w15 h15", "")
+enabled5 := arMainUI.Add("CheckBox", "x818 y305 w15 h15", "")
+enabled6 := arMainUI.Add("CheckBox", "x818 y355 w15 h15", "")
+
+arMainUI.SetFont("s8 c" uiTheme[6])
+
+; Placement dropdowns
+Placement1 := arMainUI.Add("DropDownList", "x970 y105 w60 h180 Choose1 +Center", ["1","2","3","4","5","6"])
+Placement2 := arMainUI.Add("DropDownList", "x970 y155 w60 h180 Choose1 +Center", ["1","2","3","4","5","6"])
+Placement3 := arMainUI.Add("DropDownList", "x970 y205 w60 h180 Choose1 +Center", ["1","2","3","4","5","6"])
+Placement4 := arMainUI.Add("DropDownList", "x970 y255 w60 h180 Choose1 +Center", ["1","2","3","4","5","6"])
+Placement5 := arMainUI.Add("DropDownList", "x970 y305 w60 h180 Choose1 +Center", ["1","2","3","4","5","6"])
+Placement6 := arMainUI.Add("DropDownList", "x970 y355 w60 h180 Choose1 +Center", ["1","2","3","4","5","6"])
+
 readInSettings()
 arMainUI.Show("w1366 h633")
 WinMove(0, 0,,, "ahk_id " arMainUIHwnd)
 forceRobloxSize()  ; Initial force size and position
-;------UNIT CONFIGURATION ;------UNIT CONFIGURATION ;------UNIT CONFIGURATION ;------UNIT CONFIGURATION ;------UNIT CONFIGURATION ;------UNIT CONFIGURATION ;------UNIT CONFIGURATION
 ;------FUNCTIONS;------FUNCTIONS;------FUNCTIONS;------FUNCTIONS;------FUNCTIONS;------FUNCTIONS;------FUNCTIONS;------FUNCTIONS;------FUNCTIONS;------FUNCTIONS;------FUNCTIONS
 
 ;Process text
 AddToLog(current) { 
-    global process1, process2, process3, process4, process5, process6, process7,process8, process9, process10, process11, process12, process13, process14, process14, process15, process16, process17, process18, currentOutputFile, lastlog
+    global process1, process2, process3, process4, process5, process6, currentOutputFile, lastlog
 
     ; Remove arrow from all lines first
-    process18.Value := StrReplace(process17.Value, "➤ ", "")
-    process17.Value := StrReplace(process16.Value, "➤ ", "")
-    process16.Value := StrReplace(process15.Value, "➤ ", "")
-    process15.Value := StrReplace(process14.Value, "➤ ", "")
-    process14.Value := StrReplace(process13.Value, "➤ ", "")
-    process13.Value := StrReplace(process12.Value, "➤ ", "")
-    process12.Value := StrReplace(process11.Value, "➤ ", "")
-    process11.Value := StrReplace(process10.Value, "➤ ", "")
-    process10.Value := StrReplace(process9.Value, "➤ ", "")
-    process9.Value := StrReplace(process8.Value, "➤ ", "")
-    process8.Value := StrReplace(process7.Value, "➤ ", "")
-    process7.Value := StrReplace(process6.Value, "➤ ", "")
     process6.Value := StrReplace(process5.Value, "➤ ", "")
     process5.Value := StrReplace(process4.Value, "➤ ", "")
     process4.Value := StrReplace(process3.Value, "➤ ", "")
@@ -569,7 +591,7 @@ OpenFindTextDebug(*) {
     GuideGUI.MarginX := 20
     GuideGUI.MarginY := 20
 
-    FindTextDropdown := GuideGUI.Add("DropDownList", "x60 y50 w100 h180", ["Create Room", "Boss Event"])
+    FindTextDropdown := GuideGUI.Add("DropDownList", "x60 y50 w100 h180", ["Create Room", "Boss Event", "Unit Manager"])
     FindTextDebugButton.OnEvent("Click", (*) => TestFindText(FindTextDropdown.Text))
 
     GuideGUI.Show()
@@ -588,6 +610,13 @@ TestFindText(text := "") {
     }
     else if (text = "Boss Event") {
         if (FindText(&X, &Y, 400, 375, 508, 404, 0.05, 0.20, BossPlayText)) {
+            AddToLog("Found the FindText() for " text)
+            FixClick(X, Y - 35, "Right")
+            return true
+        }
+    }
+    else if (text = "Unit Manager") {
+        if (FindText(&X, &Y, 609, 463, 723, 495, 0.05, 0.20, UnitManagerBack)) {
             AddToLog("Found the FindText() for " text)
             FixClick(X, Y - 35, "Right")
             return true

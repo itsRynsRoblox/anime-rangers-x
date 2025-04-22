@@ -7,7 +7,7 @@ Sleep=2
 Matchmake=1
 
 [AutoChallenge]
-Challenge=0
+Challenge=1
 
 [ReturnToLobby]
 ToLobby=1
@@ -17,3 +17,25 @@ Next=0
 
 [StoryDifficulty]
 Difficulty=3
+
+[Autoplay]
+Play=1
+
+[AutoUpgrade]
+Upgrade=0
+
+[UnitSettings]
+
+Enabled1=1
+Enabled2=1
+Enabled3=1
+Enabled4=1
+Enabled5=1
+Enabled6=1
+
+Placement1=1
+Placement2=2
+Placement3=3
+Placement4=4
+Placement5=5
+Placement6=6
