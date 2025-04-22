@@ -8,13 +8,13 @@ global completedChallengeMaps := Map()
 global currentMap := ""
 
 LoadKeybindSettings()  ; Load saved keybinds
-Hotkey(F1Key, (*) => moveRobloxWindow())
+Hotkey(F1Key, (*) => moveRobloxWindow())    
 Hotkey(F2Key, (*) => StartMacro())
 Hotkey(F3Key, (*) => Reload())
 Hotkey(F4Key, (*) => TogglePause())
 
 F5:: {
-
+    SummonUnits()
 }
 
 F6:: {
@@ -1065,7 +1065,6 @@ GetPlacementOrder() {
 SummonUnits() {
     upgradePoints := UnitUpgradePoints()
     pointIndex := 1
-    point := (pointIndex <= upgradePoints.Length) ? upgradePoints[pointIndex] : ""
     upgradeUnits := ShouldUpgradeUnits.Value
     
     ; Collect enabled slots
@@ -1091,7 +1090,7 @@ SummonUnits() {
         return
     }
 
-    if (upgradeUnits && point) {
+    if (upgradeUnits && upgradePoints.Length > 0) {
         if (ok := !FindText(&X, &Y, 609, 463, 723, 495, 0.05, 0.20, UnitManagerBack)) {
             AddToLog("Unit Manager isn't open - opening it")
             SendInput("{T}")
@@ -1100,6 +1099,7 @@ SummonUnits() {
     }
     while true {
         for slotIndex, slotNum in enabledSlots {
+            point := (pointIndex <= upgradePoints.Length) ? upgradePoints[pointIndex] : ""
             if (!AutoPlay.Value) {
                 SendInput("{" slotNum "}")
                 Sleep 50
@@ -1178,9 +1178,8 @@ UnitUpgradePoints() {
     ]
 
     points := []
-
-    ; Collect enabled slots
     enabledSlots := []
+
     for slotNum in GetPlacementOrder() {
         enabled := "enabled" slotNum
         enabled := %enabled%
@@ -1192,8 +1191,6 @@ UnitUpgradePoints() {
             enabledSlots.Push(slotNum)
         }
     }
-
-    
 
     for slotNum in enabledSlots {
         points.Push(allPoints[slotNum])

@@ -39,3 +39,11 @@ Placement3=3
 Placement4=4
 Placement5=5
 Placement6=6
+
+[UpgradeEnabled]
+UpgradeEnabled1=1
+UpgradeEnabled2=1
+UpgradeEnabled3=1
+UpgradeEnabled4=1
+UpgradeEnabled5=1
+UpgradeEnabled6=1

@@ -26,6 +26,7 @@ readInSettings() {
     ;Unit Settings
     global enabled1, enabled2, enabled3, enabled4, enabled5, enabled6
     global placement1, placement2, placement3, placement4, placement5, placement6
+    global upgradeEnabled1, upgradeEnabled2, upgradeEnabled3, upgradeEnabled4, upgradeEnabled5, upgradeEnabled6
     global AutoPlay, ShouldUpgradeUnits
 
     try {
@@ -58,6 +59,12 @@ readInSettings() {
                 case "Placement4": placement4.Text := parts[2]
                 case "Placement5": placement5.Text := parts[2]
                 case "Placement6": placement6.Text := parts[2]
+                case "UpgradeEnabled1": upgradeEnabled1.Value := parts[2]
+                case "UpgradeEnabled2": upgradeEnabled2.Value := parts[2]
+                case "UpgradeEnabled3": upgradeEnabled3.Value := parts[2]
+                case "UpgradeEnabled4": upgradeEnabled4.Value := parts[2]
+                case "UpgradeEnabled5": upgradeEnabled5.Value := parts[2]
+                case "UpgradeEnabled6": upgradeEnabled6.Value := parts[2]
 
                 case "Sleep": LobbySleepTimer.Value := parts[2] ; Set the dropdown value
                 case "Matchmake": MatchMaking.Value := parts[2] ; Set the checkbox value
@@ -88,6 +95,7 @@ SaveSettings(*) {
     ;Unit Settings
     global enabled1, enabled2, enabled3, enabled4, enabled5, enabled6
     global placement1, placement2, placement3, placement4, placement5, placement6
+    global upgradeEnabled1, upgradeEnabled2, upgradeEnabled3, upgradeEnabled4, upgradeEnabled5, upgradeEnabled6
     global AutoPlay, ShouldUpgradeUnits
 
     try {
@@ -146,6 +154,12 @@ SaveSettings(*) {
         content .= "`nPlacement4=" placement4.Text
         content .= "`nPlacement5=" placement5.Text
         content .= "`nPlacement6=" placement6.Text
+
+        ; Create UpgradeEnabled section
+        content .= "`n`n[UpgradeEnabled]"
+        Loop 6 {
+            content .= "`nUpgradeEnabled" A_Index "=" UpgradeEnabled%A_Index%.Value
+        }
 
         FileAppend(content, settingsFile)
         AddToLog("Configuration settings saved successfully")
