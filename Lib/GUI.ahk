@@ -6,7 +6,7 @@
 ;Update Checker
 global repoOwner := "itsRynsRoblox"
 global repoName := "anime-rangers-x "
-global currentVersion := "1.1"
+global currentVersion := "1.1.2"
 
 ; Basic Application Info
 global aaTitle := "Ryn's Anime Rangers X "
@@ -399,6 +399,8 @@ AddUnitCard(arMainUI, index, x, y) {
 
     arMainUI.SetFont("s9 c" uiTheme[1])
     unit.PlacementText := arMainUI.Add("Text", Format("x{} y{} w200 h20 +BackgroundTrans", x+100, y+2), "Summon && Upgrade Priority")
+
+    unit.UpgradeText := arMainUI.Add("Text", Format("x{} y{} w140 h20 +BackgroundTrans", x+330, y+20), "Upgrade Enabled")
     
     UnitData.Push(unit)
     return unit
@@ -417,6 +419,13 @@ enabled3 := arMainUI.Add("CheckBox", "x818 y205 w15 h15", "")
 enabled4 := arMainUI.Add("CheckBox", "x818 y255 w15 h15", "")
 enabled5 := arMainUI.Add("CheckBox", "x818 y305 w15 h15", "")
 enabled6 := arMainUI.Add("CheckBox", "x818 y355 w15 h15", "")
+
+upgradeEnabled1 := arMainUI.Add("CheckBox", "x1120 y105 w15 h15", "")
+upgradeEnabled2 := arMainUI.Add("CheckBox", "x1120 y155 w15 h15", "")
+upgradeEnabled3 := arMainUI.Add("CheckBox", "x1120 y205 w15 h15", "")
+upgradeEnabled4 := arMainUI.Add("CheckBox", "x1120 y255 w15 h15", "")
+upgradeEnabled5 := arMainUI.Add("CheckBox", "x1120 y305 w15 h15", "")
+upgradeEnabled6 := arMainUI.Add("CheckBox", "x1120 y355 w15 h15", "")
 
 arMainUI.SetFont("s8 c" uiTheme[6])
 

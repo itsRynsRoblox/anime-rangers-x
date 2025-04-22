@@ -22,7 +22,7 @@ Difficulty=3
 Play=1
 
 [AutoUpgrade]
-Upgrade=0
+Upgrade=1
 
 [UnitSettings]
 

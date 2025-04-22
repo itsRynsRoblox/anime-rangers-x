@@ -808,7 +808,7 @@ RejoinPrivateServer() {
 
 CheckForXp() {
     ; Check for lobby text
-    if (ok := FindText(&X, &Y, 118, 181, 219, 217, 0, 0, GameEnded)) {
+    if (ok := FindText(&X, &Y, 118, 181, 219, 217, 0.05, 0.05, GameEnded)) {
         FixClick(560, 560)
         return true
     }
@@ -852,6 +852,12 @@ CheckLoaded() {
 
     loop {
         Sleep(1000)
+
+        if (ok := FindText(&X, &Y, 609, 463, 723, 495, 0.05, 0.20, UnitManagerBack)) {
+            AddToLog("Unit Manager is open - closing it")
+            SendInput("{T}")
+            Sleep(1000)
+        }
         
         ; Check for vote screen
         if (ok := FindText(&X, &Y, 355, 168, 450, 196, 0, 0, VoteStart) or PixelGetColor(492, 47) = 0x5ED800) {
@@ -1057,7 +1063,10 @@ GetPlacementOrder() {
 }
 
 SummonUnits() {
-    placementPoints := UnitUpgradePoints()
+    upgradePoints := UnitUpgradePoints()
+    pointIndex := 1
+    point := (pointIndex <= upgradePoints.Length) ? upgradePoints[pointIndex] : ""
+    upgradeUnits := ShouldUpgradeUnits.Value
     
     ; Collect enabled slots
     enabledSlots := []
@@ -1077,45 +1086,43 @@ SummonUnits() {
         return
     }
 
-    if (AutoPlay.Value && !ShouldUpgradeUnits.Value) {
+    if (AutoPlay.Value && !upgradeUnits) {
         AddToLog("Autoplay is enabled and auto upgrade is disabled - monitoring stage")
         return
     }
 
-    if (ShouldUpgradeUnits.Value) {
+    if (upgradeUnits && point) {
         if (ok := !FindText(&X, &Y, 609, 463, 723, 495, 0.05, 0.20, UnitManagerBack)) {
             AddToLog("Unit Manager isn't open - opening it")
             SendInput("{T}")
             Sleep(1000)
         }
     }
-
-    ; Loop through placement points and assign them to enabled slots in order
-    pointIndex := 1
     while true {
         for slotIndex, slotNum in enabledSlots {
-            point := placementPoints[pointIndex]
-
             if (!AutoPlay.Value) {
                 SendInput("{" slotNum "}")
                 Sleep 50
             }
-
-            if (ShouldUpgradeUnits.Value) {
+        
+            if (upgradeUnits && point) {
                 FixClick(point.x, point.y)
                 Sleep 50
             }
+             else if (AutoPlay.Value) {
+                return MonitorStage() ; If not upgrading, just monitor the stage
+            }
 
-            if CheckForXp() || CheckForReturnToLobby() {
-                return MonitorStage()
+            if CheckForXp() {
+                return HandleStageEnd()
             }
 
             Reconnect()
             Sleep(500) ; Prevent spamming
 
-            ; Move to the next placement point, loop back if at the end
+            ; Move to the next upgrade point, loop back if at the end
             pointIndex++
-            if (pointIndex > placementPoints.Length) {
+            if (pointIndex > upgradePoints.Length) {
                 pointIndex := 1
             }
         }
@@ -1123,7 +1130,7 @@ SummonUnits() {
 }
 
 UseUnitPoints() {
-    ; Define all possible points for the slots
+    ; Define all possible points
     allPoints := [
         { x: 280, y: 530 },
         { x: 330, y: 530 },
@@ -1134,10 +1141,11 @@ UseUnitPoints() {
     ]
 
     points := []
+    orderedSlots := GetPlacementOrder()
 
-    ; Collect enabled slots
+    ; Track only enabled slots in placement order
     enabledSlots := []
-    for slotNum in GetPlacementOrder() {
+    for slotNum in orderedSlots {
         enabled := "enabled" slotNum
         enabled := %enabled%
         enabled := enabled.Value
@@ -1145,14 +1153,17 @@ UseUnitPoints() {
             enabledSlots.Push(slotNum)
         }
     }
-    
 
-    for slotNum in enabledSlots {
-        points.Push(allPoints[slotNum])
+    ; Assign placement points based on order
+    for i, slotNum in enabledSlots {
+        if (i > allPoints.Length)
+            break
+        points.Push({ slot: slotNum, x: allPoints[i].x, y: allPoints[i].y })
     }
 
     return points
 }
+
 
 UnitUpgradePoints() {
     ; Define all possible points for the slots
@@ -1174,10 +1185,14 @@ UnitUpgradePoints() {
         enabled := "enabled" slotNum
         enabled := %enabled%
         enabled := enabled.Value
-        if (enabled) {
+        upgradeEnabled := "upgradeEnabled" slotNum
+        upgradeEnabled := %upgradeEnabled%
+        upgradeEnabled := upgradeEnabled.Value
+        if (enabled && upgradeEnabled) {
             enabledSlots.Push(slotNum)
         }
     }
+
     
 
     for slotNum in enabledSlots {
