@@ -330,7 +330,7 @@ HandleStageEnd() {
     try { 
         SendWebhookWithTime(isWin, stageLength)
     } catch error {
-        AddToLog("Error: Unable to send webhook. Error: " error.Message)
+        AddToLog("Error: Unable to send webhook.")
     }
     Sleep (500)
     MonitorEndScreen() 
@@ -782,7 +782,7 @@ RejoinPrivateServer() {
         AddToLog("Connecting to private server...")
         Run(psLink)
     } else {
-        Run("roblox://placeID=72829404259339")  ; Public server if no PS file or empty
+        Run("roblox://placeID=" 72829404259339)
     }
 
     Sleep(5000)
@@ -1081,25 +1081,35 @@ SummonUnits() {
 
     if (upgradeUnits && upgradePoints.Length > 0) {
         if (ok := !FindText(&X, &Y, 609, 463, 723, 495, 0.05, 0.20, UnitManagerBack)) {
-            AddToLog("Unit Manager isn't open - opening it")
-            SendInput("{T}")
-            Sleep(1000)
+            AddToLog("Unit Manager isn't open - trying to open it")
+            Loop {
+                ; Check if the Unit Manager is still open
+                if (ok := !FindText(&X, &Y, 609, 463, 723, 495, 0.05, 0.20, UnitManagerBack)) {
+                    SendInput("{T}")
+                    Sleep(1000)  ; Wait for the Unit Manager to open
+                } else {
+                    AddToLog("Unit Manager is open")
+                    break  ; Exit the loop once the Unit Manager is open
+                }
+            }
         }
     }
+    
     while true {
         for slotIndex, slotNum in enabledSlots {
             point := (pointIndex <= upgradePoints.Length) ? upgradePoints[pointIndex] : ""
+
             if (upgradeUnits && point) {
                 FixClick(point.x, point.y)
                 Sleep 50
+            }
+             else if (AutoPlay.Value) {
+                return MonitorStage() ; If not upgrading, just monitor the stage
             }
             
             if (!AutoPlay.Value) {
                 SendInput("{" slotNum "}")
                 Sleep 50
-            }
-             else if (AutoPlay.Value) {
-                return MonitorStage() ; If not upgrading, just monitor the stage
             }
 
             if CheckForXp() {
