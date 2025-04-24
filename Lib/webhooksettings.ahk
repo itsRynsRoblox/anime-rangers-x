@@ -143,17 +143,15 @@ SendWebhookWithTime(isWin, stageLength) {
     ; Update streak
     UpdateStreak(isWin)
 
-    ; Check if webhook file exists first
-    if (!FileExist(WebhookURLFile)) {
-        AddToLog("No webhook configured - skipping webhook")
-        return  ; Just return if no webhook file
-    }
-
-    ; Read webhook URL from file
-    WebhookURL := FileRead(WebhookURLFile, "UTF-8")
-    if !(WebhookURL ~= 'i)https?:\/\/discord\.com\/api\/webhooks\/(\d{18,19})\/[\w-]{68}') {
-        AddToLog("Invalid webhook URL - skipping webhook")
-        return
+    if (WebhookURL = "") {
+        if !LoadWebhookURL() {
+            AddToLog("No webhook configured - skipping webhook")
+            return ; Just return if no webhook file
+        } else {
+            if (debugMessages) {
+                AddToLog("Webhook URL loaded successfully")
+            }
+        }
     }
     
     ; Initialize webhook
@@ -176,53 +174,17 @@ SendWebhookWithTime(isWin, stageLength) {
     isWin ? "win" : "lose"
     
     
-    ; Send webhook
-    WebhookScreenshot(
-        isWin ? "Stage Complete!" : "Stage Failed",
-        sessionData,
-        isWin ? 0x0AB02D : 0xB00A0A,
-        isWin ? "win" : "lose"
-    )
-}
-
-SendFinalWebhookBeforeExit() {
-    global currentStreak, Wins, loss, WebhookURL, webhook, macroStartTime
-
-    ; Check if webhook file exists first
-    if (!FileExist(WebhookURLFile)) {
-        AddToLog("No webhook configured - skipping final webhook")
-        return
+    try {
+        ; Send webhook
+        WebhookScreenshot(
+            isWin ? "Stage Complete!" : "Stage Failed",
+            sessionData,
+            isWin ? 0x0AB02D : 0xB00A0A,
+            isWin ? "win" : "lose"
+        )
+    } catch error {
+        AddToLog("Error: Unable to send webhook - " error.message)
     }
-
-    ; Read webhook URL from file
-    WebhookURL := FileRead(WebhookURLFile, "UTF-8")
-    if !(WebhookURL ~= 'i)https?:\/\/discord\.com\/api\/webhooks\/(\d{18,19})\/[\w-]{68}') {
-        AddToLog("Invalid webhook URL - skipping final webhook")
-        return
-    }
-
-    ; Initialize webhook
-    webhook := WebHookBuilder(WebhookURL)
-
-    ; Calculate total macro runtime
-    macroLength := FormatStageTime(A_TickCount - macroStartTime)
-
-    ; Build session summary
-    sessionData := "📌 **Script is shutting down!**`n"
-    . "⌛ Total Runtime: " macroLength "`n"
-    . "🔄 Final Streak: " (currentStreak > 0 ? currentStreak " Win Streak" : (currentStreak < 0 ? Abs(currentStreak) " Loss Streak" : "No active streak")) "`n"
-    . ":white_check_mark: Successful Runs: " Wins "`n"
-    . "❌ Failed Runs: " loss "`n"
-    . ":bar_chart: Total Runs: " (loss + Wins) "`n"
-    . ":scales: Win Rate: " (Wins + loss > 0 ? Format("{:.1f}%", (Wins / (Wins + loss)) * 100) : "N/A") "`n"
-
-    ; Send final webhook
-    WebhookScreenshot(
-        "Final Session Summary",
-        sessionData,
-        0xFFA500,  ; Orange color to indicate script shutdown
-        "exit"
-    )
 }
 
 CropImage(pBitmap, x, y, width, height) {
@@ -261,22 +223,9 @@ CropImage(pBitmap, x, y, width, height) {
     return pCroppedBitmap
 }
 
-
-WebhookSettings() { 
-    if FileExist(WebhookURLFile)
-        WebhookURLBox.Value := FileRead(WebhookURLFile, "UTF-8")
-
-    if FileExist(DiscordUserIDFile)
-        DiscordUserIDBox.Value := FileRead(DiscordUserIDFile, "UTF-8")
-
-    if FileExist(SendActivityLogsFile) ; Load checkbox value
-        SendActivityLogsBox.Value := (FileRead(SendActivityLogsFile, "UTF-8") = "1")
-
-    
-}
-
 SaveWebhookSettings() {
-    
+    global WebhookURL
+
     if !(WebhookURLBox.Value = "" || RegExMatch(WebhookURLBox.Value, "^https://discord\.com/api/webhooks/.*")) {
         MsgBox("Invalid Webhook URL! Please enter a valid Discord webhook URL.", "Error", "+0x1000", )
         WebhookURLBox.Value := ""
@@ -289,6 +238,7 @@ SaveWebhookSettings() {
         return
     }
 
+    WebhookURL := "" ;Reset the webhook URL to empty string on save in case of changes
     AddToLog("Saving Webhook Configuration")
     
     ; Delete old files if they exist
@@ -334,28 +284,6 @@ TextWebhook() {
     })
 }
 
-InitiateWinWebhook() {
-    global WebhookURL := FileRead(WebhookURLFile, "UTF-8")
-    global DiscordUserID := FileRead(DiscordUserIDFile, "UTF-8")
-
-    if (webhookURL ~= 'i)https?:\/\/discord\.com\/api\/webhooks\/(\d{18,19})\/[\w-]{68}') {
-        global webhook := WebHookBuilder(WebhookURL)
-        stageLength := FormatStageTime(A_TickCount - stageStartTime)
-        SendWebhookWithTime(true, stageLength)
-    }
-}
-
-InitiateLoseWebhook() {
-    global WebhookURL := FileRead(WebhookURLFile, "UTF-8")
-    global DiscordUserID := FileRead(DiscordUserIDFile, "UTF-8")
-
-    if (webhookURL ~= 'i)https?:\/\/discord\.com\/api\/webhooks\/(\d{18,19})\/[\w-]{68}') {
-        global webhook := WebHookBuilder(WebhookURL)
-        stageLength := FormatStageTime(A_TickCount - stageStartTime)
-        SendWebhookWithTime(false, stageLength)
-    }
-}
-
 WebhookLog() {
     global WebhookURL := FileRead(WebhookURLFile, "UTF-8")
     global DiscordUserID := FileRead(DiscordUserIDFile, "UTF-8")
@@ -371,8 +299,8 @@ SaveWebhookBtnClick() {
     SaveWebhookSettings()
     AddToLog("Webhook settings saved")
 }
-;Discord webhooks, above
 
+;Discord webhooks, above
 WebhookScreenshot(title, description, color := 0x0dffff, status := "") {
     global webhook, WebhookURL, DiscordUserID, wins, loss, currentStreak, stageStartTime
 
@@ -476,7 +404,7 @@ WebhookScreenshot(title, description, color := 0x0dffff, status := "") {
             embeds: [myEmbed],
             files: [attachment]
         })
-    } catch {
+    } catch error {
         AddToLog("Unable to send webhook or build embed - continuing without sending")
     }
 
@@ -531,4 +459,29 @@ sendDCWebhook() {
         AddToLog("Failed to send webhook")
     }
 
+}
+
+TestWebhook() {
+    global Wins
+    Wins++
+    SendWebhookWithTime(true, "1")
+
+
+}
+
+LoadWebhookURL() {
+    global WebhookURL, WebhookURLFile
+
+    if (!FileExist(WebhookURLFile)) {
+        WebhookURL := ""
+        return false
+    }
+
+    WebhookURL := FileRead(WebhookURLFile, "UTF-8")
+    if !(WebhookURL ~= 'i)https?:\/\/discord\.com\/api\/webhooks\/(\d{18,19})\/[\w-]{68}') {
+        WebhookURL := ""
+        return false
+    }
+
+    return true
 }

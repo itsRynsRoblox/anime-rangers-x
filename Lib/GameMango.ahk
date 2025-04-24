@@ -4,7 +4,6 @@
 global macroStartTime := A_TickCount
 global stageStartTime := A_TickCount
 
-global completedChallengeMaps := Map()
 global currentMap := ""
 
 LoadKeybindSettings()  ; Load saved keybinds
@@ -14,7 +13,7 @@ Hotkey(F3Key, (*) => Reload())
 Hotkey(F4Key, (*) => TogglePause())
 
 F5:: {
-    SummonUnits()
+
 }
 
 F6:: {
@@ -201,25 +200,18 @@ RaidMode() {
     
     ; Execute the movement pattern
     AddToLog("Moving to position for " currentRaidMap)
-    RaidMovement()
+
     
     ; Start stage
     while !(ok := FindText(&X, &Y, 325, 520, 489, 587, 0, 0, ModeCancel)) {
         Reconnect() ; Added Disconnect Check
-        RaidMovement()
+
     }
     AddToLog("Starting " currentRaidMap " - " currentRaidAct)
     StartRaid(currentRaidMap, currentRaidAct)
 
     PlayHere()
     RestartStage()
-}
-
-CheckForReturnToLobby() {
-    if (ok := FindText(&X, &Y, 80, 85, 739, 224, 0, 0, LobbyText)) {
-        return true
-    }
-    return false
 }
 
 MonitorEndScreen() {
@@ -312,7 +304,7 @@ MonitorStage() {
     }
 
     if (CheckForXp()) {
-        return HandleStageEnd()
+        HandleStageEnd()
     }
 }
 
@@ -332,16 +324,16 @@ HandleStageEnd() {
         isWin := true
     }
 
-    if isWin {
-        AddToLog("Victory detected - Stage Length: " stageLength)
-        Wins += 1
-    } else {
-        AddToLog("Defeat detected - Stage Length: " stageLength)
-        loss += 1
+    AddToLog((isWin ? "Victory" : "Defeat") " detected - Stage Length: " stageLength)
+    (isWin ? Wins += 1 : loss += 1)
+    Sleep(1000)
+    try { 
+        SendWebhookWithTime(isWin, stageLength)
+    } catch error {
+        AddToLog("Error: Unable to send webhook. Error: " error.Message)
     }
-    SendWebhookWithTime(isWin, stageLength)
     Sleep (500)
-    return MonitorEndScreen() 
+    MonitorEndScreen() 
 }
 
 StoryMovement() {
@@ -369,7 +361,7 @@ ChallengeMovement() {
 EasterMovement() {
     FixClick(25, 325) ; Click Areas
     Sleep (1000)
-    FixClick(357, 225) ; Teleport to Challenges
+    FixClick(357, 225) ; Teleport To Lobby
     Sleep (1000)
     SendInput ("{s down}")
     Sleep (1000)
@@ -383,20 +375,29 @@ EasterMovement() {
     Sleep (1000)
     SendInput ("{E}")
     Sleep (2000)
-}
-
-RaidMovement() {
-    FixClick(765, 475) ; Click Area
-    Sleep(300)
-    FixClick(495, 410)
-    Sleep(500)
-    SendInput ("{a down}")
-    Sleep(400)
-    SendInput ("{a up}")
-    Sleep(500)
-    SendInput ("{w down}")
-    Sleep(5000)
-    SendInput ("{w up}")
+    if (FindText(&X, &Y, 400, 375, 508, 404, 0.05, 0.20, BossPlayText)) {
+        FixClick(25, 325) ; Click Areas
+        Sleep (1000)
+        FixClick(357, 225) ; Teleport To Lobby
+        Sleep (1000)
+        SendInput ("{w down}")
+        Sleep (1000)
+        SendInput ("{w up}")
+        KeyWait ("w")
+        Sleep (1000)
+        SendInput ("{a down}")
+        Sleep (1000)
+        SendInput ("{a up}")
+        KeyWait ("a")
+        Sleep (1000)
+        SendInput ("{s down}")
+        Sleep (200)
+        SendInput ("{s up}")
+        KeyWait ("s")
+        Sleep (1000)
+        SendInput ("{E}")
+        Sleep (2000)
+    }
 }
 
 StartStory(map, act) {
@@ -834,18 +835,6 @@ CheckLobby() {
     return StartSelectedMode()
 }
 
-CheckForLobby() {
-    loop {
-        Sleep 1000
-        if (ok := FindText(&X, &Y, 47, 342, 83, 374, 0, 0, AreaText)) {
-            break
-        }
-        Reconnect()
-    }
-    AddToLog("Returned to lobby.")
-    return true
-}
-
 CheckLoaded() {
     startTime := A_TickCount
     timeout := 120 * 1000 ; Convert to milliseconds
@@ -1100,13 +1089,13 @@ SummonUnits() {
     while true {
         for slotIndex, slotNum in enabledSlots {
             point := (pointIndex <= upgradePoints.Length) ? upgradePoints[pointIndex] : ""
-            if (!AutoPlay.Value) {
-                SendInput("{" slotNum "}")
-                Sleep 50
-            }
-        
             if (upgradeUnits && point) {
                 FixClick(point.x, point.y)
+                Sleep 50
+            }
+            
+            if (!AutoPlay.Value) {
+                SendInput("{" slotNum "}")
                 Sleep 50
             }
              else if (AutoPlay.Value) {
@@ -1211,4 +1200,13 @@ ScrollToTop() {
         SendInput("{WheelUp}")
         Sleep(250)
     }
+}
+
+TeleportToSpawn() {
+    FixClick(18, 574) ; Click Settings
+    Sleep(1000)
+    FixClick(539, 290)
+    Sleep(1000)
+    FixClick(180, 574) ; Click Settings to close
+    Sleep(1000)
 }
