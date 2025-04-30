@@ -6,7 +6,7 @@
 ;Update Checker
 global repoOwner := "itsRynsRoblox"
 global repoName := "anime-rangers-x "
-global currentVersion := "1.1.6"
+global currentVersion := "1.2"
 
 ; Basic Application Info
 global aaTitle := "Ryn's Anime Rangers X "
@@ -34,6 +34,8 @@ global loss := 0
 global mode := ""
 global StartTime := A_TickCount
 global currentTime := GetCurrentTime()
+
+global unitCardsVisible := true
 ;Auto Challenge
 global challengeStartTime := A_TickCount
 global inChallengeMode := false
@@ -91,6 +93,7 @@ uiBorders.Push(arMainUI.Add("Text", "x0 y30 w1363 h1 +Background" uiTheme[3])) ;
 uiBorders.Push(arMainUI.Add("Text", "x803 y550 w560 h1 +Background" uiTheme[3])) ;Placement bottom
 uiBorders.Push(arMainUI.Add("Text", "x803 y385 w560 h1 +Background" uiTheme[3])) ;Process bottom
 uiBorders.Push(arMainUI.Add("Text", "x803 y420 w560 h1 +Background" uiTheme[3])) ;Process bottom
+uiBorders.Push(arMainUI.Add("Text", "x803 y610 w560 h1 +Background" uiTheme[3])) ;Toggles top
 uiBorders.Push(arMainUI.Add("Text", "x802 y30 w1 h667 +Background" uiTheme[3])) ;Roblox Right
 uiBorders.Push(arMainUI.Add("Text", "x0 y632 w1364 h1 +Background" uiTheme[3], "")) ;Roblox second bottom
 
@@ -304,14 +307,17 @@ OpenGuide(*) {
 arMainUI.SetFont("s9 Bold c" uiTheme[1])
 
 ;DEBUG
-DebugButton := arMainUI.Add("Button", "x900 y5 w90 h20 +Center", "Debug")
+DebugButton := arMainUI.Add("Button", "x800 y5 w90 h20 +Center", "Debug")
 DebugButton.OnEvent("Click", (*) => OpenDebug())
 
-global guideBtn := arMainUI.Add("Button", "x1000 y5 w90 h20", "Guides")
+global guideBtn := arMainUI.Add("Button", "x900 y5 w90 h20", "Guides")
 guideBtn.OnEvent("Click", OpenGuide)
 
-global mapButton := arMainUI.Add("Button", "x1100 y5 w90 h20", "Map Skips")
+global mapButton := arMainUI.Add("Button", "x1000 y5 w90 h20", "Map Skips")
 mapButton.OnEvent("Click", (*) => OpenMapSkipPriorityPicker())
+
+global miscSettingsButton := arMainUI.Add("Button", "x1100 y5 w90 h20", "Extra")
+miscSettingsButton.OnEvent("Click", (*) => ShowSettings())
 
 global settingsBtn := arMainUI.Add("Button", "x1200 y5 w90 h20", "Settings")
 settingsBtn.OnEvent("Click", ShowSettingsGUI)
@@ -326,26 +332,27 @@ global NextLevelBox := arMainUI.Add("Checkbox", "x900 y560 cffffff Checked", "Ne
 global ReturnLobbyBox := arMainUI.Add("Checkbox", "x900 y560 cffffff Checked", "Return To Lobby")
 global MatchMaking := arMainUI.Add("Checkbox", "x900 y580 cffffff Hidden Checked", "Matchmaking") 
 ;Auto Settings
-global ChallengeBox := arMainUI.Add("CheckBox", "x900 y610 cffffff", "Auto Ranger Stage")
-global AutoPlay := arMainUI.Add("CheckBox", "x1050 y610 cffffff", "Autoplay")
-global ShouldUpgradeUnits := arMainUI.Add("CheckBox", "x1140 y610 cffffff", "Auto Upgrade")
+global AutoPlay := arMainUI.Add("CheckBox", "x808 y615 cffffff", "Auto Summon")
+
+global ShouldUpgradeUnits := arMainUI.Add("CheckBox", "x928 y615 cffffff", "Auto Upgrade")
+global ChallengeBox := arMainUI.Add("CheckBox", "x1180 y615 cffffff", "Farm Ranger Stages")
 ; General Settings
-LobbySleepText := arMainUI.Add("Text", "x1220 y565 w130 h20 +Center", "Lobby Sleep Timer")
-global LobbySleepTimer := arMainUI.Add("DropDownList", "x1235 y585 w100 h180 Choose1", ["No Delay", "5 Seconds", "10 Seconds", "15 Seconds", "20 Seconds", "25 Seconds", "30 Seconds", "35 Seconds", "40 Seconds", "45 Seconds", "50 Seconds", "55 Seconds", "60 Seconds"])
+LobbySleepText := arMainUI.Add("Text", "x818 y123.5 w130 h20 +Center Hidden", "Lobby Sleep Timer")
+global LobbySleepTimer := arMainUI.Add("DropDownList", "x950 y120 w100 h180 Hidden Choose1", ["No Delay", "5 Seconds", "10 Seconds", "15 Seconds", "20 Seconds", "25 Seconds", "30 Seconds", "35 Seconds", "40 Seconds", "45 Seconds", "50 Seconds", "55 Seconds", "60 Seconds"])
 
 StoryDifficultyText := arMainUI.Add("Text", "x890 y585 w80 h20 +Center", "Difficulty")
 global StoryDifficulty := arMainUI.Add("DropDownList", "x970 y580 w100 h180 Choose1", ["Normal", "Hard", "Nightmare"])
 
-
 placementSaveText := arMainUI.Add("Text", "x807 y565 w80 h20", "Save Config")
-
 Hotkeytext := arMainUI.Add("Text", "x807 y35 w500 h30", "Below are the default hotkey settings ")
 Hotkeytext2 := arMainUI.Add("Text", "x807 y50 w500 h30", "F1:Fix Roblox Window|F2:Start Macro|F3:Stop Macro|F4:Pause Macro")
-GithubButton := arMainUI.Add("Picture", "x30 y640 w40 h40 +BackgroundTrans cffffff Hidden", GithubImage)
-DiscordButton := arMainUI.Add("Picture", "x30 y645 w60 h34 +BackgroundTrans cffffff", DiscordImage)
 
-GithubButton.OnEvent("Click", (*) => OpenGithub())
+DiscordButton := arMainUI.Add("Picture", "x30 y645 w60 h34 +BackgroundTrans cffffff", DiscordImage)
 DiscordButton.OnEvent("Click", (*) => OpenDiscord())
+
+AutoPlay.OnEvent("Click", (*) => SendSummonInformation())
+
+global MiscSettings := arMainUI.Add("GroupBox", "x808 y85 w550 h296 +Center Hidden c" uiTheme[1], "Miscellaneous Settings")
 
 ;--------------SETTINGS;--------------SETTINGS;--------------SETTINGS;--------------SETTINGS;--------------SETTINGS;--------------SETTINGS;--------------SETTINGS
 ;--------------MODE SELECT;--------------MODE SELECT;--------------MODE SELECT;--------------MODE SELECT;--------------MODE SELECT;--------------MODE SELECT
@@ -392,10 +399,11 @@ AddUnitCard(arMainUI, index, x, y) {
     unit.BorderBottom := arMainUI.Add("Text", Format("x{} y{} w552 h2 +Background{}", x, y+45, uiTheme[3]))
     unit.BorderLeft := arMainUI.Add("Text", Format("x{} y{} w2 h45 +Background{}", x, y, uiTheme[3]))
     unit.BorderRight := arMainUI.Add("Text", Format("x{} y{} w2 h45 +Background{}", x+85, y, uiTheme[3]))
-    unit.BorderRight := arMainUI.Add("Text", Format("x{} y{} w2 h45 +Background{}", x+300, y, uiTheme[3]))
-    unit.BorderRight := arMainUI.Add("Text", Format("x{} y{} w2 h45 +Background{}", x+550, y, uiTheme[3]))
+    unit.BorderRight2 := arMainUI.Add("Text", Format("x{} y{} w2 h45 +Background{}", x+300, y, uiTheme[3]))
+    unit.BorderRight3 := arMainUI.Add("Text", Format("x{} y{} w2 h45 +Background{}", x+550, y, uiTheme[3]))
+
     arMainUI.SetFont("s11 Bold c" uiTheme[1])
-    unit.Title := arMainUI.Add("Text", Format("x{} y{} w60 h25 +BackgroundTrans", x+30, y+18), "Slot " index)
+    unit.Title := arMainUI.Add("Text", Format("x{} y{} w60 h25 +BackgroundTrans", x+30, y+15), "Slot " index)
 
     arMainUI.SetFont("s9 c" uiTheme[1])
     unit.PlacementText := arMainUI.Add("Text", Format("x{} y{} w200 h20 +BackgroundTrans", x+100, y+2), "Summon && Upgrade Priority")
@@ -413,12 +421,12 @@ Loop 6 {
     AddUnitCard(arMainUI, A_Index, 808, y_start + ((A_Index-1)*y_spacing))
 }
 
-enabled1 := arMainUI.Add("CheckBox", "x818 y105 w15 h15", "")
-enabled2 := arMainUI.Add("CheckBox", "x818 y155 w15 h15", "")
-enabled3 := arMainUI.Add("CheckBox", "x818 y205 w15 h15", "")
-enabled4 := arMainUI.Add("CheckBox", "x818 y255 w15 h15", "")
-enabled5 := arMainUI.Add("CheckBox", "x818 y305 w15 h15", "")
-enabled6 := arMainUI.Add("CheckBox", "x818 y355 w15 h15", "")
+enabled1 := arMainUI.Add("CheckBox", "x818 y102 w15 h15", "")
+enabled2 := arMainUI.Add("CheckBox", "x818 y152 w15 h15", "")
+enabled3 := arMainUI.Add("CheckBox", "x818 y202 w15 h15", "")
+enabled4 := arMainUI.Add("CheckBox", "x818 y252 w15 h15", "")
+enabled5 := arMainUI.Add("CheckBox", "x818 y302 w15 h15", "")
+enabled6 := arMainUI.Add("CheckBox", "x818 y352 w15 h15", "")
 
 upgradeEnabled1 := arMainUI.Add("CheckBox", "x1120 y105 w15 h15", "")
 upgradeEnabled2 := arMainUI.Add("CheckBox", "x1120 y155 w15 h15", "")
@@ -666,4 +674,83 @@ OpenRangerSettings(*) {
 
     GuideGUI.Add("Text", "x0 w800 cWhite +Center", "Currently there is no recommended settings for Anime Rangers")
     GuideGUI.Show("w800")
+}
+
+HideUnitCards() {
+    for _, unit in UnitData {
+        for _, control in unit.OwnProps() {
+            if IsObject(control)
+                control.Visible := false
+        }
+    }
+    Placement1.Visible := false
+    Placement2.Visible := false
+    Placement3.Visible := false
+    Placement4.Visible := false
+    Placement5.Visible := false
+    Placement6.Visible := false
+    enabled1.Visible := false
+    enabled2.Visible := false
+    enabled3.Visible := false
+    enabled4.Visible := false
+    enabled5.Visible := false
+    enabled6.Visible := false
+    upgradeEnabled1.Visible := false
+    upgradeEnabled2.Visible := false
+    upgradeEnabled3.Visible := false
+    upgradeEnabled4.Visible := false
+    upgradeEnabled5.Visible := false
+    upgradeEnabled6.Visible := false
+}
+
+ShowUnitCards() {
+    for _, unit in UnitData {
+        for _, control in unit.OwnProps() {
+            if IsObject(control)
+                control.Visible := true
+        }
+    }
+    Placement1.Visible := true
+    Placement2.Visible := true
+    Placement3.Visible := true
+    Placement4.Visible := true
+    Placement5.Visible := true
+    Placement6.Visible := true
+    enabled1.Visible := true
+    enabled2.Visible := true
+    enabled3.Visible := true
+    enabled4.Visible := true
+    enabled5.Visible := true
+    enabled6.Visible := true
+    upgradeEnabled1.Visible := true
+    upgradeEnabled2.Visible := true
+    upgradeEnabled3.Visible := true
+    upgradeEnabled4.Visible := true
+    upgradeEnabled5.Visible := true
+    upgradeEnabled6.Visible := true
+}
+
+ShowSettings(*) {
+    try {
+        global unitCardsVisible
+        if (unitCardsVisible) {
+            HideUnitCards()
+            MiscSettings.Visible := true
+            LobbySleepText.Visible := true
+            LobbySleepTimer.Visible := true
+            unitCardsVisible := false
+        } else {
+            MiscSettings.Visible := false
+            LobbySleepText.Visible := false
+            LobbySleepTimer.Visible := false
+            ShowUnitCards()
+            unitCardsVisible := true
+        }
+    } catch {
+        AddToLog("Error showing unit settings")
+    }
+}
+
+SendSummonInformation() {
+    AddToLog("Auto Summon should match your auto play setting in-game.")
 }

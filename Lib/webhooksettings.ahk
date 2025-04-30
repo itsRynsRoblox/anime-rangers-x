@@ -183,7 +183,7 @@ SendWebhookWithTime(isWin, stageLength) {
             isWin ? "win" : "lose"
         )
     } catch error {
-        AddToLog("Error: Unable to send webhook - " error.message)
+        AddToLog("Error: Unable to send webhook")
     }
 }
 

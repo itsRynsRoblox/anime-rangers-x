@@ -5,6 +5,7 @@ global macroStartTime := A_TickCount
 global stageStartTime := A_TickCount
 
 global currentMap := ""
+global shouldSkipWebhook := false
 
 LoadKeybindSettings()  ; Load saved keybinds
 Hotkey(F1Key, (*) => moveRobloxWindow())    
@@ -215,125 +216,119 @@ RaidMode() {
 }
 
 MonitorEndScreen() {
-    global StoryDropdown, StoryActDropdown
     global challengeStartTime, inChallengeMode, challengeStageCount, challengeMapIndex, challengeMapList
+    global Wins, loss, stageStartTime, shouldSkipWebhook, lastResult
 
-    Loop {
-        Sleep(3000)  
+    isWin := false
+    stageEndTime := A_TickCount
+    stageLength := FormatStageTime(stageEndTime - stageStartTime)
 
-        CloseChat()
-
-        ; Now handle each mode
-        if (ok := FindText(&X, &Y, 135, 399, 539, 456, 0, 0, LobbyText)) {
-            AddToLog("Found Lobby Text - Current Mode: " (inChallengeMode ? "Ranger Stages" : ModeDropdown.Text))
-            Sleep(2000)
-
-            ; Logic to track challenge progress
-            if (inChallengeMode) {
-                challengeStageCount++
-                AddToLog("Completed " challengeStageCount " out of 3 ranger stages for " challengeMapList[challengeMapIndex])
-                if (challengeStageCount >= 3) {
-                    AddToLog("Completed all 3 ranger stages for " challengeMapList[challengeMapIndex])
-
-                    challengeStageCount := 0
-                    challengeMapIndex++
-
-                    if (challengeMapIndex > challengeMapList.Length) {
-                        AddToLog("All maps completed, returning to " ModeDropdown.Text)
-                        inChallengeMode := false
-                        challengeStartTime := A_TickCount  ; Reset timer for next ranger stage trigger
-                        challengeMapIndex := 1  ; Reset map index for next session
-                        ClickReturnToLobby()
-                        return CheckLobby()
-                    } else {
-                        AddToLog("Returning to lobby to start next map: " challengeMapList[challengeMapIndex])
-                        ClickReturnToLobby()
-                        return CheckLobby()
-                    }
-                } else {
-                    ; Proceed to the next challenge stage
-                    ClickNextLevel()
-                    return RestartStage()
-                }
-            }
-
-            ; Check if it's time for challenge mode
-            if (!inChallengeMode && ChallengeBox.Value) {
-                timeElapsed := A_TickCount - challengeStartTime
-                if (timeElapsed >= 1800000) {
-                    AddToLog("30 minutes has passed - switching to Ranger Stages")
-                    inChallengeMode := true
-                    challengeStartTime := A_TickCount
-                    challengeStageCount := 0  ; Reset stage count for new ranger stage session
-                    ClickReturnToLobby()
-                    return CheckLobby()
-                }
-            }
-
-            if (mode = "Story") {
-                AddToLog("Handling Story mode end")
-                if (NextLevelBox.Value && lastResult = "win") {
-                    AddToLog("Next level")
-                    ClickNextLevel()
-                } else {
-                    AddToLog("Replay level")
-                    ClickReplay()
-                }
-                return RestartStage()
-            }
-            else {
-                AddToLog("Handling end case")
-                AddToLog("Replaying")
-                ClickReplay()
-                return RestartStage()
-            }
-        }
-        Reconnect()
-    }
-}
-
-
-MonitorStage() {
-
-    CloseChat() ; Close chat if open
-
+    ; Wait for XP to appear or reconnect if necessary
     while !CheckForXp() {
         ClickThroughDrops()
         Reconnect()
         Sleep(1000)
     }
 
-    if (CheckForXp()) {
-        HandleStageEnd()
-    }
-}
+    CloseChat()
 
-HandleStageEnd() {
-    global Wins, loss, stageStartTime
-
-    isWin := false
-
-    stageEndTime := A_TickCount
-    stageLength := FormatStageTime(stageEndTime - stageStartTime)
-
-    if (ok := FindText(&X, &Y, 377, 228, 536, 276, 0.05, 0.80, DefeatText)) {
+    ; Detect win or loss
+    if (FindText(&X, &Y, 377, 228, 536, 276, 0.05, 0.80, DefeatText)) {
         isWin := false
-    }
-
-    if (ok := FindText(&X, &Y, 397, 222, 538, 273, 0.05, 0.80, VictoryText)) {
+    } else if (FindText(&X, &Y, 397, 222, 538, 273, 0.05, 0.80, VictoryText)) {
         isWin := true
     }
 
+    lastResult := isWin ? "win" : "lose"
     AddToLog((isWin ? "Victory" : "Defeat") " detected - Stage Length: " stageLength)
     (isWin ? Wins += 1 : loss += 1)
     Sleep(1000)
-    try { 
-        SendWebhookWithTime(isWin, stageLength)
-    } catch error {
-        AddToLog("Error: Unable to send webhook.")
+
+    ; ─── Webhook Section ───
+    if (!shouldSkipWebhook) {
+        try {
+            SendWebhookWithTime(isWin, stageLength)
+            AddToLog("Webhook sent successfully, skipping next.")
+        } catch {
+            AddToLog("Error: Unable to send webhook. Skipping next.")
+            shouldSkipWebhook := true  ; Backoff in case of failure
+        }
+    } else {
+        AddToLog("Webhook was skipped, will send next time.")
+        shouldSkipWebhook := false  ; Reset flag
     }
-    Sleep (500)
-    MonitorEndScreen() 
+
+    ; ─── End-of-Stage Handling Loop ───
+    if (inChallengeMode) {
+        challengeStageCount++
+        AddToLog("Completed " challengeStageCount " out of 3 ranger stages for " challengeMapList[challengeMapIndex])
+
+        if (challengeStageCount >= 3) {
+            AddToLog("Completed all 3 ranger stages for " challengeMapList[challengeMapIndex])
+            challengeStageCount := 0
+            challengeMapIndex++
+
+            if (challengeMapIndex > challengeMapList.Length) {
+                AddToLog("All maps completed, returning to " ModeDropdown.Text)
+                inChallengeMode := false
+                challengeStartTime := A_TickCount
+                challengeMapIndex := 1
+                ClickReturnToLobby()
+                return CheckLobby()
+            } else {
+                AddToLog("Returning to lobby to start next map: " challengeMapList[challengeMapIndex])
+                ClickReturnToLobby()
+                return CheckLobby()
+            }
+        } else {
+            ClickNextLevel()
+            return RestartStage()
+        }
+    }
+
+    ; ─── Start Challenge Mode If Time ───
+    if (!inChallengeMode && ChallengeBox.Value) {
+        if ((A_TickCount - challengeStartTime) >= 1800000) {
+            AddToLog("30 minutes has passed - switching to Ranger Stages")
+            inChallengeMode := true
+            challengeStartTime := A_TickCount
+            challengeStageCount := 0
+            ClickReturnToLobby()
+            return CheckLobby()
+        }
+    }
+
+    ; ─── Mode Handling ───
+    if (ModeDropdown.Text = "Story") {
+        HandleStoryMode()
+    } else {
+        HandleDefaultMode()
+    }
+}
+
+HandleStoryMode() {
+    global lastResult
+    if (ReturnLobbyBox.Value) {
+        ClickReturnToLobby()
+        return CheckLobby()
+    } else {
+        if (lastResult "win" && NextLevelBox.Value) {
+            ClickNextLevel()
+        } else {
+            ClickReplay()
+        }
+        return RestartStage()
+    }
+}
+
+HandleDefaultMode() {
+    if (ReturnLobbyBox.Value) {
+        ClickReturnToLobby()
+        return CheckLobby()
+    } else {
+        ClickReplay()
+    }
+    return RestartStage()
 }
 
 StoryMovement() {
@@ -705,6 +700,8 @@ DetectMap() {
 RestartStage() {
     global currentMap
 
+    FindText
+
     if (currentMap = "") {
         currentMap := DetectMap()
     } else {
@@ -721,7 +718,7 @@ RestartStage() {
     SummonUnits()
     
     ; Monitor stage progress
-    MonitorStage()
+    MonitorEndScreen()
 }
 
 Reconnect() {
@@ -824,7 +821,7 @@ CheckLobby() {
         }
         if (CheckForXp()) {
             AddToLog("Detected end game screen when should have already returned to lobby")
-            return MonitorStage()
+            return MonitorEndScreen()
         }
         Reconnect()
         Sleep (1000)
@@ -942,35 +939,6 @@ GetNavKeys() {
     return StrSplit(FileExist("Settings\UINavigation.txt") ? FileRead("Settings\UINavigation.txt", "UTF-8") : "\,#,}", ",")
 }
 
-ClickUntilGone(x, y, searchX1, searchY1, searchX2, searchY2, textToFind, offsetX:=0, offsetY:=0, textToFind2:="") {
-    waitTime := A_TickCount ; Start timer
-    while (ok := FindText(&X, &Y, searchX1, searchY1, searchX2, searchY2, 0, 0, textToFind) || textToFind2 && FindText(&X, &Y, searchX1, searchY1, searchX2, searchY2, 0, 0, textToFind2)) {
-        if ((A_TickCount - waitTime) > 300000) { ; 5-minute limit
-            AddToLog("5 minute failsafe triggered, trying to open roblox...")
-            return RejoinPrivateServer()
-        }
-        if (offsetX != 0 || offsetY != 0) {
-            FixClick(X + offsetX, Y + offsetY)  
-        } else {
-            FixClick(x, y) 
-        }
-        Sleep(1000)
-    }
-}
-
-RightClickUntilGone(x, y, searchX1, searchY1, searchX2, searchY2, textToFind, offsetX:=0, offsetY:=0, textToFind2:="") {
-    while (ok := FindText(&X, &Y, searchX1, searchY1, searchX2, searchY2, 0, 0, textToFind) || 
-           textToFind2 && FindText(&X, &Y, searchX1, searchY1, searchX2, searchY2, 0, 0, textToFind2)) {
-
-        if (offsetX != 0 || offsetY != 0) {
-            FixClick(X + offsetX, Y + offsetY, "Right")  
-        } else {
-            FixClick(x, y, "Right") 
-        }
-        Sleep(1000)
-    }
-}
-
 IsColorInRange(color, targetColor, tolerance := 50) {
     ; Extract RGB components
     r1 := (color >> 16) & 0xFF
@@ -994,33 +962,6 @@ SleepTime() {
 
     if timeIndex is number  ; Ensure it's a number
         return time[timeIndex]  ; Use the value directly from the array
-}
-
-ClickReplay() {
-    xCoord := (ModeDropdown.Text != "Story" || StoryDropdown.Text = "Z City") ? -120 : -250
-    ClickUntilGone(0, 0, 135, 399, 539, 456, LobbyText, xCoord, -35)
-}
-
-ClickNextLevel() {
-    ClickUntilGone(0, 0, 135, 399, 539, 456, LobbyText, -120, -35)
-}
-
-ClickReturnToLobby() {
-    ClickUntilGone(0, 0, 135, 399, 539, 456, LobbyText, 0, -35)
-}
-
-ClickStartStory() {
-    ClickUntilGone(0, 0, 320, 468, 486, 521, StartStoryButton, 0, -35)
-}
-
-ClickThroughDrops() {
-    if (debugMessages) {
-        AddToLog("Clicking through item drops...")
-    }
-    Loop 5 {
-        FixClick(400, 495)
-        Sleep(500)
-    }
 }
 
 GetPlacementOrder() {
@@ -1104,7 +1045,7 @@ SummonUnits() {
                 Sleep 50
             }
              else if (AutoPlay.Value) {
-                return MonitorStage() ; If not upgrading, just monitor the stage
+                return MonitorEndScreen() ; If not upgrading, just monitor the stage
             }
             
             if (!AutoPlay.Value) {
@@ -1113,7 +1054,7 @@ SummonUnits() {
             }
 
             if CheckForXp() {
-                return HandleStageEnd()
+                return MonitorEndScreen()
             }
 
             Reconnect()
@@ -1196,27 +1137,4 @@ UnitUpgradePoints() {
     }
 
     return points
-}
-
-ScrollToBottom() {
-    loop 3 {
-        SendInput("{WheelDown}")
-        Sleep(250)
-    }
-}
-
-ScrollToTop() {
-    loop 3 {
-        SendInput("{WheelUp}")
-        Sleep(250)
-    }
-}
-
-TeleportToSpawn() {
-    FixClick(18, 574) ; Click Settings
-    Sleep(1000)
-    FixClick(539, 290)
-    Sleep(1000)
-    FixClick(180, 574) ; Click Settings to close
-    Sleep(1000)
 }

@@ -206,49 +206,6 @@ FixClick(x, y, LR := "Left") {
     MouseClick(LR, -1, 0, , , , "R")
     Sleep(50)
 }
- 
-CaptchaDetect(x, y, w, h, inputX, inputY) {
-    detectionCount := 0
-    AddToLog("Checking for numbers...")
-    Loop 10 {
-        try {
-            result := OCR.FromRect(x, y, w, h, "FirstFromAvailableLanguages", 
-                {   
-                    grayscale: true,
-                    scale: 2.0
-                })
-            
-            if result {
-                ; Get text before any linebreak
-                number := StrSplit(result.Text, "`n")[1]
-                
-                ; Clean to just get numbers
-                number := RegExReplace(number, "[^\d]")
-                
-                if (StrLen(number) >= 5 && StrLen(number) <= 7) {
-                    detectionCount++
-                    
-                    if (detectionCount >= 1) {
-                        ; Send exactly what we detected in the green text
-                        FixClick(inputX, inputY)
-                        Sleep(300)
-                        
-                        AddToLog("Sending number: " number)
-                        for digit in StrSplit(number) {
-                            Send(digit)
-                            Sleep(120)
-                        }
-                        Sleep(200)
-                        return true
-                    }
-                }
-            }
-        }
-        Sleep(200)  
-    }
-    AddToLog("Could not detect valid captcha")
-    return false
-}
 
 GetWindowCenter(WinTitle) {
     x := 0 y := 0 Width := 0 Height := 0
@@ -258,24 +215,6 @@ GetWindowCenter(WinTitle) {
     centerY := Y + (Height / 2)
 
     return { x: centerX, y: centerY, width: Width, height: Height }
-}
-
-FindAndClickColor(targetColor := (ModeDropdown.Text = "Winter Event" ? 0x006783 : 0xFAFF4D), searchArea := [0, 0, GetWindowCenter(rblxID).Width, GetWindowCenter(rblxID).Height]) { ;targetColor := Winter Event Color : 0x006783 / Contracts Color : 0xFAFF4D
-    ; Extract the search area boundaries
-    x1 := searchArea[1], y1 := searchArea[2], x2 := searchArea[3], y2 := searchArea[4]
-
-    ; Perform the pixel search
-    if (PixelSearch(&foundX, &foundY, x1, y1, x2, y2, targetColor, 0)) {
-        ; Color found, click on the detected coordinates
-        FixClick(foundX, foundY, "Right")
-        AddToLog("Color found and clicked at: X" foundX " Y" foundY)
-        return true
-
-    }
-}
-
-OpenGithub() {
-    ; Removed to prevent access to non testers / mists donators
 }
 
 OpenDiscord() {
@@ -371,5 +310,84 @@ GetMousePos() {
         AddToLog("Copied: " x ", " y)
     } else {
         AddToLog("Failed to copy coordinates.")
+    }
+}
+
+ScrollToBottom() {
+    loop 3 {
+        SendInput("{WheelDown}")
+        Sleep(250)
+    }
+}
+
+ScrollToTop() {
+    loop 3 {
+        SendInput("{WheelUp}")
+        Sleep(250)
+    }
+}
+
+TeleportToSpawn() {
+    FixClick(18, 574) ; Click Settings
+    Sleep(1000)
+    FixClick(539, 290)
+    Sleep(1000)
+    FixClick(180, 574) ; Click Settings to close
+    Sleep(1000)
+}
+
+ClickReplay() {
+    xCoord := (ModeDropdown.Text != "Story" || StoryDropdown.Text = "Z City") ? -120 : -250
+    ClickUntilGone(0, 0, 135, 399, 539, 456, LobbyText, xCoord, -35)
+}
+
+ClickNextLevel() {
+    ClickUntilGone(0, 0, 135, 399, 539, 456, LobbyText, -120, -35)
+}
+
+ClickReturnToLobby() {
+    ClickUntilGone(0, 0, 135, 399, 539, 456, LobbyText, 0, -35)
+}
+
+ClickStartStory() {
+    ClickUntilGone(0, 0, 320, 468, 486, 521, StartStoryButton, 0, -35)
+}
+
+ClickThroughDrops() {
+    if (debugMessages) {
+        AddToLog("Clicking through item drops...")
+    }
+    Loop 5 {
+        FixClick(400, 495)
+        Sleep(500)
+    }
+}
+
+ClickUntilGone(x, y, searchX1, searchY1, searchX2, searchY2, textToFind, offsetX:=0, offsetY:=0, textToFind2:="") {
+    waitTime := A_TickCount ; Start timer
+    while (ok := FindText(&X, &Y, searchX1, searchY1, searchX2, searchY2, 0, 0, textToFind) || textToFind2 && FindText(&X, &Y, searchX1, searchY1, searchX2, searchY2, 0, 0, textToFind2)) {
+        if ((A_TickCount - waitTime) > 300000) { ; 5-minute limit
+            AddToLog("5 minute failsafe triggered, trying to open roblox...")
+            return RejoinPrivateServer()
+        }
+        if (offsetX != 0 || offsetY != 0) {
+            FixClick(X + offsetX, Y + offsetY)  
+        } else {
+            FixClick(x, y) 
+        }
+        Sleep(1000)
+    }
+}
+
+RightClickUntilGone(x, y, searchX1, searchY1, searchX2, searchY2, textToFind, offsetX:=0, offsetY:=0, textToFind2:="") {
+    while (ok := FindText(&X, &Y, searchX1, searchY1, searchX2, searchY2, 0, 0, textToFind) || 
+           textToFind2 && FindText(&X, &Y, searchX1, searchY1, searchX2, searchY2, 0, 0, textToFind2)) {
+
+        if (offsetX != 0 || offsetY != 0) {
+            FixClick(X + offsetX, Y + offsetY, "Right")  
+        } else {
+            FixClick(x, y, "Right") 
+        }
+        Sleep(1000)
     }
 }
