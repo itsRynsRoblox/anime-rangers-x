@@ -60,17 +60,11 @@ StoryMode() {
     StoryMovement()
     
     ; Start stage
-    while !(ok := FindText(&X, &Y, 12, 241, 148, 275, 0.05, 0.20, CreateRoom)) {
-        AddToLog("Looking for Create Room button...")
+    while !(ok := FindText(&X, &Y, 352, 101, 452, 120, 0.05, 0.20, RoomPods)) {
         FixClick(80, 325) ; Click Leave
         Reconnect() ; Added Disconnect Check
         StoryMovement()
     }
-
-    ; Closes Player leaderboard
-    FixClick(640, 70)
-    Sleep(500)
-
     FixClick(25, 225) ; Create Room
     Sleep(1000)
 
@@ -157,7 +151,7 @@ LegendMode() {
     StoryMovement()
     
     ; Start stage
-    while !(ok := FindText(&X, &Y, 12, 241, 148, 275, 0.05, 0.20, CreateRoom)) {
+    while !(ok := FindText(&X, &Y, 352, 101, 452, 120, 0.05, 0.20, RoomPods)) {
         if (debugMessages) {
             AddToLog("Debug: Looking for create room text...")
         }
@@ -165,10 +159,6 @@ LegendMode() {
         Reconnect() ; Added Disconnect Check
         StoryMovement()
     }
-
-    ; Closes Player leaderboard
-    FixClick(640, 70)
-    Sleep(500)
 
     FixClick(25, 225) ; Create Room
     Sleep(1000)
@@ -324,7 +314,7 @@ HandleDefaultMode() {
 
 StoryMovement() {
     FixClick(65, 335)
-    Sleep (1000)
+    Sleep (200)
     FixClick(400, 300)
     Sleep (1000)
 }
@@ -497,10 +487,6 @@ GetRandomAct() {
 
 StartLegend(map, act) {
     AddToLog("Selecting map: " map " and act: " act)
-    
-    ; Closes Player leaderboard
-    FixClick(640, 70)
-    Sleep(500)
 
     FixClick(22, 227) ; Create Room
     Sleep(500)
@@ -568,10 +554,6 @@ StartBossEvent() {
 
 StartRaid(map, act) {
     AddToLog("Selecting map: " map " and act: " act)
-    
-    ; Closes Player leaderboard
-    FixClick(640, 70)
-    Sleep(500)
 
     ; Get Story map 
     RaidMap := GetMapData("RaidMap", map)
@@ -836,11 +818,11 @@ CheckLoaded() {
         if (ok := FindText(&X, &Y, 609, 463, 723, 495, 0.05, 0.20, UnitManagerBack)) {
             AddToLog("Unit Manager is open - closing it")
             SendInput("{T}")
+            FixClick(665, 450)
             Sleep(1000)
         }
         
-        ; Check for vote screen
-        if (ok := FindText(&X, &Y, 355, 168, 450, 196, 0, 0, VoteStart) or PixelGetColor(492, 47) = 0x5ED800) {
+        if (ok := FindText(&X, &Y, 355, 168, 450, 196, 0.05, 0.20, VoteStart) or PixelGetColor(381, 47) = 0x5ED800) {
             AddToLog("Successfully Loaded In")
             Sleep(1000)
             break
