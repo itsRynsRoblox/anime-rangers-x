@@ -14,6 +14,7 @@ global mode := ""
 global StartTime := A_TickCount 
 global stageStartTime := A_TickCount
 global macroStartTime := A_TickCount
+global webhookSendTime := A_TickCount
 
 if (!FileExist("Settings")) {
     DirCreate("Settings")

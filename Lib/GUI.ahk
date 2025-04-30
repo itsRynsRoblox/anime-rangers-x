@@ -336,9 +336,14 @@ global AutoPlay := arMainUI.Add("CheckBox", "x808 y615 cffffff", "Auto Summon")
 
 global ShouldUpgradeUnits := arMainUI.Add("CheckBox", "x928 y615 cffffff", "Auto Upgrade")
 global ChallengeBox := arMainUI.Add("CheckBox", "x1180 y615 cffffff", "Farm Ranger Stages")
-; General Settings
+
+; Extra Settings
 LobbySleepText := arMainUI.Add("Text", "x818 y123.5 w130 h20 +Center Hidden", "Lobby Sleep Timer")
 global LobbySleepTimer := arMainUI.Add("DropDownList", "x950 y120 w100 h180 Hidden Choose1", ["No Delay", "5 Seconds", "10 Seconds", "15 Seconds", "20 Seconds", "25 Seconds", "30 Seconds", "35 Seconds", "40 Seconds", "45 Seconds", "50 Seconds", "55 Seconds", "60 Seconds"])
+
+WebhookSleepText := arMainUI.Add("Text", "x818 y163.5 w130 h20 +Center Hidden", "Webhook Timer")
+global WebhookSleepTimer := arMainUI.Add("DropDownList", "x950 y160 w100 h180 Hidden Choose1", ["No Delay", "1 minute", "3 minutes", "5 minutes", "10 minutes"])
+
 
 StoryDifficultyText := arMainUI.Add("Text", "x890 y585 w80 h20 +Center", "Difficulty")
 global StoryDifficulty := arMainUI.Add("DropDownList", "x970 y580 w100 h180 Choose1", ["Normal", "Hard", "Nightmare"])
@@ -358,7 +363,7 @@ global MiscSettings := arMainUI.Add("GroupBox", "x808 y85 w550 h296 +Center Hidd
 ;--------------MODE SELECT;--------------MODE SELECT;--------------MODE SELECT;--------------MODE SELECT;--------------MODE SELECT;--------------MODE SELECT
 global modeSelectionGroup := arMainUI.Add("GroupBox", "x808 y38 w500 h45 Background" uiTheme[2], "Mode Select")
 arMainUI.SetFont("s10 c" uiTheme[6])
-global ModeDropdown := arMainUI.Add("DropDownList", "x818 y53 w140 h180 Choose0 +Center", ["Story", "Boss Event", "Challenge", "Easter Event"])
+global ModeDropdown := arMainUI.Add("DropDownList", "x818 y53 w140 h180 Choose0 +Center", ["Story", "Challenge", "Easter Event"])
 global StoryDropdown := arMainUI.Add("DropDownList", "x968 y53 w150 h180 Choose0 +Center", ["Voocha Village", "Green Planet", "Demon Forest", "Leaf Village", "Z City"])
 global StoryActDropdown := arMainUI.Add("DropDownList", "x1128 y53 w80 h180 Choose0 +Center", ["Act 1", "Act 2", "Act 3", "Act 4", "Act 5", "Act 6", "Act 7", "Act 8", "Act 9", "Act 10"])
 global LegendDropDown := arMainUI.Add("DropDownlist", "x968 y53 w150 h180 Choose0 +Center", [""] )
@@ -738,11 +743,15 @@ ShowSettings(*) {
             MiscSettings.Visible := true
             LobbySleepText.Visible := true
             LobbySleepTimer.Visible := true
+            WebhookSleepText.Visible := true
+            WebhookSleepTimer.Visible := true
             unitCardsVisible := false
         } else {
             MiscSettings.Visible := false
             LobbySleepText.Visible := false
             LobbySleepTimer.Visible := false
+            WebhookSleepText.Visible := false
+            WebhookSleepTimer.Visible := false
             ShowUnitCards()
             unitCardsVisible := true
         }

@@ -27,7 +27,7 @@ readInSettings() {
     global enabled1, enabled2, enabled3, enabled4, enabled5, enabled6
     global placement1, placement2, placement3, placement4, placement5, placement6
     global upgradeEnabled1, upgradeEnabled2, upgradeEnabled3, upgradeEnabled4, upgradeEnabled5, upgradeEnabled6
-    global AutoPlay, ShouldUpgradeUnits
+    global AutoPlay, ShouldUpgradeUnits, LobbySleepTimer, WebhookSleepTimer
 
     try {
         settingsFile := setupFilePath()
@@ -74,6 +74,8 @@ readInSettings() {
                 case "Difficulty": StoryDifficulty.Value := parts[2] ; Set the dropdown value
                 case "Play": AutoPlay.Value := parts[2] ; Set the checkbox value
                 case "Upgrade": ShouldUpgradeUnits.Value := parts[2] ; Set the checkbox value
+                case "LobbyDelay": LobbySleepTimer.Value := parts[2]
+                case "WebhookDelay": WebhookSleepTimer.Value := parts[2]
             }
         }
         AddToLog("Configuration settings loaded successfully")
@@ -96,7 +98,7 @@ SaveSettings(*) {
     global enabled1, enabled2, enabled3, enabled4, enabled5, enabled6
     global placement1, placement2, placement3, placement4, placement5, placement6
     global upgradeEnabled1, upgradeEnabled2, upgradeEnabled3, upgradeEnabled4, upgradeEnabled5, upgradeEnabled6
-    global AutoPlay, ShouldUpgradeUnits
+    global AutoPlay, ShouldUpgradeUnits, LobbySleepTimer, WebhookSleepTimer
 
     try {
         settingsFile := A_ScriptDir "\Settings\Configuration.txt"
@@ -160,6 +162,12 @@ SaveSettings(*) {
         Loop 6 {
             content .= "`nUpgradeEnabled" A_Index "=" UpgradeEnabled%A_Index%.Value
         }
+
+        content .= "`n`n[Lobby]"
+        content .= "`nLobbyDelay=" LobbySleepTimer.Value
+
+        content .= "`n`n[Webhook]"
+        content .= "`nWebhookDelay=" WebhookSleepTimer.Value
 
         FileAppend(content, settingsFile)
         AddToLog("Configuration settings saved successfully")

@@ -47,3 +47,9 @@ UpgradeEnabled3=1
 UpgradeEnabled4=1
 UpgradeEnabled5=1
 UpgradeEnabled6=1
+
+[Lobby]
+LobbyDelay=2
+
+[Webhook]
+WebhookDelay=2

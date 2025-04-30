@@ -217,7 +217,7 @@ RaidMode() {
 
 MonitorEndScreen() {
     global challengeStartTime, inChallengeMode, challengeStageCount, challengeMapIndex, challengeMapList
-    global Wins, loss, stageStartTime, shouldSkipWebhook, lastResult
+    global Wins, loss, stageStartTime, shouldSkipWebhook, lastResult, webhookSendTime
 
     isWin := false
     stageEndTime := A_TickCount
@@ -244,20 +244,15 @@ MonitorEndScreen() {
     (isWin ? Wins += 1 : loss += 1)
     Sleep(1000)
 
-    ; ─── Webhook Section ───
-    if (!shouldSkipWebhook) {
+    if ((A_TickCount - webhookSendTime) >= GetWebhookDelay()) { ; Custom cooldown
         try {
             SendWebhookWithTime(isWin, stageLength)
-            AddToLog("Webhook sent successfully, skipping next.")
         } catch {
-            AddToLog("Error: Unable to send webhook. Skipping next.")
-            shouldSkipWebhook := true  ; Backoff in case of failure
+            AddToLog("Error: Unable to send webhook.")
         }
     } else {
-        AddToLog("Webhook was skipped, will send next time.")
-        shouldSkipWebhook := false  ; Reset flag
+        UpdateStreak(isWin) ; Needed for webhook
     }
-
     ; ─── End-of-Stage Handling Loop ───
     if (inChallengeMode) {
         challengeStageCount++
@@ -370,7 +365,10 @@ EasterMovement() {
     Sleep (1000)
     SendInput ("{E}")
     Sleep (2000)
-    if (FindText(&X, &Y, 400, 375, 508, 404, 0.05, 0.20, BossPlayText)) {
+    if (FindText(&X, &Y, 343, 467, 461, 496, 0.05, 0.20, Back)) {
+        AddToLog("Correct angle, starting Easter...")
+    } else {
+        AddToLog("Wrong spawn angle, retrying...")
         FixClick(25, 325) ; Click Areas
         Sleep (1000)
         FixClick(357, 225) ; Teleport To Lobby
@@ -1137,4 +1135,12 @@ UnitUpgradePoints() {
     }
 
     return points
+}
+
+GetWebhookDelay() {
+    speeds := [0, 60000, 180000, 300000, 600000]  ; Array of sleep values
+    speedIndex := WebhookSleepTimer.Value  ; Get the selected speed value
+
+    if speedIndex is number  ; Ensure it's a number
+        return speeds[speedIndex]  ; Use the value directly from the array
 }
