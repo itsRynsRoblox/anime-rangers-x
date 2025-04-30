@@ -303,17 +303,13 @@ MonitorEndScreen() {
 
 HandleStoryMode() {
     global lastResult
-    if (ReturnLobbyBox.Value) {
-        ClickReturnToLobby()
-        return CheckLobby()
+
+    if (lastResult "win" && NextLevelBox.Value) {
+        ClickNextLevel()
     } else {
-        if (lastResult "win" && NextLevelBox.Value) {
-            ClickNextLevel()
-        } else {
-            ClickReplay()
-        }
-        return RestartStage()
+        ClickReplay()
     }
+    return RestartStage()
 }
 
 HandleDefaultMode() {

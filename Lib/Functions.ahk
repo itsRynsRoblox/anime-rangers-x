@@ -145,6 +145,7 @@ OnConfirmClick(*) {
     else if (ModeDropdown.Text = "Easter Event") {
         mode := "Easter Event"
         AddToLog("Selected Easter Event")
+        ReturnLobbyBox.Visible := true
     }
     ; For Legend mode, check if both Legend and Act are selected
     else if (ModeDropdown.Text = "Legend") {

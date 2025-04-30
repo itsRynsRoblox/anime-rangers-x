@@ -10,7 +10,7 @@ Matchmake=1
 Challenge=1
 
 [ReturnToLobby]
-ToLobby=1
+ToLobby=0
 
 [NextLevel]
 Next=0
