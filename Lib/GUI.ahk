@@ -6,7 +6,7 @@
 ;Update Checker
 global repoOwner := "itsRynsRoblox"
 global repoName := "anime-rangers-x "
-global currentVersion := "1.2.2"
+global currentVersion := "1.2.3"
 
 ; Basic Application Info
 global aaTitle := "Ryn's Anime Rangers X "
@@ -344,6 +344,8 @@ global LobbySleepTimer := arMainUI.Add("DropDownList", "x950 y120 w100 h180 Hidd
 WebhookSleepText := arMainUI.Add("Text", "x818 y163.5 w130 h20 +Center Hidden", "Webhook Timer")
 global WebhookSleepTimer := arMainUI.Add("DropDownList", "x950 y160 w100 h180 Hidden Choose1", ["No Delay", "1 minute", "3 minutes", "5 minutes", "10 minutes"])
 
+UpgradeClicksText := arMainUI.Add("Text", "x818 y203.5 w130 h20 +Center Hidden", "Upgrade Clicks")
+global UpgradeClicks := arMainUI.Add("DropDownList", "x950 y200 w100 h180 Hidden Choose1", ["1", "2", "3", "4", "5", "7", "8", "9", "10"])
 
 StoryDifficultyText := arMainUI.Add("Text", "x890 y585 w80 h20 +Center", "Difficulty")
 global StoryDifficulty := arMainUI.Add("DropDownList", "x970 y580 w100 h180 Choose1", ["Normal", "Hard", "Nightmare"])
@@ -745,6 +747,8 @@ ShowSettings(*) {
             LobbySleepTimer.Visible := true
             WebhookSleepText.Visible := true
             WebhookSleepTimer.Visible := true
+            UpgradeClicksText.Visible := true
+            UpgradeClicks.Visible := true
             unitCardsVisible := false
         } else {
             MiscSettings.Visible := false
@@ -752,6 +756,8 @@ ShowSettings(*) {
             LobbySleepTimer.Visible := false
             WebhookSleepText.Visible := false
             WebhookSleepTimer.Visible := false
+            UpgradeClicksText.Visible := false
+            UpgradeClicks.Visible := false
             ShowUnitCards()
             unitCardsVisible := true
         }

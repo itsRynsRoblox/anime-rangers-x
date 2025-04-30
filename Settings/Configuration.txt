@@ -7,7 +7,7 @@ Sleep=2
 Matchmake=1
 
 [AutoChallenge]
-Challenge=1
+Challenge=0
 
 [ReturnToLobby]
 ToLobby=0
@@ -53,3 +53,5 @@ LobbyDelay=2
 
 [Webhook]
 WebhookDelay=2
+[Upgrading]
+UpgradeClicks=1

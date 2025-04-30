@@ -26,7 +26,7 @@ readInSettings() {
     ;Unit Settings
     global enabled1, enabled2, enabled3, enabled4, enabled5, enabled6
     global placement1, placement2, placement3, placement4, placement5, placement6
-    global upgradeEnabled1, upgradeEnabled2, upgradeEnabled3, upgradeEnabled4, upgradeEnabled5, upgradeEnabled6
+    global upgradeEnabled1, upgradeEnabled2, upgradeEnabled3, upgradeEnabled4, upgradeEnabled5, upgradeEnabled6, UpgradeClicks
     global AutoPlay, ShouldUpgradeUnits, LobbySleepTimer, WebhookSleepTimer
 
     try {
@@ -76,6 +76,7 @@ readInSettings() {
                 case "Upgrade": ShouldUpgradeUnits.Value := parts[2] ; Set the checkbox value
                 case "LobbyDelay": LobbySleepTimer.Value := parts[2]
                 case "WebhookDelay": WebhookSleepTimer.Value := parts[2]
+                case "UpgradeClicks": UpgradeClicks.Value := parts[2]
             }
         }
         AddToLog("Configuration settings loaded successfully")
@@ -97,7 +98,7 @@ SaveSettings(*) {
     ;Unit Settings
     global enabled1, enabled2, enabled3, enabled4, enabled5, enabled6
     global placement1, placement2, placement3, placement4, placement5, placement6
-    global upgradeEnabled1, upgradeEnabled2, upgradeEnabled3, upgradeEnabled4, upgradeEnabled5, upgradeEnabled6
+    global upgradeEnabled1, upgradeEnabled2, upgradeEnabled3, upgradeEnabled4, upgradeEnabled5, upgradeEnabled6, UpgradeClicks
     global AutoPlay, ShouldUpgradeUnits, LobbySleepTimer, WebhookSleepTimer
 
     try {
@@ -168,6 +169,9 @@ SaveSettings(*) {
 
         content .= "`n`n[Webhook]"
         content .= "`nWebhookDelay=" WebhookSleepTimer.Value
+
+        content .= "`n[Upgrading]"
+        content .= "`nUpgradeClicks=" UpgradeClicks.Value
 
         FileAppend(content, settingsFile)
         AddToLog("Configuration settings saved successfully")

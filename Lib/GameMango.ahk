@@ -65,6 +65,7 @@ StoryMode() {
         Reconnect() ; Added Disconnect Check
         StoryMovement()
     }
+
     FixClick(25, 225) ; Create Room
     Sleep(1000)
 
@@ -1017,8 +1018,10 @@ SummonUnits() {
             point := (pointIndex <= upgradePoints.Length) ? upgradePoints[pointIndex] : ""
 
             if (upgradeUnits && point) {
-                FixClick(point.x, point.y)
-                Sleep 50
+                loop UpgradeClicks.Value {
+                    FixClick(point.x, point.y)
+                    Sleep 50
+                }
             }
              else if (AutoPlay.Value) {
                 return MonitorEndScreen() ; If not upgrading, just monitor the stage
