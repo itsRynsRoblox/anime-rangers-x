@@ -5,7 +5,7 @@ global macroStartTime := A_TickCount
 global stageStartTime := A_TickCount
 
 global currentMap := ""
-global shouldSkipWebhook := false
+global checkForUnitManager := true
 
 LoadKeybindSettings()  ; Load saved keybinds
 Hotkey(F1Key, (*) => moveRobloxWindow())    
@@ -208,11 +208,9 @@ RaidMode() {
 
 MonitorEndScreen() {
     global challengeStartTime, inChallengeMode, challengeStageCount, challengeMapIndex, challengeMapList
-    global Wins, loss, stageStartTime, shouldSkipWebhook, lastResult, webhookSendTime
+    global Wins, loss, stageStartTime, lastResult, webhookSendTime
 
     isWin := false
-    stageEndTime := A_TickCount
-    stageLength := FormatStageTime(stageEndTime - stageStartTime)
 
     ; Wait for XP to appear or reconnect if necessary
     while !CheckForXp() {
@@ -220,6 +218,9 @@ MonitorEndScreen() {
         Reconnect()
         Sleep(1000)
     }
+
+    stageEndTime := A_TickCount
+    stageLength := FormatStageTime(stageEndTime - stageStartTime)
 
     CloseChat()
 
@@ -238,6 +239,7 @@ MonitorEndScreen() {
     if ((A_TickCount - webhookSendTime) >= GetWebhookDelay()) { ; Custom cooldown
         try {
             SendWebhookWithTime(isWin, stageLength)
+            webhookSendTime := A_TickCount
         } catch {
             AddToLog("Error: Unable to send webhook.")
         }
@@ -295,7 +297,7 @@ MonitorEndScreen() {
 HandleStoryMode() {
     global lastResult
 
-    if (lastResult "win" && NextLevelBox.Value) {
+    if (lastResult "win" && NextLevelBox.Value && NextLevelBox.Visible) {
         ClickNextLevel()
     } else {
         ClickReplay()
@@ -304,7 +306,7 @@ HandleStoryMode() {
 }
 
 HandleDefaultMode() {
-    if (ReturnLobbyBox.Value) {
+    if (ReturnLobbyBox.Visible && ReturnLobbyBox.Value) {
         ClickReturnToLobby()
         return CheckLobby()
     } else {
@@ -675,15 +677,15 @@ DetectMap() {
 }
     
 RestartStage() {
-    global currentMap
-
-    FindText
+    global currentMap, checkForUnitManager
 
     if (currentMap = "") {
         currentMap := DetectMap()
     } else {
         AddToLog("Current Map: " currentMap)
     }
+
+    checkForUnitManager := true
 
     ; Wait for loading
     CheckLoaded()
@@ -810,20 +812,21 @@ CheckLobby() {
 }
 
 CheckLoaded() {
+    global checkForUnitManager
     startTime := A_TickCount
     timeout := 120 * 1000 ; Convert to milliseconds
 
     loop {
         Sleep(1000)
 
-        if (ok := FindText(&X, &Y, 609, 463, 723, 495, 0.05, 0.20, UnitManagerBack)) {
-            AddToLog("Unit Manager is open - closing it")
-            SendInput("{T}")
-            FixClick(665, 450)
-            Sleep(1000)
+        if (checkForUnitManager) {
+            if (ok := FindText(&X, &Y, 609, 463, 723, 495, 0.10, 0.20, UnitManagerBack)) {
+                AddToLog("Unit Manager found, game is loaded.")
+                break
+            }
         }
         
-        if (ok := FindText(&X, &Y, 355, 168, 450, 196, 0.05, 0.20, VoteStart) or PixelGetColor(381, 47) = 0x5ED800) {
+        if (ok := FindText(&X, &Y, 355, 168, 450, 196, 0.05, 0.20, VoteStart) or PixelGetColor(381, 47, "RGB") = 0x5ED800) {
             AddToLog("Successfully Loaded In")
             Sleep(1000)
             break
@@ -835,21 +838,24 @@ CheckLoaded() {
             return RejoinPrivateServer()
         }
 
+        ClickThroughDrops()
+
         Reconnect()
     }
 }
 
 StartedGame() {
+    global stageStartTime
     loop {
         Sleep(1000)
-        if (ok := FindText(&X, &Y, 355, 168, 450, 196, 0, 0, VoteStart)) {
+        if (ok := FindText(&X, &Y, 355, 168, 450, 196, 0.10, 0.10, VoteStart)) {
             FixClick(401, 149)
             continue  ; Keep waiting if vote screen is still there
         }
         
         ; If we don't see vote screen anymore the game has started
         AddToLog("Game started")
-        global stageStartTime := A_TickCount
+        stageStartTime := A_TickCount
         break
     }
 }
@@ -970,6 +976,7 @@ GetPlacementOrder() {
 }
 
 SummonUnits() {
+    global checkForUnitManager
     upgradePoints := UnitUpgradePoints()
     pointIndex := 1
     upgradeUnits := ShouldUpgradeUnits.Value
@@ -998,55 +1005,80 @@ SummonUnits() {
     }
 
     if (upgradeUnits && upgradePoints.Length > 0) {
-        if (ok := !FindText(&X, &Y, 609, 463, 723, 495, 0.05, 0.20, UnitManagerBack)) {
-            AddToLog("Unit Manager isn't open - trying to open it")
-            Loop {
-                ; Check if the Unit Manager is still open
-                if (ok := !FindText(&X, &Y, 609, 463, 723, 495, 0.05, 0.20, UnitManagerBack)) {
-                    SendInput("{T}")
-                    Sleep(1000)  ; Wait for the Unit Manager to open
-                } else {
-                    AddToLog("Unit Manager is open")
-                    break  ; Exit the loop once the Unit Manager is open
+        if (checkForUnitManager) {
+            if (ok := !FindText(&X, &Y, 609, 463, 723, 495, 0.10, 0.20, UnitManagerBack)) {
+                AddToLog("Unit Manager isn't open - trying to open it")
+                Loop {
+                    if (CheckForVoteScreen()) {
+                        FixClick(401, 149) ; Added for when game tweaks out
+                    }
+                    ; Check if the Unit Manager is still open
+                    if (ok := !FindText(&X, &Y, 609, 463, 723, 495, 0.10, 0.20, UnitManagerBack)) {
+                        SendInput("{T}")
+                        Sleep(1000)  ; Wait for the Unit Manager to open
+                    } else {
+                        AddToLog("Unit Manager is open")
+                        checkForUnitManager := false
+                        break  ; Exit the loop once the Unit Manager is open
+                    }
                 }
             }
         }
     }
     
+    lastScrollGroup := "" ; Tracks whether we're currently scrolled "top" or "bottom"
+
     while true {
         for slotIndex, slotNum in enabledSlots {
             point := (pointIndex <= upgradePoints.Length) ? upgradePoints[pointIndex] : ""
-
+    
+            if (ModeDropdown.Text = "Challenge") {
+                if (CheckForVoteScreen()) {
+                    FixClick(401, 149)
+                }
+            }
+    
             if (upgradeUnits && point) {
+                currentGroup := ([1, 2, 3].Has(slotNum)) ? "top" : "bottom"
+    
+                if (currentGroup != lastScrollGroup) {
+                    if (currentGroup = "top") {
+                        ScrollToTop()
+                    } else {
+                        ScrollToBottom()
+                    }
+                    lastScrollGroup := currentGroup
+                    Sleep(200)
+                }
+    
                 loop UpgradeClicks.Value {
                     FixClick(point.x, point.y)
                     Sleep 50
                 }
-            }
-             else if (AutoPlay.Value) {
+    
+            } else if (AutoPlay.Value) {
                 return MonitorEndScreen() ; If not upgrading, just monitor the stage
             }
-            
+    
             if (!AutoPlay.Value) {
                 SendInput("{" slotNum "}")
                 Sleep 50
             }
-
+    
             if CheckForXp() {
                 return MonitorEndScreen()
             }
-
+    
             Reconnect()
-            Sleep(500) ; Prevent spamming
-
-            ; Move to the next upgrade point, loop back if at the end
+            Sleep(500)
+    
             pointIndex++
             if (pointIndex > upgradePoints.Length) {
                 pointIndex := 1
             }
         }
-    }
-}
+    }    
+}    
 
 UseUnitPoints() {
     ; Define all possible points
@@ -1116,12 +1148,4 @@ UnitUpgradePoints() {
     }
 
     return points
-}
-
-GetWebhookDelay() {
-    speeds := [0, 60000, 180000, 300000, 600000]  ; Array of sleep values
-    speedIndex := WebhookSleepTimer.Value  ; Get the selected speed value
-
-    if speedIndex is number  ; Ensure it's a number
-        return speeds[speedIndex]  ; Use the value directly from the array
 }

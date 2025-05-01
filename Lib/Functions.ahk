@@ -324,7 +324,7 @@ ScrollToBottom() {
 ScrollToTop() {
     loop 3 {
         SendInput("{WheelUp}")
-        Sleep(250)
+        Sleep(50)
     }
 }
 
@@ -390,5 +390,19 @@ RightClickUntilGone(x, y, searchX1, searchY1, searchX2, searchY2, textToFind, of
             FixClick(x, y, "Right") 
         }
         Sleep(1000)
+    }
+}
+
+GetWebhookDelay() {
+    speeds := [0, 60000, 180000, 300000, 600000]  ; Array of sleep values
+    speedIndex := WebhookSleepTimer.Value  ; Get the selected speed value
+
+    if speedIndex is number  ; Ensure it's a number
+        return speeds[speedIndex]  ; Use the value directly from the array
+}
+
+CheckForVoteScreen() {
+    if (ok := FindText(&X, &Y, 355, 168, 450, 196, 0.10, 0.10, VoteStart)) {
+        return true
     }
 }

@@ -6,7 +6,7 @@
 ;Update Checker
 global repoOwner := "itsRynsRoblox"
 global repoName := "anime-rangers-x "
-global currentVersion := "1.2.3"
+global currentVersion := "1.2.9"
 
 ; Basic Application Info
 global aaTitle := "Ryn's Anime Rangers X "
@@ -44,6 +44,7 @@ global challengeMapIndex := 1
 global firstStartup := true
 global challengeMapList := ["Voocha Village", "Green Planet", "Demon Forest", "Leaf Village", "Z City"]
 ;Gui creation
+global currentTheme := "Red"
 global uiBorders := []
 global uiBackgrounds := []
 global uiTheme := []
@@ -345,7 +346,7 @@ WebhookSleepText := arMainUI.Add("Text", "x818 y163.5 w130 h20 +Center Hidden", 
 global WebhookSleepTimer := arMainUI.Add("DropDownList", "x950 y160 w100 h180 Hidden Choose1", ["No Delay", "1 minute", "3 minutes", "5 minutes", "10 minutes"])
 
 UpgradeClicksText := arMainUI.Add("Text", "x818 y203.5 w130 h20 +Center Hidden", "Upgrade Clicks")
-global UpgradeClicks := arMainUI.Add("DropDownList", "x950 y200 w100 h180 Hidden Choose1", ["1", "2", "3", "4", "5", "7", "8", "9", "10"])
+global UpgradeClicks := arMainUI.Add("Edit", "x950 y200 w100 Hidden cBlack Number", "1")
 
 StoryDifficultyText := arMainUI.Add("Text", "x890 y585 w80 h20 +Center", "Difficulty")
 global StoryDifficulty := arMainUI.Add("DropDownList", "x970 y580 w100 h180 Choose1", ["Normal", "Hard", "Nightmare"])
