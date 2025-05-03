@@ -6,7 +6,7 @@
 ;Update Checker
 global repoOwner := "itsRynsRoblox"
 global repoName := "anime-rangers-x "
-global currentVersion := "1.3.0"
+global currentVersion := "1.3.8"
 
 ; Basic Application Info
 global aaTitle := "Ryn's Anime Rangers X "
@@ -70,7 +70,7 @@ global SendActivityLogsFile := "Settings\SendActivityLogs.txt"
 
 ;Custom Pictures
 GithubImage := "Images\github-logo.png"
-DiscordImage := "Images\another_discord.png"
+DiscordImage := "Images\discord_logo.png"
 
 if !DirExist(A_ScriptDir "\Logs") {
     DirCreate(A_ScriptDir "\Logs")
@@ -222,11 +222,14 @@ OpenDebug(*) {
     MouseMovementChecker := DebugGUI.Add("Button", "x40 y140 w200 cWhite +Center", "Mouse")
     MouseMovementChecker.OnEvent("Click", (*) => MouseMovementDebug())
 
-    FindTextWorkingChecker := DebugGUI.Add("Button", "x40 y220 w200 cWhite +Center", "FindText")
+    FindTextWorkingChecker := DebugGUI.Add("Button", "x40 y220 w200 cWhite +Center", "Find Text")
     FindTextWorkingChecker.OnEvent("Click", (*) => OpenFindTextDebug())
 
-    ImageSearchDebugChecker := DebugGUI.Add("Button", "x40 y300 w200 cWhite +Center", "ImageSearch")
+    ImageSearchDebugChecker := DebugGUI.Add("Button", "x40 y300 w200 cWhite +Center", "Image Search")
     ImageSearchDebugChecker.OnEvent("Click", (*) => ImageSearchDebug())
+
+    ReconnectChecker := DebugGUI.Add("Button", "x40 y380 w200 cWhite +Center", "Rejoin Game/Private Server")
+    ReconnectChecker.OnEvent("Click", (*) => RejoinPrivateServer(true))
 
     DebugGUI.SetFont("s8 bold", "Segoe UI")
     DebugGUI.Add("Text"," x25 y100 cwhite +Center", "Check If Your Computer Settings Are Correct")
@@ -616,7 +619,7 @@ OpenFindTextDebug(*) {
     GuideGUI.MarginX := 20
     GuideGUI.MarginY := 20
 
-    FindTextDropdown := GuideGUI.Add("DropDownList", "x60 y50 w100 h180", ["Create Room", "Boss Event", "Unit Manager"])
+    FindTextDropdown := GuideGUI.Add("DropDownList", "x50 y50 w120 h180", ["Create Room", "Unit Manager", "Vote Screen"])
     FindTextDebugButton.OnEvent("Click", (*) => TestFindText(FindTextDropdown.Text))
 
     GuideGUI.Show()
@@ -633,15 +636,15 @@ TestFindText(text := "") {
             return true
         }
     }
-    else if (text = "Boss Event") {
-        if (FindText(&X, &Y, 400, 375, 508, 404, 0.05, 0.20, BossPlayText)) {
+    else if (text = "Unit Manager") {
+        if (FindText(&X, &Y, 609, 463, 723, 495, 0.05, 0.20, UnitManagerBack)) {
             AddToLog("Found the FindText() for " text)
             FixClick(X, Y - 35, "Right")
             return true
         }
     }
-    else if (text = "Unit Manager") {
-        if (FindText(&X, &Y, 609, 463, 723, 495, 0.05, 0.20, UnitManagerBack)) {
+    else if (text = "Vote Screen") {
+        if (FindText(&X, &Y, 355, 168, 450, 196, 0.10, 0.10, VoteStart)) {
             AddToLog("Found the FindText() for " text)
             FixClick(X, Y - 35, "Right")
             return true

@@ -403,6 +403,7 @@ GetWebhookDelay() {
 
 CheckForVoteScreen() {
     if (ok := FindText(&X, &Y, 355, 168, 450, 196, 0.10, 0.10, VoteStart)) {
+        FixClick(400, 150)
         return true
     }
 }

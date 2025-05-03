@@ -138,14 +138,20 @@ class JSON {
 				case "Integer":
 					return S
 				case "String":
-					S := StrReplace(S, "\", "\\")
-					S := StrReplace(S, "`t", "\t")
-					S := StrReplace(S, "`r", "\r")
-					S := StrReplace(S, "`n", "\n")
-					S := StrReplace(S, "`b", "\b")
-					S := StrReplace(S, "`f", "\f")
-					S := StrReplace(S, "`v", "\v")
-					S := StrReplace(S, '"', '\"')
+					; Ensure we're working with a string
+					if !(S is String)
+						S := StrPtr(S) ? StrGet(S) : ""
+				
+					; Escape special characters safely for JSON
+					S := RegExReplace(S, "\\", "\\\\")     ; backslash
+					S := RegExReplace(S, '"', '\"')        ; double quote
+					S := RegExReplace(S, "`r", "\r")       ; carriage return
+					S := RegExReplace(S, "`n", "\n")       ; line feed
+					S := RegExReplace(S, "`t", "\t")       ; tab
+					S := RegExReplace(S, "`b", "\b")       ; backspace
+					S := RegExReplace(S, "`f", "\f")       ; form feed
+					S := RegExReplace(S, "`v", "\v")       ; vertical tab (non-standard in JSON but preserved if used)
+				
 					return '"' S '"'
 				default:
 					return S == this.true ? "true" : S == this.false ? "false" : "null"

@@ -144,19 +144,15 @@ SendWebhookWithTime(isWin, stageLength) {
     ; Update streak
     UpdateStreak(isWin)
 
-    if (WebhookURL = "") {
-        if !LoadWebhookURL() {
-            AddToLog("No webhook configured - skipping webhook")
-            return ; Just return if no webhook file
-        } else {
-            if (debugMessages) {
-                AddToLog("Webhook URL loaded successfully")
-            }
+    ; Initialize webhook
+    if !EnsureWebhookBuilt() {
+        AddToLog("No webhook configured - skipping webhook")
+        return
+    } else {
+        if (debugMessages) {
+            AddToLog("Webhook built successfully!")
         }
     }
-    
-    ; Initialize webhook
-    webhook := WebHookBuilder(WebhookURL)
     
     ; Calculate macro runtime (total time)
     macroLength := FormatStageTime(A_TickCount - macroStartTime)
@@ -286,13 +282,23 @@ TextWebhook() {
 }
 
 WebhookLog() {
-    global WebhookURL := FileRead(WebhookURLFile, "UTF-8")
-    global DiscordUserID := FileRead(DiscordUserIDFile, "UTF-8")
+    global WebhookURLFile, DiscordUserIDFile, debugMessages
+    global WebhookURL := WebhookURL ?? ""
+    global webhook := webhook ?? ""
 
-    if (webhookURL ~= 'i)https?:\/\/discord\.com\/api\/webhooks\/(\d{18,19})\/[\w-]{68}') {
-        global webhook := WebHookBuilder(WebhookURL)
+    ; Load URL and ID if not yet loaded
+    if (WebhookURL = "") {
+        try WebhookURL := FileRead(WebhookURLFile, "UTF-8")
+    }
+
+    ; Validate webhook
+    if (WebhookURL ~= 'i)^https?://discord\.com/api/webhooks/\d{18,19}/[\w-]{68}$') {
+        ; Only build webhook if it's not already cached
+        EnsureWebhookBuilt()
         TextWebhook()
-    } 
+    } else if (debugMessages) {
+        AddToLog("Invalid or missing webhook URL")
+    }
 }
 
 SaveWebhookBtnClick() {
@@ -303,7 +309,7 @@ SaveWebhookBtnClick() {
 
 ;Discord webhooks, above
 WebhookScreenshot(title, description, color := 0x0dffff, status := "") {
-    global webhook, WebhookURL, DiscordUserID, wins, loss, currentStreak, stageStartTime
+    global webhook, WebhookURL, wins, loss, currentStreak, stageStartTime
 
     footerMessages := Map(
         "win", win_messages,
@@ -316,16 +322,11 @@ WebhookScreenshot(title, description, color := 0x0dffff, status := "") {
         "long_lose", long_lose_messages
     )
 
-    global webhook := WebHookBuilder(WebhookURL)
-    global WebhookURL := FileRead(WebhookURLFile, "UTF-8")
-    global DiscordUserID := FileRead(DiscordUserIDFile, "UTF-8")
-    global wins, loss, currentStreak, stageStartTime
-
     if (!IsSet(stageStartTime)) {
         stageStartTime := A_TickCount
     }
 
-    if !(webhookURL ~= 'i)https?:\/\/discord\.com\/api\/webhooks\/(\d{18,19})\/[\w-]{68}') {
+    if !(EnsureWebhookBuilt()) {
         return
     }
 
@@ -365,7 +366,7 @@ WebhookScreenshot(title, description, color := 0x0dffff, status := "") {
         footerText := messages[Random(1, messages.Length)]
     }
 
-    UserIDSent := (DiscordUserID = "") ? "" : "<@" DiscordUserID ">"
+    UserIDSent := ""
 
     ; Initialize GDI+
     pToken := Gdip_Startup()
@@ -482,6 +483,38 @@ LoadWebhookURL() {
     if !(WebhookURL ~= 'i)https?:\/\/discord\.com\/api\/webhooks\/(\d{18,19})\/[\w-]{68}') {
         WebhookURL := ""
         return false
+    }
+    return true
+}
+
+EnsureWebhookBuilt() {
+    global webhook, WebhookURL, WebhookURLFile
+
+    ; Load webhook URL if needed
+    if (WebhookURL = "") {
+        try WebhookURL := FileRead(WebhookURLFile, "UTF-8")
+        catch {
+            if (debugMessages)
+                AddToLog("Failed to read WebhookURLFile")
+            return false
+        }
+    }
+
+    ; Validate the URL
+    if !(WebhookURL ~= 'i)^https?://discord\.com/api/webhooks/\d{18,19}/[\w-]{68}$') {
+        if (debugMessages)
+            AddToLog("Invalid webhook URL")
+        return false
+    }
+
+    ; Build the webhook only once
+    if !(webhook is WebHookBuilder) {
+        try webhook := WebHookBuilder(WebhookURL)
+        catch error {
+            if (debugMessages)
+                AddToLog("Failed to build webhook.")
+            return false
+        }
     }
 
     return true

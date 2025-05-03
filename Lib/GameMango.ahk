@@ -14,7 +14,7 @@ Hotkey(F3Key, (*) => Reload())
 Hotkey(F4Key, (*) => TogglePause())
 
 F5:: {
-    SummonUnits()
+    StartedGame()
 }
 
 F6:: {
@@ -246,6 +246,7 @@ MonitorEndScreen() {
     } else {
         UpdateStreak(isWin) ; Needed for webhook
     }
+
     ; ─── End-of-Stage Handling Loop ───
     if (inChallengeMode) {
         challengeStageCount++
@@ -492,10 +493,10 @@ StartLegend(map, act) {
     AddToLog("Selecting map: " map " and act: " act)
 
     FixClick(22, 227) ; Create Room
-    Sleep(500)
+    Sleep(1000)
 
     FixClick(476, 466) ; Click Legend Stages
-    Sleep(500)
+    Sleep(1000)
 
     ; Get Legend Stage Map 
     LegendMap := GetMapData("LegendMap", map)
@@ -649,7 +650,7 @@ DetectMap() {
         }
 
         ; Check for vote screen
-        if (ok := FindText(&X, &Y, 355, 168, 450, 196, 0, 0, VoteStart) or PixelGetColor(492, 47) = 0x5ED800) {
+        if (ok := FindText(&X, &Y, 355, 168, 450, 196, 0.10, 0.10, VoteStart) or PixelGetColor(492, 47) = 0x5ED800) {
             AddToLog("No Map Found or Movement Unnecessary")
             return "No Map Found"
         }
@@ -692,6 +693,9 @@ RestartStage() {
 
     ; Wait for game to actually start
     StartedGame()
+
+    ; Check for the vote start
+    CheckForVoteScreen()
 
     ;Summon Units
     SummonUnits()
@@ -749,8 +753,8 @@ Reconnect() {
     }
 }
 
-RejoinPrivateServer() {   
-    AddToLog("Attempting To Reconnect To Private Server...")
+RejoinPrivateServer(testing := false) {   
+    AddToLog("Attempting to reconnect to Anime Rangers X...")
 
     psLink := FileExist("Settings\PrivateServer.txt") ? FileRead("Settings\PrivateServer.txt", "UTF-8") : ""
 
@@ -770,12 +774,17 @@ RejoinPrivateServer() {
 
         if WinExist(rblxID) {
             forceRobloxSize()
+            moveRobloxWindow()
             Sleep(1000)
         }
 
         if (ok := FindText(&X, &Y, 47, 342, 83, 374, 0, 0, AreaText)) {
             AddToLog("Reconnected Successfully!")
-            return StartSelectedMode()
+            if (!testing) {
+                return StartSelectedMode()
+            } else {
+                return
+            }
         }
 
         Reconnect()
@@ -826,9 +835,14 @@ CheckLoaded() {
             }
         }
         
-        if (ok := FindText(&X, &Y, 355, 168, 450, 196, 0.05, 0.20, VoteStart) or PixelGetColor(381, 47, "RGB") = 0x5ED800) {
-            AddToLog("Successfully Loaded In")
-            Sleep(1000)
+        if (FindText(&X, &Y, 355, 168, 450, 196, 0.10, 0.10, VoteStart)) {
+            AddToLog("Successfully Loaded In: Vote screen was found.")
+            break
+        } else if (PixelGetColor(381, 47, "RGB") = 0x5ED800) {
+            AddToLog("Successfully Loaded In: Base health was found.")
+            break
+        } else if (FindText(&X, &Y, 12, 594, 32, 615, 0.05, 0.10, InGameSettings)) {
+            AddToLog("Successfully Loaded In: Settings cogwheel was found.")
             break
         }
 
@@ -846,17 +860,44 @@ CheckLoaded() {
 
 StartedGame() {
     global stageStartTime
+
+    ; Record the start time for the 2-second wait period
+    startTime := A_TickCount
+    foundVote := false
+
     loop {
-        Sleep(1000)
+        ; Sleep for a shorter period (e.g., 100ms) to keep checking within 2 seconds
+        Sleep(100)
+
+        ; Check if the vote screen is still visible
         if (ok := FindText(&X, &Y, 355, 168, 450, 196, 0.10, 0.10, VoteStart)) {
-            FixClick(401, 149)
+            ; Click to fix the vote screen if it's visible
+            FixClick(400, 150)
+            
+            ; Reset the timer if it's still visible
+            startTime := A_TickCount
+            foundVote := true
             continue  ; Keep waiting if vote screen is still there
         }
         
-        ; If we don't see vote screen anymore the game has started
-        AddToLog("Game started")
-        stageStartTime := A_TickCount
-        break
+        ; If the vote screen is no longer visible and 2 seconds have passed
+        if (A_TickCount - startTime >= 2000) {
+            ; Click and proceed with game start logic after 2 seconds
+            FixClick(400, 150) ; For those who can't follow a simple setup guide
+
+            ; Game is started and properly loaded
+            AddToLog("Game started")
+            stageStartTime := A_TickCount
+            break
+        }
+
+        ; If vote screen is found and we're inside the loop, break early
+        if (foundVote) {
+            FixClick(400, 150) ; For those who can't follow a simple setup guide
+            AddToLog("Game started")
+            stageStartTime := A_TickCount
+            break
+        }
     }
 }
 
@@ -979,11 +1020,10 @@ SummonUnits() {
     global checkForUnitManager
     upgradeUnits := ShouldUpgradeUnits.Value
     upgradePoints := UnitUpgradePoints() ; Map of slotNum → point
-    profilePoints:= UnitProfilePoints()
+    profilePoints := UnitProfilePoints()
     enabledSlots := []
     upgradeEnabledSlots := Map()
 
-    ; Collect enabled and upgrade-enabled slots
     for slotNum in GetPlacementOrder() {
         enabledVar := "enabled" slotNum
         upgradeEnabledVar := "upgradeEnabled" slotNum
@@ -1012,34 +1052,31 @@ SummonUnits() {
     }
 
     ; Open Unit Manager if needed
-    if (upgradeUnits && upgradePoints.Count > 0) {
-        if (checkForUnitManager) {
-            if (!FindText(&X, &Y, 609, 463, 723, 495, 0.10, 0.20, UnitManagerBack)) {
-                AddToLog("Unit Manager isn't open - trying to open it")
-                Loop {
-                    if (CheckForVoteScreen()) {
-                        FixClick(401, 149)
-                    }
-                    if (!FindText(&X, &Y, 609, 463, 723, 495, 0.10, 0.20, UnitManagerBack)) {
-                        SendInput("{T}")
-                        Sleep(1000)
-                    } else {
-                        AddToLog("Unit Manager is open")
-                        checkForUnitManager := false
-                        break
-                    }
+    if (upgradeUnits && upgradePoints.Count > 0 && checkForUnitManager) {
+        if (!FindText(&X, &Y, 609, 463, 723, 495, 0.10, 0.20, UnitManagerBack)) {
+            AddToLog("Unit Manager isn't open - trying to open it")
+            Loop {
+                CheckForVoteScreen()
+                if (!FindText(&X, &Y, 609, 463, 723, 495, 0.10, 0.20, UnitManagerBack)) {
+                    SendInput("{T}")
+                    Sleep(1000)
+                } else {
+                    AddToLog("Unit Manager is open")
+                    checkForUnitManager := false
+                    break
                 }
             }
         }
     }
 
     lastScrollGroup := ""
+    lastSlotNum := ""
 
-    ; Main placement/upgrade loop
-    while true {
-        for _, slotNum in enabledSlots {
+    ; Main loop — runs until all enabled slots are processed
+    while (enabledSlots.Length > 0) {
+        slotsToRemove := []
 
-            ; Check for XP early
+        for index, slotNum in enabledSlots {
             if CheckForXp() {
                 return MonitorEndScreen()
             }
@@ -1048,54 +1085,63 @@ SummonUnits() {
                 FixClick(401, 149)
             }
 
-            ; Upgrade unit if it's marked upgrade-enabled and has a point
+            ; Scroll to correct unit group if needed
+            if ([1, 2, 3].Has(slotNum))
+                currentGroup := "top"
+            else
+                currentGroup := "bottom"
+
+            if (currentGroup != lastScrollGroup && upgradeEnabledSlots.Has(slotNum)) {
+                FixClick(660, 155)
+                (currentGroup = "top") ? ScrollToTop() : ScrollToBottom()
+                lastScrollGroup := currentGroup
+                Sleep(200)
+            }
+
             if (upgradeUnits && upgradeEnabledSlots.Has(slotNum)) {
                 point := upgradePoints.Get(slotNum, "")
+                profile := profilePoints[slotNum]
+            
                 if (point) {
-                    currentGroup := ([1, 2, 3].Has(slotNum)) ? "top" : "bottom"
-
-                    if (currentGroup != lastScrollGroup) {
-                        if (currentGroup = "top") {
-                            ScrollToTop()
-                        } else {
-                            ScrollToBottom()
-                        }
-                        lastScrollGroup := currentGroup
-                        Sleep(200)
+                    ; Only click profile if it's a different slot
+                    if (slotNum != lastSlotNum) {
+                        FixClick(profile.x, profile.y)
+                        lastSlotNum := slotNum
                     }
-                    FixClick(profilePoints[slotNum].x, profilePoints[slotNum].y)
+            
                     loop UpgradeClicks.Value {
                         FixClick(point.x, point.y)
-                        Sleep 50
+                        Sleep(50)
+                    }
+            
+                    if (MaxUpgraded()) {
+                        AddToLog("Max upgrade reached for slot: " slotNum)
+                        FixClick(250, 200)
+                        upgradeEnabledSlots.Delete(slotNum)
+                        continue
                     }
                 } else {
                     AddToLog("No upgrade point for slot " slotNum)
                 }
             }
 
-            if (MaxUpgraded()) {
-                AddToLog("Max upgrade reached for: " slotNum)
-                FixClick(250, 200)
-                upgradeEnabledSlots.Delete(_)
-            }
-
-            if (upgradeEnabledSlots.Count < 1) {
-                AddToLog("Finshed upgrading all units")
-                if (AutoPlay.Value) {
-                    return MonitorEndScreen()
-                }
-            }
-
-            ; Place the unit
+            ; Summon the unit
             if (!AutoPlay.Value) {
                 SendInput("{" slotNum "}")
-                Sleep 50
-            } else {
-                ; Autoplay with upgrades only: continue until all done
-                continue
+                Sleep(50)
             }
+
             Reconnect()
             Sleep(500)
+        }
+
+        ; Exit if nothing left to upgrade or summon
+        if (enabledSlots.Length = 0 || upgradeEnabledSlots.Count = 0) {
+            AddToLog("All units have been upgraded to the max")
+            if (AutoPlay.Value) {
+                return MonitorEndScreen()
+            }
+            break
         }
     }
 }

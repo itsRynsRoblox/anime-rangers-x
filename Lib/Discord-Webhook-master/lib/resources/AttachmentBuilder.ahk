@@ -19,12 +19,17 @@ class AttachmentBuilder {
         if FileExist(param) {
             if InStr(FileExist(param), "D")
                 throw Error("AttachmentBuilder: Expected a file but got a directory.", , param)
-            try {
-                loop files param
-                    this.file := A_LoopFileFullPath, this.fileName := A_LoopFileName, this.isBitmap := 0
-            } catch {
-                throw Error("AttachmentBuilder: Failed to access file.", , param)
-            }
+            
+            ; Resolve full path and filename without using a loop
+            fullPath := ResolveFullPath(param)
+            
+            if !FileExist(fullPath)
+                throw Error("AttachmentBuilder: File does not exist.", , param)
+            
+            SplitPath fullPath, &fileName
+            this.file := fullPath
+            this.fileName := fileName
+            this.isBitmap := 0
         }
         else {
             try {
@@ -36,7 +41,7 @@ class AttachmentBuilder {
 
         ; Build attachment info
         this.attachmentName := "attachment://" this.fileName
-        this.contentType := this.isBitmap ? "image/png" : AttachmentBuilder.MimeType(this.fileName)
+        this.contentType := this.isBitmap ? "image/png" : AttachmentBuilder.MimeType(this.file)
     }
 
     static MimeType(path) {
@@ -64,4 +69,14 @@ class AttachmentBuilder {
              : (n = 0x89504E47)     ? "image/x-icon"
              : "application/octet-stream"
     }
+}
+
+ResolveFullPath(path) {
+    if !IsAbsolutePath(path)
+        return A_WorkingDir "\" path
+    return path
+}
+
+IsAbsolutePath(path) {
+    return RegExMatch(path, "^[A-Za-z]:\\|^\\\\")
 }

@@ -52,6 +52,6 @@ UpgradeEnabled6=1
 LobbyDelay=2
 
 [Webhook]
-WebhookDelay=3
+WebhookDelay=1
 [Upgrading]
 UpgradeClicks=5
