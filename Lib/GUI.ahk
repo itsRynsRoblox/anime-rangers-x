@@ -5,7 +5,7 @@
 
 ;Update Checker
 global repoOwner := "itsRynsRoblox"
-global repoName := "anime-rangers-x "
+global repoName := "anime-rangers-x"
 global currentVersion := "1.3.9"
 
 ; Basic Application Info
@@ -379,7 +379,7 @@ global UnitSettings := arMainUI.Add("GroupBox", "x808 y85 w550 h296 +Center Hidd
 ;--------------MODE SELECT;--------------MODE SELECT;--------------MODE SELECT;--------------MODE SELECT;--------------MODE SELECT;--------------MODE SELECT
 global modeSelectionGroup := arMainUI.Add("GroupBox", "x808 y38 w500 h45 Background" uiTheme[2], "Mode Select")
 arMainUI.SetFont("s10 c" uiTheme[6])
-global ModeDropdown := arMainUI.Add("DropDownList", "x818 y53 w140 h180 Choose0 +Center", ["Story", "Challenge", "Easter Event"])
+global ModeDropdown := arMainUI.Add("DropDownList", "x818 y53 w140 h180 Choose0 +Center", ["Story", "Challenge", "Coop", "Easter Event"])
 global StoryDropdown := arMainUI.Add("DropDownList", "x968 y53 w150 h180 Choose0 +Center", ["Voocha Village", "Green Planet", "Demon Forest", "Leaf Village", "Z City"])
 global StoryActDropdown := arMainUI.Add("DropDownList", "x1128 y53 w80 h180 Choose0 +Center", ["Act 1", "Act 2", "Act 3", "Act 4", "Act 5", "Act 6", "Act 7", "Act 8", "Act 9", "Act 10"])
 global LegendDropDown := arMainUI.Add("DropDownlist", "x968 y53 w150 h180 Choose0 +Center", [""] )

@@ -112,6 +112,10 @@ ChallengeMode() {
     RestartStage()
 }
 
+CoopMode() {    
+    RestartStage()
+}
+
 EasterEvent() {    
     EasterMovement()
 
@@ -309,7 +313,7 @@ HandleStoryMode() {
 }
 
 HandleDefaultMode() {
-    if (ReturnLobbyBox.Visible && ReturnLobbyBox.Value) {
+    if (ReturnLobbyBox.Visible && ReturnLobbyBox.Value && ModeDropdown.Text != "Coop") {
         ClickReturnToLobby()
         return CheckLobby()
     } else {
@@ -756,10 +760,12 @@ RestartStage() {
             currentMap := DetectMap(true) ; Re-detect the map
         }
     } else {
-        if (currentMap = "") {
-            currentMap := DetectMap(false)
-        } else {
-            AddToLog("Current Map: " currentMap)
+        if (ModeDropdown.Text != "Coop") {
+            if (currentMap = "") {
+                currentMap := DetectMap(false)
+            } else {
+                AddToLog("Current Map: " currentMap)
+            }
         }
     }
 
@@ -984,13 +990,15 @@ StartSelectedMode() {
     FixClick(640, 70) ; Closes Player leaderboard
     Sleep(500)
 
-    if (ChallengeBox.Value && firstStartup) {
-        AddToLog("Auto Ranger Stage enabled - starting with Ranger Stage")
-        inChallengeMode := true
-        firstStartup := false
-        challengeStartTime := A_TickCount  ; Set initial challenge time
-        LegendMode()
-        return
+    if (ModeDropdown.Text != "Coop") {
+        if (ChallengeBox.Value && firstStartup) {
+            AddToLog("Auto Ranger Stage enabled - starting with Ranger Stage")
+            inChallengeMode := true
+            firstStartup := false
+            challengeStartTime := A_TickCount  ; Set initial challenge time
+            LegendMode()
+            return
+        }
     }
 
     ; If we're in challenge mode, do challenge
@@ -1007,6 +1015,9 @@ StartSelectedMode() {
     }
     else if (ModeDropdown.Text = "Challenge") {
         ChallengeMode()
+    }
+    else if (ModeDropdown.Text = "Coop") {
+        CoopMode()
     }
     else if (ModeDropdown.Text = "Easter Event") {
         EasterEvent()

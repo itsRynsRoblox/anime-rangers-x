@@ -143,6 +143,10 @@ OnConfirmClick(*) {
         AddToLog("Selected Challenge Mode")
         ReturnLobbyBox.Visible := true
     }
+    else if (ModeDropdown.Text = "Coop") {
+        mode := "Coop"
+        AddToLog("Selected Coop Mode")
+    }
     else if (ModeDropdown.Text = "Easter Event") {
         mode := "Easter Event"
         AddToLog("Selected Easter Event")
