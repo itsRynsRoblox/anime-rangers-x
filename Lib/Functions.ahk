@@ -141,6 +141,7 @@ OnConfirmClick(*) {
     else if (ModeDropdown.Text = "Challenge") {
         mode := "Challenge"
         AddToLog("Selected Challenge Mode")
+        ReturnLobbyBox.Visible := true
     }
     else if (ModeDropdown.Text = "Easter Event") {
         mode := "Easter Event"
@@ -237,7 +238,7 @@ SearchFor(Name) {
 
     ; Loop through all search texts to perform the Find Text search
     for searchText in searchTexts {
-        if (FindText(&X, &Y, x1, y1, x2, y2, 0.20, 0.20, searchText)) {
+        if (GetFindText().FindText(&X, &Y, x1, y1, x2, y2, 0.20, 0.20, searchText)) {
             return true  ; FindText found
         }
     }
@@ -366,7 +367,7 @@ ClickThroughDrops() {
 
 ClickUntilGone(x, y, searchX1, searchY1, searchX2, searchY2, textToFind, offsetX:=0, offsetY:=0, textToFind2:="") {
     waitTime := A_TickCount ; Start timer
-    while (ok := FindText(&X, &Y, searchX1, searchY1, searchX2, searchY2, 0, 0, textToFind) || textToFind2 && FindText(&X, &Y, searchX1, searchY1, searchX2, searchY2, 0, 0, textToFind2)) {
+    while (ok := GetFindText().FindText(&X, &Y, searchX1, searchY1, searchX2, searchY2, 0, 0, textToFind) || textToFind2 && GetFindText().FindText(&X, &Y, searchX1, searchY1, searchX2, searchY2, 0, 0, textToFind2)) {
         if ((A_TickCount - waitTime) > 300000) { ; 5-minute limit
             AddToLog("5 minute failsafe triggered, trying to open roblox...")
             return RejoinPrivateServer()
@@ -381,13 +382,13 @@ ClickUntilGone(x, y, searchX1, searchY1, searchX2, searchY2, textToFind, offsetX
 }
 
 RightClickUntilGone(x, y, searchX1, searchY1, searchX2, searchY2, textToFind, offsetX:=0, offsetY:=0, textToFind2:="") {
-    while (ok := FindText(&X, &Y, searchX1, searchY1, searchX2, searchY2, 0, 0, textToFind) || 
-           textToFind2 && FindText(&X, &Y, searchX1, searchY1, searchX2, searchY2, 0, 0, textToFind2)) {
+    while (ok := GetFindText().FindText(&X, &Y, searchX1, searchY1, searchX2, searchY2, 0, 0, textToFind) || 
+           textToFind2 && GetFindText().FindText(&X, &Y, searchX1, searchY1, searchX2, searchY2, 0, 0, textToFind2)) {
 
         if (offsetX != 0 || offsetY != 0) {
             FixClick(X + offsetX, Y + offsetY, "Right")  
         } else {
-            FixClick(x, y, "Right") 
+            FixClick(x, y, "Right")
         }
         Sleep(1000)
     }
@@ -402,8 +403,20 @@ GetWebhookDelay() {
 }
 
 CheckForVoteScreen() {
-    if (ok := FindText(&X, &Y, 355, 168, 450, 196, 0.10, 0.10, VoteStart)) {
+    if (ok := GetFindText().FindText(&X, &Y, 355, 168, 450, 196, 0.10, 0.10, VoteStart)) {
         FixClick(400, 150)
         return true
     }
+}
+
+CheckForCooldownMessage() {
+    if (ok := GetFindText().FindText(&X, &Y, 258, 410, 602, 476, 0.10, 0.10, RangerCooldownMessage)) {
+        return true
+    }
+}
+
+; Safe accessor for the FindText class
+GetFindText() {
+    static obj := FindTextClass()
+    return obj
 }

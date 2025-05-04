@@ -27,7 +27,7 @@ readInSettings() {
     global enabled1, enabled2, enabled3, enabled4, enabled5, enabled6
     global placement1, placement2, placement3, placement4, placement5, placement6
     global upgradeEnabled1, upgradeEnabled2, upgradeEnabled3, upgradeEnabled4, upgradeEnabled5, upgradeEnabled6, UpgradeClicks
-    global AutoPlay, ShouldUpgradeUnits, LobbySleepTimer, WebhookSleepTimer
+    global AutoPlay, ShouldUpgradeUnits, LobbySleepTimer, WebhookSleepTimer, LoadingScreenWaitTime, UpdateMessages
 
     try {
         settingsFile := setupFilePath()
@@ -77,6 +77,8 @@ readInSettings() {
                 case "LobbyDelay": LobbySleepTimer.Value := parts[2]
                 case "WebhookDelay": WebhookSleepTimer.Value := parts[2]
                 case "UpgradeClicks": UpgradeClicks.Value := parts[2]
+                case "LoadingScreenDelay": LoadingScreenWaitTime.Value := parts[2]
+                case "Messages": UpdateMessages.Value := parts[2]
             }
         }
         AddToLog("Configuration settings loaded successfully")
@@ -99,7 +101,7 @@ SaveSettings(*) {
     global enabled1, enabled2, enabled3, enabled4, enabled5, enabled6
     global placement1, placement2, placement3, placement4, placement5, placement6
     global upgradeEnabled1, upgradeEnabled2, upgradeEnabled3, upgradeEnabled4, upgradeEnabled5, upgradeEnabled6, UpgradeClicks
-    global AutoPlay, ShouldUpgradeUnits, LobbySleepTimer, WebhookSleepTimer
+    global AutoPlay, ShouldUpgradeUnits, LobbySleepTimer, WebhookSleepTimer, LoadingScreenWaitTime, UpdateMessages
 
     try {
         settingsFile := A_ScriptDir "\Settings\Configuration.txt"
@@ -172,6 +174,12 @@ SaveSettings(*) {
 
         content .= "`n[Upgrading]"
         content .= "`nUpgradeClicks=" UpgradeClicks.Value
+
+        content .= "`n[LoadingScreen]"
+        content .= "`nLoadingScreenDelay=" LoadingScreenWaitTime.Value
+
+        content .= "`n[UpdateMessages]"
+        content .= "`nMessages=" UpdateMessages.Value
 
         FileAppend(content, settingsFile)
         AddToLog("Configuration settings saved successfully")

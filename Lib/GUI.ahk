@@ -6,7 +6,7 @@
 ;Update Checker
 global repoOwner := "itsRynsRoblox"
 global repoName := "anime-rangers-x "
-global currentVersion := "1.3.8"
+global currentVersion := "1.3.9"
 
 ; Basic Application Info
 global aaTitle := "Ryn's Anime Rangers X "
@@ -52,6 +52,7 @@ global UnitData := []
 global arMainUI := Gui("+AlwaysOnTop -Caption")
 global lastlog := ""
 global arMainUIHwnd := arMainUI.Hwnd
+global ActiveControlGroup := ""
 ;Theme colors
 uiTheme.Push("0xffffff")  ; Header color
 uiTheme.Push("0c000a")  ; Background color
@@ -311,17 +312,20 @@ OpenGuide(*) {
 arMainUI.SetFont("s9 Bold c" uiTheme[1])
 
 ;DEBUG
-DebugButton := arMainUI.Add("Button", "x800 y5 w90 h20 +Center", "Debug")
+DebugButton := arMainUI.Add("Button", "x700 y5 w90 h20 +Center", "Debug")
 DebugButton.OnEvent("Click", (*) => OpenDebug())
 
-global guideBtn := arMainUI.Add("Button", "x900 y5 w90 h20", "Guides")
+global guideBtn := arMainUI.Add("Button", "x800 y5 w90 h20", "Guides")
 guideBtn.OnEvent("Click", OpenGuide)
 
-global mapButton := arMainUI.Add("Button", "x1000 y5 w90 h20", "Map Skips")
+global mapButton := arMainUI.Add("Button", "x900 y5 w90 h20", "Map Skips")
 mapButton.OnEvent("Click", (*) => OpenMapSkipPriorityPicker())
 
-global miscSettingsButton := arMainUI.Add("Button", "x1100 y5 w90 h20", "Extra")
-miscSettingsButton.OnEvent("Click", (*) => ShowSettings())
+global timersButton := arMainUI.Add("Button", "x1100 y5 w90 h20", "Timers")
+timersButton.OnEvent("Click", (*) => ToggleControlGroup("Timers"))
+
+global upgradesButton := arMainUI.Add("Button", "x1000 y5 w90 h20", "Upgrades")
+upgradesButton.OnEvent("Click", (*) => ToggleControlGroup("Upgrade"))
 
 global settingsBtn := arMainUI.Add("Button", "x1200 y5 w90 h20", "Settings")
 settingsBtn.OnEvent("Click", ShowSettingsGUI)
@@ -339,17 +343,22 @@ global MatchMaking := arMainUI.Add("Checkbox", "x900 y580 cffffff Hidden Checked
 global AutoPlay := arMainUI.Add("CheckBox", "x808 y615 cffffff", "Auto Summon")
 
 global ShouldUpgradeUnits := arMainUI.Add("CheckBox", "x928 y615 cffffff", "Auto Upgrade")
-global ChallengeBox := arMainUI.Add("CheckBox", "x1180 y615 cffffff", "Farm Ranger Stages")
+global ChallengeBox := arMainUI.Add("CheckBox", "x1048 y615 cffffff", "Farm Ranger Stages")
+global UpdateMessages := arMainUI.Add("CheckBox", "x1215 y615 cffffff", "Update Messages")
 
-; Extra Settings
+; Timer Settings
 LobbySleepText := arMainUI.Add("Text", "x818 y123.5 w130 h20 +Center Hidden", "Lobby Sleep Timer")
 global LobbySleepTimer := arMainUI.Add("DropDownList", "x950 y120 w100 h180 Hidden Choose1", ["No Delay", "5 Seconds", "10 Seconds", "15 Seconds", "20 Seconds", "25 Seconds", "30 Seconds", "35 Seconds", "40 Seconds", "45 Seconds", "50 Seconds", "55 Seconds", "60 Seconds"])
 
 WebhookSleepText := arMainUI.Add("Text", "x818 y163.5 w130 h20 +Center Hidden", "Webhook Timer")
 global WebhookSleepTimer := arMainUI.Add("DropDownList", "x950 y160 w100 h180 Hidden Choose1", ["No Delay", "1 minute", "3 minutes", "5 minutes", "10 minutes"])
 
-UpgradeClicksText := arMainUI.Add("Text", "x818 y203.5 w130 h20 +Center Hidden", "Upgrade Clicks")
-global UpgradeClicks := arMainUI.Add("Edit", "x950 y200 w100 Hidden cBlack Number", "1")
+LoadingScreenWaitTimeText := arMainUI.Add("Text", "x818 y203.5 w160 h20 +Center Hidden", "Loading Screen Timer")
+global LoadingScreenWaitTime := arMainUI.Add("DropDownList", "x980 y200 w100 h180 Hidden Choose1", ["15 Seconds", "20 Seconds", "25 Seconds", "30 Seconds", "35 Seconds", "40 Seconds", "45 Seconds", "50 Seconds", "55 Seconds", "60 Seconds"])
+
+; Unit Settings
+UpgradeClicksText := arMainUI.Add("Text", "x818 y123.5 w130 h20 +Center Hidden", "Upgrade Clicks")
+global UpgradeClicks := arMainUI.Add("Edit", "x950 y120 w100 Hidden cBlack Number", "1")
 
 StoryDifficultyText := arMainUI.Add("Text", "x890 y585 w80 h20 +Center", "Difficulty")
 global StoryDifficulty := arMainUI.Add("DropDownList", "x970 y580 w100 h180 Choose1", ["Normal", "Hard", "Nightmare"])
@@ -363,7 +372,8 @@ DiscordButton.OnEvent("Click", (*) => OpenDiscord())
 
 AutoPlay.OnEvent("Click", (*) => SendSummonInformation())
 
-global MiscSettings := arMainUI.Add("GroupBox", "x808 y85 w550 h296 +Center Hidden c" uiTheme[1], "Miscellaneous Settings")
+global TimerSettings := arMainUI.Add("GroupBox", "x808 y85 w550 h296 +Center Hidden c" uiTheme[1], "Timer Settings")
+global UnitSettings := arMainUI.Add("GroupBox", "x808 y85 w550 h296 +Center Hidden c" uiTheme[1], "Upgrade Settings")
 
 ;--------------SETTINGS;--------------SETTINGS;--------------SETTINGS;--------------SETTINGS;--------------SETTINGS;--------------SETTINGS;--------------SETTINGS
 ;--------------MODE SELECT;--------------MODE SELECT;--------------MODE SELECT;--------------MODE SELECT;--------------MODE SELECT;--------------MODE SELECT
@@ -630,21 +640,21 @@ TestFindText(text := "") {
         WinActivate(rblxID)
     }
     if (text = "Create Room") {
-        if (FindText(&X, &Y, 12, 241, 148, 275, 0.05, 0.20, CreateRoom)) {
+        if (GetFindText().FindText(&X, &Y, 12, 241, 148, 275, 0.05, 0.20, CreateRoom)) {
             AddToLog("Found the FindText() for " text)
             FixClick(X, Y - 35, "Right")
             return true
         }
     }
     else if (text = "Unit Manager") {
-        if (FindText(&X, &Y, 609, 463, 723, 495, 0.05, 0.20, UnitManagerBack)) {
+        if (GetFindText().FindText(&X, &Y, 609, 463, 723, 495, 0.05, 0.20, UnitManagerBack)) {
             AddToLog("Found the FindText() for " text)
             FixClick(X, Y - 35, "Right")
             return true
         }
     }
     else if (text = "Vote Screen") {
-        if (FindText(&X, &Y, 355, 168, 450, 196, 0.10, 0.10, VoteStart)) {
+        if (GetFindText().FindText(&X, &Y, 355, 168, 450, 196, 0.10, 0.10, VoteStart)) {
             AddToLog("Found the FindText() for " text)
             FixClick(X, Y - 35, "Right")
             return true
@@ -687,89 +697,76 @@ OpenRangerSettings(*) {
     GuideGUI.Show("w800")
 }
 
-HideUnitCards() {
+SendSummonInformation() {
+    AddToLog("Auto Summon should match your auto play setting in-game.")
+}
+
+ToggleControlGroup(groupName) {
+    global ActiveControlGroup
+    if (ActiveControlGroup = groupName) {
+        ShowOnlyControlGroup("Default") ; hide all
+        ActiveControlGroup := ""
+        AddToLog("Displaying: Default UI")
+        ShowUnitCards()
+    } else {
+        ShowOnlyControlGroup(groupName)
+        ActiveControlGroup := groupName
+        AddToLog("Displaying: " groupName " Settings UI")
+        HideUnitCards()
+    }
+}
+
+SetUnitCardVisibility(visible) {
     for _, unit in UnitData {
         for _, control in unit.OwnProps() {
             if IsObject(control)
-                control.Visible := false
+                control.Visible := visible
         }
     }
-    Placement1.Visible := false
-    Placement2.Visible := false
-    Placement3.Visible := false
-    Placement4.Visible := false
-    Placement5.Visible := false
-    Placement6.Visible := false
-    enabled1.Visible := false
-    enabled2.Visible := false
-    enabled3.Visible := false
-    enabled4.Visible := false
-    enabled5.Visible := false
-    enabled6.Visible := false
-    upgradeEnabled1.Visible := false
-    upgradeEnabled2.Visible := false
-    upgradeEnabled3.Visible := false
-    upgradeEnabled4.Visible := false
-    upgradeEnabled5.Visible := false
-    upgradeEnabled6.Visible := false
+
+    controlNames := [
+        "Placement", "enabled", "upgradeEnabled"
+    ]
+
+    for name in controlNames {
+        loop 6 {
+            control := %name%%A_Index%
+            if IsObject(control)
+                control.Visible := visible
+        }
+    }
+}
+
+HideUnitCards() {
+    SetUnitCardVisibility(false)
 }
 
 ShowUnitCards() {
-    for _, unit in UnitData {
-        for _, control in unit.OwnProps() {
+    SetUnitCardVisibility(true)
+}
+
+ShowOnlyControlGroup(groupToShow) {
+    global ControlGroups := Map()
+
+    ControlGroups["Default"] := [
+        Placement1, Placement2, Placement3, Placement4, Placement5, Placement6,
+        enabled1, enabled2, enabled3, enabled4, enabled5, enabled6,
+        upgradeEnabled1, upgradeEnabled2, upgradeEnabled3, upgradeEnabled4, upgradeEnabled5, upgradeEnabled6,
+    ]
+    
+    ControlGroups["Upgrade"] := [
+        UnitSettings, UpgradeClicks, UpgradeClicksText
+    ]
+    
+    ControlGroups["Timers"] := [
+        TimerSettings, LobbySleepText, LobbySleepTimer, WebhookSleepText, WebhookSleepTimer, LoadingScreenWaitTime, LoadingScreenWaitTimeText
+    ]
+
+    for name, controls in ControlGroups {
+        isVisible := (name = groupToShow)
+        for control in controls {
             if IsObject(control)
-                control.Visible := true
+                control.Visible := isVisible
         }
     }
-    Placement1.Visible := true
-    Placement2.Visible := true
-    Placement3.Visible := true
-    Placement4.Visible := true
-    Placement5.Visible := true
-    Placement6.Visible := true
-    enabled1.Visible := true
-    enabled2.Visible := true
-    enabled3.Visible := true
-    enabled4.Visible := true
-    enabled5.Visible := true
-    enabled6.Visible := true
-    upgradeEnabled1.Visible := true
-    upgradeEnabled2.Visible := true
-    upgradeEnabled3.Visible := true
-    upgradeEnabled4.Visible := true
-    upgradeEnabled5.Visible := true
-    upgradeEnabled6.Visible := true
-}
-
-ShowSettings(*) {
-    try {
-        global unitCardsVisible
-        if (unitCardsVisible) {
-            HideUnitCards()
-            MiscSettings.Visible := true
-            LobbySleepText.Visible := true
-            LobbySleepTimer.Visible := true
-            WebhookSleepText.Visible := true
-            WebhookSleepTimer.Visible := true
-            UpgradeClicksText.Visible := true
-            UpgradeClicks.Visible := true
-            unitCardsVisible := false
-        } else {
-            MiscSettings.Visible := false
-            LobbySleepText.Visible := false
-            LobbySleepTimer.Visible := false
-            WebhookSleepText.Visible := false
-            WebhookSleepTimer.Visible := false
-            UpgradeClicksText.Visible := false
-            UpgradeClicks.Visible := false
-            ShowUnitCards()
-            unitCardsVisible := true
-        }
-    } catch {
-        AddToLog("Error showing unit settings")
-    }
-}
-
-SendSummonInformation() {
-    AddToLog("Auto Summon should match your auto play setting in-game.")
 }

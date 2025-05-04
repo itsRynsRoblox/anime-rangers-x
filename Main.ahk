@@ -15,3 +15,4 @@ SendMode "Event"
 #Include %A_ScriptDir%\Lib\FindText.ahk
 #Include %A_ScriptDir%\Lib\OCR-main\Lib\OCR.ahk
 #Include %A_ScriptDir%\Lib\webhooksettings.ahk
+#Include %A_ScriptDir%\Lib\UpdateChecker.ahk

@@ -6,15 +6,17 @@ global stageStartTime := A_TickCount
 
 global currentMap := ""
 global checkForUnitManager := true
+global lastHourCheck := A_Hour
 
 LoadKeybindSettings()  ; Load saved keybinds
+CheckForUpdates()
 Hotkey(F1Key, (*) => moveRobloxWindow())    
 Hotkey(F2Key, (*) => StartMacro())
 Hotkey(F3Key, (*) => Reload())
 Hotkey(F4Key, (*) => TogglePause())
 
 F5:: {
-    StartedGame()
+
 }
 
 F6:: {
@@ -60,7 +62,7 @@ StoryMode() {
     StoryMovement()
     
     ; Start stage
-    while !(ok := FindText(&X, &Y, 352, 101, 452, 120, 0.05, 0.20, RoomPods)) {
+    while !(ok := GetFindText().FindText(&X, &Y, 352, 101, 452, 120, 0.05, 0.20, RoomPods)) {
         FixClick(80, 325) ; Click Leave
         Reconnect() ; Added Disconnect Check
         StoryMovement()
@@ -69,7 +71,7 @@ StoryMode() {
     FixClick(25, 225) ; Create Room
     Sleep(1000)
 
-    while !(ok := FindText(&X, &Y, 325, 163, 409, 193, 0.05, 0.20, StoryChapter)) {
+    while !(ok := GetFindText().FindText(&X, &Y, 325, 163, 409, 193, 0.05, 0.20, StoryChapter)) {
         AddToLog("Looking for Story Chapter Text...")
         FixClick(615, 155) ; Click X on Join
         Sleep(1000)
@@ -88,7 +90,7 @@ StoryMode() {
 BossEvent() {    
     BossEventMovement()
 
-    while !(ok := FindText(&X, &Y, 400, 375, 508, 404, 0.05, 0.20, BossPlayText)) {
+    while !(ok := GetFindText().FindText(&X, &Y, 400, 375, 508, 404, 0.05, 0.20, BossPlayText)) {
         Reconnect() ; Added Disconnect Check
         BossEventMovement()
     }
@@ -100,7 +102,7 @@ BossEvent() {
 ChallengeMode() {    
     ChallengeMovement()
 
-    while !(ok := FindText(&X, &Y, 343, 467, 461, 496, 0.05, 0.20, Back)) {
+    while !(ok := GetFindText().FindText(&X, &Y, 343, 467, 461, 496, 0.05, 0.20, Back)) {
         Reconnect() ; Added Disconnect Check
         FixClick(598, 425) ; Click Back
         ChallengeMovement()
@@ -113,7 +115,7 @@ ChallengeMode() {
 EasterEvent() {    
     EasterMovement()
 
-    while !(ok := FindText(&X, &Y, 343, 467, 461, 496, 0.05, 0.20, Back)) {
+    while !(ok := GetFindText().FindText(&X, &Y, 343, 467, 461, 496, 0.05, 0.20, Back)) {
         Reconnect() ; Added Disconnect Check
         FixClick(598, 425) ; Click Back
         EasterMovement()
@@ -152,7 +154,7 @@ LegendMode() {
     StoryMovement()
     
     ; Start stage
-    while !(ok := FindText(&X, &Y, 352, 101, 452, 120, 0.05, 0.20, RoomPods)) {
+    while !(ok := GetFindText().FindText(&X, &Y, 352, 101, 452, 120, 0.05, 0.20, RoomPods)) {
         if (debugMessages) {
             AddToLog("Debug: Looking for create room text...")
         }
@@ -164,7 +166,7 @@ LegendMode() {
     FixClick(25, 225) ; Create Room
     Sleep(1000)
 
-    while !(ok := FindText(&X, &Y, 325, 163, 409, 193, 0.05, 0.20, StoryChapter)) {
+    while !(ok := GetFindText().FindText(&X, &Y, 325, 163, 409, 193, 0.05, 0.20, StoryChapter)) {
         if (debugMessages) {
             AddToLog("Debug: Looking for story chapters Text...")
         }
@@ -195,7 +197,7 @@ RaidMode() {
 
     
     ; Start stage
-    while !(ok := FindText(&X, &Y, 325, 520, 489, 587, 0, 0, ModeCancel)) {
+    while !(ok := GetFindText().FindText(&X, &Y, 325, 520, 489, 587, 0, 0, ModeCancel)) {
         Reconnect() ; Added Disconnect Check
 
     }
@@ -225,9 +227,9 @@ MonitorEndScreen() {
     CloseChat()
 
     ; Detect win or loss
-    if (FindText(&X, &Y, 377, 228, 536, 276, 0.05, 0.80, DefeatText)) {
+    if (GetFindText().FindText(&X, &Y, 377, 228, 536, 276, 0.05, 0.80, DefeatText)) {
         isWin := false
-    } else if (FindText(&X, &Y, 397, 222, 538, 273, 0.05, 0.80, VictoryText)) {
+    } else if (GetFindText().FindText(&X, &Y, 397, 222, 538, 273, 0.05, 0.80, VictoryText)) {
         isWin := true
     }
 
@@ -316,6 +318,37 @@ HandleDefaultMode() {
     return RestartStage()
 }
 
+HandleLegendMode() {
+    global lastHourCheck
+
+    currentHour := A_Hour
+    currentTime := A_Hour ":" A_Min ":" A_Sec
+
+    if (debugMessages) {
+        AddToLog("HandleLegendMode() called at " currentTime)
+    }
+
+    ; If a new hour has started
+    if (currentHour != lastHourCheck) {
+        if (debugMessages) {
+            AddToLog("New hour detected (last: " lastHourCheck ", now: " currentHour ") - returning to lobby")
+        }
+        lastHourCheck := currentHour
+        ClickReturnToLobby()
+        return CheckLobby()
+    }
+
+    if (ReturnLobbyBox.Visible && ReturnLobbyBox.Value) {
+        ClickReturnToLobby()
+        return CheckLobby()
+    } else {
+        ClickReplay()
+    }
+
+    return RestartStage()
+}
+
+
 StoryMovement() {
     FixClick(65, 335)
     Sleep (200)
@@ -355,7 +388,7 @@ EasterMovement() {
     Sleep (1000)
     SendInput ("{E}")
     Sleep (2000)
-    if (FindText(&X, &Y, 343, 467, 461, 496, 0.05, 0.20, Back)) {
+    if (GetFindText().FindText(&X, &Y, 343, 467, 461, 496, 0.05, 0.20, Back)) {
         AddToLog("Correct angle, starting Easter...")
     } else {
         AddToLog("Wrong spawn angle, retrying...")
@@ -538,7 +571,22 @@ StartLegend(map, act) {
 }
 
 PlayHere() {
+    global inChallengeMode, challengeMapIndex, challengeStageCount, challengeStartTime
     FixClick(485, 410)  ;Create
+    if (inChallengeMode) {
+        Sleep (500)
+        if (CheckForCooldownMessage()) {
+            AddToLog("Still on cooldown...")
+            FixClick(580, 410) ; Exit Ranger Stages
+            Sleep (1000)
+            FixClick(70, 325) ; Exit 
+            inChallengeMode := false
+            challengeStartTime := A_TickCount  ; Reset timer for next ranger stage trigger
+            challengeMapIndex := 1  ; Reset map index for next session
+            challengeStageCount := 0  ; Reset stage count for new ranger stage session
+            return CheckLobby()
+        }
+    }
     Sleep (1500)
     FixClick(400, 475) ;Start
     Sleep (1200)
@@ -623,7 +671,7 @@ Zoom() {
 }
 
 CloseChat() {
-    if (ok := FindText(&X, &Y, 123, 50, 156, 79, 0, 0, OpenChat)) {
+    if (ok := GetFindText().FindText(&X, &Y, 123, 50, 156, 79, 0, 0, OpenChat)) {
         AddToLog "Closing Chat"
         FixClick(138, 30) ;close chat
     }
@@ -634,14 +682,42 @@ BasicSetup() {
     Sleep 300
 }
 
-DetectMap() {
+DetectMap(waitForLoadingScreen := false) {
+    global lastHourCheck
+
     AddToLog("Trying to determine map...")
+
+    mapPatterns := Map(
+        "Voocha Village", VoochaVillage,
+        "Green Planet", GreenPlanet,
+        "Demon Forest", DemonForest,
+        "Leaf Village", LeafVillage,
+        "Z City", ZCity,
+        "Cursed Town", CursedTown,
+        "Egg Island", EggIsland
+    )
+
+    if (waitForLoadingScreen) {
+        AddToLog("Waiting for loading screen to appear (" LoadingScreenWaitTime.Text ")...")
+        loadingStart := A_TickCount
+        while (A_TickCount - loadingStart < GetLoadingScreenWaitTime()) {
+            for mapName, pattern in mapPatterns {
+                if (ok := GetFindText().FindText(&X, &Y, 11, 159, 450, 285, 0, 0, pattern)) {
+                    lastHourCheck := A_Hour
+                    return mapName
+                }
+            }
+            Sleep 500
+        }
+        AddToLog("No map detected during wait time — checking if loaded in.")
+        return "No Map Found"
+    }
+
     startTime := A_TickCount
-    
     Loop {
-        ; Check if we waited more than 5 minute for votestart
+        ; Timeout after 5 minutes
         if (A_TickCount - startTime > 300000) {
-            if (ok := FindText(&X, &Y, 47, 342, 83, 374, 0, 0, AreaText)) {
+            if (ok := GetFindText().FindText(&X, &Y, 47, 342, 83, 374, 0, 0, AreaText)) {
                 AddToLog("Found in lobby - restarting selected mode")
                 return StartSelectedMode()
             }
@@ -650,40 +726,41 @@ DetectMap() {
         }
 
         ; Check for vote screen
-        if (ok := FindText(&X, &Y, 355, 168, 450, 196, 0.10, 0.10, VoteStart) or PixelGetColor(492, 47) = 0x5ED800) {
+        if (ok := GetFindText().FindText(&X, &Y, 355, 168, 450, 196, 0.10, 0.10, VoteStart) 
+            or PixelGetColor(492, 47) = 0x5ED800) {
             AddToLog("No Map Found or Movement Unnecessary")
             return "No Map Found"
         }
 
-        mapPatterns := Map(
-            "Voocha Village", VoochaVillage,
-            "Green Planet", GreenPlanet,
-            "Demon Forest", DemonForest,
-            "Leaf Village", LeafVillage,
-            "Z City", ZCity,
-
-            "Cursed Town", CursedTown,
-            "Egg Island", EggIsland
-        )
-
+        ; Check for map
         for mapName, pattern in mapPatterns {
-            if (ok := FindText(&X, &Y, 11, 159, 450, 285, 0, 0, pattern)) {
+            if (ok := GetFindText().FindText(&X, &Y, 11, 159, 450, 285, 0, 0, pattern)) {
                 AddToLog("Detected map: " mapName)
                 return mapName
             }
         }
+
         Sleep 1000
         Reconnect()
     }
 }
     
 RestartStage() {
-    global currentMap, checkForUnitManager
+    global currentMap, checkForUnitManager, lastHourCheck, inChallengeMode
 
-    if (currentMap = "") {
-        currentMap := DetectMap()
+    currentHour := A_Hour
+
+    if (ModeDropdown.Text = "Challenge" && !inChallengeMode) {
+        if (currentHour != lastHourCheck) {
+            AddToLog("New hour detected (last: " lastHourCheck ", now: " currentHour ")")
+            currentMap := DetectMap(true) ; Re-detect the map
+        }
     } else {
-        AddToLog("Current Map: " currentMap)
+        if (currentMap = "") {
+            currentMap := DetectMap(false)
+        } else {
+            AddToLog("Current Map: " currentMap)
+        }
     }
 
     checkForUnitManager := true
@@ -697,7 +774,7 @@ RestartStage() {
     ; Check for the vote start
     CheckForVoteScreen()
 
-    ;Summon Units
+    ; Summon Units
     SummonUnits()
     
     ; Monitor stage progress
@@ -743,7 +820,7 @@ Reconnect() {
                 moveRobloxWindow()
                 Sleep (2000)
             }
-            if (ok := FindText(&X, &Y, 47, 342, 83, 374, 0, 0, AreaText)) {
+            if (ok := GetFindText().FindText(&X, &Y, 47, 342, 83, 374, 0, 0, AreaText)) {
                 AddToLog("Reconnected Successfully!")
                 return StartSelectedMode()
             } else {
@@ -778,7 +855,7 @@ RejoinPrivateServer(testing := false) {
             Sleep(1000)
         }
 
-        if (ok := FindText(&X, &Y, 47, 342, 83, 374, 0, 0, AreaText)) {
+        if (ok := GetFindText().FindText(&X, &Y, 47, 342, 83, 374, 0, 0, AreaText)) {
             AddToLog("Reconnected Successfully!")
             if (!testing) {
                 return StartSelectedMode()
@@ -794,7 +871,7 @@ RejoinPrivateServer(testing := false) {
 
 CheckForXp() {
     ; Check for lobby text
-    if (ok := FindText(&X, &Y, 118, 181, 219, 217, 0.05, 0.05, GameEnded)) {
+    if (ok := GetFindText().FindText(&X, &Y, 118, 181, 219, 217, 0.05, 0.05, GameEnded)) {
         FixClick(560, 560)
         return true
     }
@@ -804,7 +881,7 @@ CheckForXp() {
 CheckLobby() {
     global currentMap
     loop {
-        if (ok := FindText(&X, &Y, 47, 342, 83, 374, 0, 0, AreaText)) {
+        if (ok := GetFindText().FindText(&X, &Y, 47, 342, 83, 374, 0, 0, AreaText)) {
             break
         }
         if (CheckForXp()) {
@@ -835,13 +912,13 @@ CheckLoaded() {
             }
         }
         
-        if (FindText(&X, &Y, 355, 168, 450, 196, 0.10, 0.10, VoteStart)) {
+        if (GetFindText().FindText(&X, &Y, 355, 168, 450, 196, 0.10, 0.10, VoteStart)) {
             AddToLog("Successfully Loaded In: Vote screen was found.")
             break
         } else if (PixelGetColor(381, 47, "RGB") = 0x5ED800) {
             AddToLog("Successfully Loaded In: Base health was found.")
             break
-        } else if (FindText(&X, &Y, 12, 594, 32, 615, 0.05, 0.10, InGameSettings)) {
+        } else if (GetFindText().FindText(&X, &Y, 12, 594, 32, 615, 0.05, 0.10, InGameSettings)) {
             AddToLog("Successfully Loaded In: Settings cogwheel was found.")
             break
         }
@@ -870,7 +947,7 @@ StartedGame() {
         Sleep(100)
 
         ; Check if the vote screen is still visible
-        if (ok := FindText(&X, &Y, 355, 168, 450, 196, 0.10, 0.10, VoteStart)) {
+        if (ok := GetFindText().FindText(&X, &Y, 355, 168, 450, 196, 0.10, 0.10, VoteStart)) {
             ; Click to fix the vote screen if it's visible
             FixClick(400, 150)
             
@@ -988,6 +1065,14 @@ SleepTime() {
         return time[timeIndex]  ; Use the value directly from the array
 }
 
+GetLoadingScreenWaitTime() {
+    time := [15000, 20000, 25000, 30000, 35000, 40000, 45000, 50000, 55000, 60000]  ; Array of sleep values
+    timeIndex := LoadingScreenWaitTime.Value  ; Get the selected speed value
+
+    if timeIndex is number  ; Ensure it's a number
+        return time[timeIndex]  ; Use the value directly from the array
+}
+
 GetPlacementOrder() {
     placements := []
 
@@ -1053,11 +1138,11 @@ SummonUnits() {
 
     ; Open Unit Manager if needed
     if (upgradeUnits && upgradePoints.Count > 0 && checkForUnitManager) {
-        if (!FindText(&X, &Y, 609, 463, 723, 495, 0.10, 0.20, UnitManagerBack)) {
+        if (!GetFindText().FindText(&X, &Y, 609, 463, 723, 495, 0.10, 0.20, UnitManagerBack)) {
             AddToLog("Unit Manager isn't open - trying to open it")
             Loop {
                 CheckForVoteScreen()
-                if (!FindText(&X, &Y, 609, 463, 723, 495, 0.10, 0.20, UnitManagerBack)) {
+                if (!GetFindText().FindText(&X, &Y, 609, 463, 723, 495, 0.10, 0.20, UnitManagerBack)) {
                     SendInput("{T}")
                     Sleep(1000)
                 } else {
@@ -1136,12 +1221,11 @@ SummonUnits() {
         }
 
         ; Exit if nothing left to upgrade or summon
-        if (enabledSlots.Length = 0 || upgradeEnabledSlots.Count = 0) {
+        if (enabledSlots.Length = 0 && upgradeEnabledSlots.Count = 0) {
             AddToLog("All units have been upgraded to the max")
             if (AutoPlay.Value) {
                 return MonitorEndScreen()
             }
-            break
         }
     }
 }
@@ -1149,7 +1233,7 @@ SummonUnits() {
 MaxUpgraded() {
     Sleep 500
     ; Check for max text
-    if (ok := FindText(&X, &Y, 108, 246, 158, 263, 0, 0, UnitMaxText)) {
+    if (ok := GetFindText().FindText(&X, &Y, 108, 246, 158, 263, 0, 0, UnitMaxText)) {
         return true
     }
     return false
