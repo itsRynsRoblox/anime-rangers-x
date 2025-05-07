@@ -18,7 +18,7 @@ Hotkey(F3Key, (*) => Reload())
 Hotkey(F4Key, (*) => TogglePause())
 
 F5:: {
-
+    SummonUnits()
 }
 
 F6:: {
@@ -745,6 +745,7 @@ DetectMap(waitForLoadingScreen := false) {
         if (waitForLoadingScreen = true) {
             if (A_TickCount - startTime > GetLoadingScreenWaitTime()) {
                 AddToLog("❌ No map was found after waiting " GetLoadingWaitInSeconds() " seconds.")
+                lastHourCheck := A_Hour
                 return "No Map Found"
             }
         } else {
@@ -769,6 +770,7 @@ DetectMap(waitForLoadingScreen := false) {
         for mapName, pattern in mapPatterns {
             if (ok := GetFindText().FindText(&X, &Y, 11, 159, 450, 285, 0, 0, pattern)) {
                 AddToLog("✅ Map detected: " mapName)
+                lastHourCheck := A_Hour
                 return mapName
             }
         }
@@ -789,14 +791,15 @@ RestartStage() {
 
 
         checkForUnitManager := true
-        currentHour := A_Hour
 
         if (ModeDropdown.Text = "Challenge" && !inChallengeMode) {
-            if (currentHour != lastHourCheck && currentMap != "") {
-                AddToLog("New hour detected (last: " lastHourCheck ", now: " currentHour ")")
+            if (A_Hour != lastHourCheck) {
+                AddToLog("New hour detected (last: " lastHourCheck ", now: " A_Hour ")")
                 currentMap := DetectMap(true)  ; Force re-detect the map
             } else {
-                currentMap := DetectMap(false)  ; Detect once if not already known
+                if (currentMap = "") {
+                    currentMap := DetectMap(false)  ; Detect once if not already known
+                }
             }
         } else if (ModeDropdown.Text != "Coop") {
             if (currentMap = "") {
@@ -974,6 +977,7 @@ CheckLoaded() {
         if (checkForUnitManager) {
             if (ok := FindText(&X, &Y, 609, 463, 723, 495, 0.10, 0.20, UnitManagerBack)) {
                 AddToLog("Unit Manager found, game is loaded.")
+                checkForUnitManager := false
                 break
             }
         }
@@ -1180,22 +1184,24 @@ GetPlacementOrder() {
 SummonUnits() {
     global checkForUnitManager
     upgradeUnits := ShouldUpgradeUnits.Value
-    upgradePoints := UnitUpgradePoints() ; Map of slotNum → point
-    profilePoints := UnitProfilePoints()
     enabledSlots := []
     upgradeEnabledSlots := Map()
+    waitUntilMaxSlots := Map()
 
     for slotNum in GetPlacementOrder() {
         enabledVar := "enabled" slotNum
         upgradeEnabledVar := "upgradeEnabled" slotNum
+        upgradeBeforeSummonVar := "upgradeBeforeSummon" slotNum
 
         enabled := %enabledVar%
         upgradeEnabled := %upgradeEnabledVar%
+        upgradeBeforeSummon := %upgradeBeforeSummonVar%
 
         if (enabled.Value) {
             enabledSlots.Push(slotNum)
             if (upgradeEnabled.Value) {
                 upgradeEnabledSlots[slotNum] := true
+                waitUntilMaxSlots[slotNum] := upgradeBeforeSummon.Value
             }
         }
     }
@@ -1207,19 +1213,23 @@ SummonUnits() {
         return
     }
 
-    if (AutoPlay.Value && !upgradeUnits) {
-        AddToLog("Autoplay is enabled and auto upgrade is disabled - monitoring stage")
-        return MonitorEndScreen()
+    profilePoints := UnitProfilePoints(enabledSlots.Length)
+
+    if (!AutoPlay.Value && !upgradeUnits) {
+        AddToLog("Auto summon and auto upgrade is disabled - monitoring stage")
+        checkForUnitManager := false
+        return
     }
 
     ; Open Unit Manager if needed
-    if (upgradeUnits && upgradePoints.Count > 0 && checkForUnitManager) {
+    if (upgradeUnits && checkForUnitManager) {
         if (!GetFindText().FindText(&X, &Y, 609, 463, 723, 495, 0.10, 0.20, UnitManagerBack)) {
             AddToLog("Unit Manager isn't open - trying to open it")
             Loop {
                 CheckForVoteScreen()
                 if (!GetFindText().FindText(&X, &Y, 609, 463, 723, 495, 0.10, 0.20, UnitManagerBack)) {
                     SendInput("{T}")
+                    FixClick(750, 330)
                     Sleep(1000)
                 } else {
                     AddToLog("Unit Manager is open")
@@ -1235,80 +1245,82 @@ SummonUnits() {
 
     ; Main loop — runs until all enabled slots are processed
     while (enabledSlots.Length > 0) {
-        slotsToRemove := []
-
-        for index, slotNum in enabledSlots {
-
-            if CheckForXp() {
-                return
-            }
-
-            if (ModeDropdown.Text = "Challenge" && CheckForVoteScreen()) {
-                FixClick(401, 149)
-            }
-
-            ; Scroll to correct unit group if needed
-            if ([1, 2, 3].Has(slotNum))
-                currentGroup := "top"
-            else
-                currentGroup := "bottom"
-
-            if (currentGroup != lastScrollGroup && upgradeEnabledSlots.Has(slotNum)) {
-                FixClick(660, 155)
-                (currentGroup = "top") ? ScrollToTop() : ScrollToBottom()
-                lastScrollGroup := currentGroup
-                Sleep(200)
-            }
-
-            if (upgradeUnits && upgradeEnabledSlots.Has(slotNum)) {
-                point := upgradePoints.Get(slotNum, "")
+        ; Track whether any upgrading was done this loop
+        upgradedThisLoop := false
+    
+        ; Handle upgrading (only one unit at a time if toggle is on)
+        if (upgradeUnits && upgradeEnabledSlots.Count > 0) {
+            for index, slotNum in enabledSlots {
+                if !upgradeEnabledSlots.Has(slotNum)
+                    continue
+    
+                if CheckForXp() {
+                    return
+                }
+    
+                ; Scroll if needed
+                if ([1, 2, 3].Has(slotNum))
+                    currentGroup := "top"
+                else
+                    currentGroup := "bottom"
+    
+                if (currentGroup != lastScrollGroup) {
+                    FixClick(660, 155)
+                    (currentGroup = "top") ? ScrollToTop() : ScrollToBottom()
+                    lastScrollGroup := currentGroup
+                    Sleep(200)
+                }
+    
                 profile := profilePoints[slotNum]
-            
-                if (point) {
-                    ; Only click profile if it's a different slot
-                    if (slotNum != lastSlotNum) {
-                        FixClick(profile.x, profile.y)
-                        lastSlotNum := slotNum
-                    }
-            
-                    loop UpgradeClicks.Value {
-                        FixClick(point.x, point.y)
-                        Sleep(50)
-                    }
-            
-                    if (MaxUpgraded()) {
-                        AddToLog("Max upgrade reached for slot: " slotNum)
-                        FixClick(250, 200)
-                        upgradeEnabledSlots.Delete(slotNum)
-                        if (upgradeEnabledSlots.Count = 0 && AutoPlay.Value) {
-                            AddToLog("All units have been ugraded to max, monitoring stage...")
-                            return
-                        }
-                        continue
-                    }
-                } else {
-                    AddToLog("No upgrade point for slot " slotNum)
+    
+                if (slotNum != lastSlotNum) {
+                    FixClick(profile.x, profile.y)
+                    lastSlotNum := slotNum
+                }
+
+                ; Perform one upgrade loop
+                loop UpgradeClicks.Value {
+                    FixClick(70, 355)
+                    Sleep(50)
+                }
+
+                upgradedThisLoop := true
+
+                if (MaxUpgraded()) {
+                    AddToLog("Max upgrade reached for slot: " slotNum)
+                    FixClick(250, 200)
+                    upgradeEnabledSlots.Delete(slotNum)
+                }
+
+                ; Break if we're only doing one unit at a time
+                if (UpgradeUntilMaxed.Value)
+                    break
+            }
+        }
+    
+        ; Now summon all enabled units
+        for _, slotNum in enabledSlots {
+            ; If the "Upgrade Before Summon" checkbox is enabled, wait until maxed before summoning
+            if (!upgradeEnabledSlots.Has(slotNum) || (waitUntilMaxSlots.Has(slotNum) && !waitUntilMaxSlots[slotNum])) {
+                if (AutoPlay.Value) {
+                    SendInput("{" slotNum "}")
+                }
+            } else {
+                if (debugMessages) {
+                    AddToLog("Skipping summon for slot " slotNum " — waiting until maxed")
                 }
             }
-
-            ; Summon the unit
-            if (!AutoPlay.Value) {
-                SendInput("{" slotNum "}")
-                Sleep(50)
-                FixClick(400, 495)
-                Sleep(50)
-            }
-
-            Reconnect()
-            Sleep(500)
         }
-
-        ; Exit if upgrades are done and AutoPlay is enabled
-        if (upgradeEnabledSlots.Count = 0 && AutoPlay.Value) {
-            AddToLog("All units have been ugraded to max, monitoring stage...")
+    
+        Reconnect()
+        Sleep(500)
+    
+        ; Exit if upgrades are done and AutoPlay is on
+        if (upgradeEnabledSlots.Count = 0 && !AutoPlay.Value) {
+            AddToLog("All units have been upgraded to max, monitoring stage...")
             return
         }
-    }
+    }    
 }
 
 MaxUpgraded() {
@@ -1320,24 +1332,33 @@ MaxUpgraded() {
     return false
 }
 
-UnitUpgradePoints() {
-    return Map(
-        1, { x: 715, y: 190 },
-        2, { x: 715, y: 275 },
-        3, { x: 715, y: 350 },
-        4, { x: 715, y: 190 },
-        5, { x: 715, y: 275 },
-        6, { x: 715, y: 350 }
-    )
-}
+UnitProfilePoints(enabledCount := 6) {
+    topSlots := [
+        { x: 635, y: 190 }, ; Slot 1
+        { x: 635, y: 275 }, ; Slot 2
+        { x: 635, y: 350 }  ; Slot 3
+    ]
 
-UnitProfilePoints() {
+    ; Adjust bottom slot positions based on how many slots are enabled
+    if (enabledCount <= 4) {
+        bottomY := [365] ; Centered
+    } else if (enabledCount = 5) {
+        bottomY := [275, 365] ; Spread for 2
+    } else {
+        bottomY := [190, 275, 365] ; Evenly spread for 3
+    }
+
+    bottomSlots := []
+    for index, y in bottomY {
+        bottomSlots.Push({ x: 635, y: y })
+    }
+
     return Map(
-        1, { x: 635, y: 190 },
-        2, { x: 635, y: 275 },
-        3, { x: 635, y: 350 },
-        4, { x: 635, y: 190 },
-        5, { x: 635, y: 275 },
-        6, { x: 635, y: 350 }
+        1, topSlots[1],
+        2, topSlots[2],
+        3, topSlots[3],
+        4, bottomSlots.Has(1) ? bottomSlots[1] : { x: 635, y: 275 },
+        5, bottomSlots.Has(2) ? bottomSlots[2] : { x: 635, y: 275 },
+        6, bottomSlots.Has(3) ? bottomSlots[3] : { x: 635, y: 275 }
     )
 }

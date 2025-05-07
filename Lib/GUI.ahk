@@ -6,7 +6,7 @@
 ;Update Checker
 global repoOwner := "itsRynsRoblox"
 global repoName := "anime-rangers-x"
-global currentVersion := "1.4.3"
+global currentVersion := "1.4.6"
 
 ; Basic Application Info
 global aaTitle := "Ryn's Anime Rangers X "
@@ -361,6 +361,7 @@ global LoadingScreenWaitTime := arMainUI.Add("DropDownList", "x980 y200 w100 h18
 ; Unit Settings
 UpgradeClicksText := arMainUI.Add("Text", "x818 y123.5 w130 h20 +Center Hidden", "Upgrade Clicks")
 global UpgradeClicks := arMainUI.Add("Edit", "x950 y120 w100 Hidden cBlack Number", "1")
+global UpgradeUntilMaxed := arMainUI.Add("CheckBox", "x830 y163.5 Hidden cffffff", "Upgrade units to max before upgrading next unit")
 
 StoryDifficultyText := arMainUI.Add("Text", "x890 y585 w80 h20 +Center", "Difficulty")
 global StoryDifficulty := arMainUI.Add("DropDownList", "x970 y580 w100 h180 Choose1", ["Normal", "Hard", "Nightmare"])
@@ -371,8 +372,6 @@ Hotkeytext2 := arMainUI.Add("Text", "x807 y50 w500 h30", "F1:Fix Roblox Window|F
 
 DiscordButton := arMainUI.Add("Picture", "x30 y645 w60 h34 +BackgroundTrans cffffff", DiscordImage)
 DiscordButton.OnEvent("Click", (*) => OpenDiscord())
-
-AutoPlay.OnEvent("Click", (*) => SendSummonInformation())
 
 global TimerSettings := arMainUI.Add("GroupBox", "x808 y85 w550 h296 +Center Hidden c" uiTheme[1], "Timer Settings")
 global UnitSettings := arMainUI.Add("GroupBox", "x808 y85 w550 h296 +Center Hidden c" uiTheme[1], "Upgrade Settings")
@@ -431,7 +430,9 @@ AddUnitCard(arMainUI, index, x, y) {
     arMainUI.SetFont("s9 c" uiTheme[1])
     unit.PlacementText := arMainUI.Add("Text", Format("x{} y{} w200 h20 +BackgroundTrans", x+100, y+2), "Summon && Upgrade Priority")
 
-    unit.UpgradeText := arMainUI.Add("Text", Format("x{} y{} w140 h20 +BackgroundTrans", x+330, y+20), "Upgrade Enabled")
+    unit.UpgradeText := arMainUI.Add("Text", Format("x{} y{} w140 h20 +BackgroundTrans", x+330, y+5), "Upgrade Enabled")
+
+    unit.UpgradeBeforeSummonText := arMainUI.Add("Text", Format("x{} y{} w200 h20 +BackgroundTrans", x+330, y+25), "Max upgrade before summon")
     
     UnitData.Push(unit)
     return unit
@@ -451,12 +452,20 @@ enabled4 := arMainUI.Add("CheckBox", "x818 y252 w15 h15", "")
 enabled5 := arMainUI.Add("CheckBox", "x818 y302 w15 h15", "")
 enabled6 := arMainUI.Add("CheckBox", "x818 y352 w15 h15", "")
 
-upgradeEnabled1 := arMainUI.Add("CheckBox", "x1120 y105 w15 h15", "")
-upgradeEnabled2 := arMainUI.Add("CheckBox", "x1120 y155 w15 h15", "")
-upgradeEnabled3 := arMainUI.Add("CheckBox", "x1120 y205 w15 h15", "")
-upgradeEnabled4 := arMainUI.Add("CheckBox", "x1120 y255 w15 h15", "")
-upgradeEnabled5 := arMainUI.Add("CheckBox", "x1120 y305 w15 h15", "")
-upgradeEnabled6 := arMainUI.Add("CheckBox", "x1120 y355 w15 h15", "")
+upgradeEnabled1 := arMainUI.Add("CheckBox", "x1120 y90 w15 h15", "")
+upgradeEnabled2 := arMainUI.Add("CheckBox", "x1120 y140 w15 h15", "")
+upgradeEnabled3 := arMainUI.Add("CheckBox", "x1120 y190 w15 h15", "")
+upgradeEnabled4 := arMainUI.Add("CheckBox", "x1120 y240 w15 h15", "")
+upgradeEnabled5 := arMainUI.Add("CheckBox", "x1120 y290 w15 h15", "")
+upgradeEnabled6 := arMainUI.Add("CheckBox", "x1120 y340 w15 h15", "")
+
+upgradeBeforeSummon1 := arMainUI.Add("CheckBox", "x1120 y110 w15 h15", "")
+upgradeBeforeSummon2 := arMainUI.Add("CheckBox", "x1120 y160 w15 h15", "")
+upgradeBeforeSummon3 := arMainUI.Add("CheckBox", "x1120 y210 w15 h15", "")
+upgradeBeforeSummon4 := arMainUI.Add("CheckBox", "x1120 y260 w15 h15", "")
+upgradeBeforeSummon5 := arMainUI.Add("CheckBox", "x1120 y310 w15 h15", "")
+upgradeBeforeSummon6 := arMainUI.Add("CheckBox", "x1120 y360 w15 h15", "")
+
 
 arMainUI.SetFont("s8 c" uiTheme[6])
 
@@ -699,10 +708,6 @@ OpenRangerSettings(*) {
     GuideGUI.Show("w800")
 }
 
-SendSummonInformation() {
-    AddToLog("Auto Summon should match your auto play setting in-game.")
-}
-
 ToggleControlGroup(groupName) {
     global ActiveControlGroup
     if (ActiveControlGroup = groupName) {
@@ -727,7 +732,7 @@ SetUnitCardVisibility(visible) {
     }
 
     controlNames := [
-        "Placement", "enabled", "upgradeEnabled"
+        "Placement", "enabled", "upgradeEnabled", "upgradeBeforeSummon"
     ]
 
     for name in controlNames {
@@ -757,7 +762,7 @@ ShowOnlyControlGroup(groupToShow) {
     ]
     
     ControlGroups["Upgrade"] := [
-        UnitSettings, UpgradeClicks, UpgradeClicksText
+        UnitSettings, UpgradeClicks, UpgradeClicksText, UpgradeUntilMaxed
     ]
     
     ControlGroups["Timers"] := [

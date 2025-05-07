@@ -47,12 +47,21 @@ UpgradeEnabled3=1
 UpgradeEnabled4=1
 UpgradeEnabled5=1
 UpgradeEnabled6=1
+UpgradeUntilMaxed=0
+
+[UpgradeBeforeSummoning]
+UpgradeBeforeSummon1=0
+UpgradeBeforeSummon2=0
+UpgradeBeforeSummon3=0
+UpgradeBeforeSummon4=0
+UpgradeBeforeSummon5=0
+UpgradeBeforeSummon6=0
 
 [Lobby]
 LobbyDelay=2
 
 [Webhook]
-WebhookDelay=4
+WebhookDelay=1
 [Upgrading]
 UpgradeClicks=5
 [LoadingScreen]

@@ -26,7 +26,8 @@ readInSettings() {
     ;Unit Settings
     global enabled1, enabled2, enabled3, enabled4, enabled5, enabled6
     global placement1, placement2, placement3, placement4, placement5, placement6
-    global upgradeEnabled1, upgradeEnabled2, upgradeEnabled3, upgradeEnabled4, upgradeEnabled5, upgradeEnabled6, UpgradeClicks
+    global upgradeEnabled1, upgradeEnabled2, upgradeEnabled3, upgradeEnabled4, upgradeEnabled5, upgradeEnabled6, UpgradeClicks, UpgradeUntilMaxed
+    global upgradeBeforeSummon1, upgradeBeforeSummon2, upgradeBeforeSummon3, upgradeBeforeSummon4, upgradeBeforeSummon5, upgradeBeforeSummon6
     global AutoPlay, ShouldUpgradeUnits, LobbySleepTimer, WebhookSleepTimer, LoadingScreenWaitTime, UpdateMessages
 
     try {
@@ -65,6 +66,12 @@ readInSettings() {
                 case "UpgradeEnabled4": upgradeEnabled4.Value := parts[2]
                 case "UpgradeEnabled5": upgradeEnabled5.Value := parts[2]
                 case "UpgradeEnabled6": upgradeEnabled6.Value := parts[2]
+                case "UpgradeBeforeSummon1": upgradeBeforeSummon1.Value := parts[2]
+                case "UpgradeBeforeSummon2": upgradeBeforeSummon2.Value := parts[2]
+                case "UpgradeBeforeSummon3": upgradeBeforeSummon3.Value := parts[2]
+                case "UpgradeBeforeSummon4": upgradeBeforeSummon4.Value := parts[2]
+                case "UpgradeBeforeSummon5": upgradeBeforeSummon5.Value := parts[2]
+                case "UpgradeBeforeSummon6": upgradeBeforeSummon6.Value := parts[2]
 
                 case "Sleep": LobbySleepTimer.Value := parts[2] ; Set the dropdown value
                 case "Matchmake": MatchMaking.Value := parts[2] ; Set the checkbox value
@@ -79,6 +86,7 @@ readInSettings() {
                 case "UpgradeClicks": UpgradeClicks.Value := parts[2]
                 case "LoadingScreenDelay": LoadingScreenWaitTime.Value := parts[2]
                 case "Messages": UpdateMessages.Value := parts[2]
+                case "UpgradeUntilMaxed": UpgradeUntilMaxed.Value := parts[2]
             }
         }
         AddToLog("✅ Configuration settings loaded successfully")
@@ -100,7 +108,8 @@ SaveSettings(*) {
     ;Unit Settings
     global enabled1, enabled2, enabled3, enabled4, enabled5, enabled6
     global placement1, placement2, placement3, placement4, placement5, placement6
-    global upgradeEnabled1, upgradeEnabled2, upgradeEnabled3, upgradeEnabled4, upgradeEnabled5, upgradeEnabled6, UpgradeClicks
+    global upgradeEnabled1, upgradeEnabled2, upgradeEnabled3, upgradeEnabled4, upgradeEnabled5, upgradeEnabled6, UpgradeClicks, UpgradeUntilMaxed
+    global upgradeBeforeSummon1, upgradeBeforeSummon2, upgradeBeforeSummon3, upgradeBeforeSummon4, upgradeBeforeSummon5, upgradeBeforeSummon6
     global AutoPlay, ShouldUpgradeUnits, LobbySleepTimer, WebhookSleepTimer, LoadingScreenWaitTime, UpdateMessages
 
     try {
@@ -164,6 +173,13 @@ SaveSettings(*) {
         content .= "`n`n[UpgradeEnabled]"
         Loop 6 {
             content .= "`nUpgradeEnabled" A_Index "=" UpgradeEnabled%A_Index%.Value
+        }
+
+        content .= "`nUpgradeUntilMaxed=" UpgradeUntilMaxed.Value
+
+        content .= "`n`n[UpgradeBeforeSummoning]"
+        Loop 6 {
+            content .= "`nUpgradeBeforeSummon" A_Index "=" upgradeBeforeSummon%A_Index%.Value
         }
 
         content .= "`n`n[Lobby]"
