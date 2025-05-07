@@ -23,6 +23,7 @@ CheckForUpdates() {
     if (latestVersion != currentVersion) {
         AddToLog("🔄 Update available! Current: " currentVersion " → Latest: " latestVersion)
     } else {
-        AddToLog("You are using the latest version. Version: " currentVersion)
+        AddToLog("✅ You are already using the latest version (" currentVersion ")")
+
     }
 }

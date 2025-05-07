@@ -8,6 +8,8 @@ global currentMap := ""
 global checkForUnitManager := true
 global lastHourCheck := A_Hour
 
+global startingMode := true
+
 LoadKeybindSettings()  ; Load saved keybinds
 CheckForUpdates()
 Hotkey(F1Key, (*) => moveRobloxWindow())    
@@ -36,7 +38,7 @@ StartMacro(*) {
     if (!ValidateMode()) {
         return
     }
-    StartSelectedMode()
+    RestartStage()
 }
 
 TogglePause(*) {
@@ -51,6 +53,7 @@ TogglePause(*) {
 }
 
 StoryMode() {
+    global startingMode
     global StoryDropdown, StoryActDropdown
     
     ; Get current map and act
@@ -84,10 +87,10 @@ StoryMode() {
     StartStory(currentStoryMap, currentStoryAct)
 
     PlayHere()
-    RestartStage()
 }
 
-BossEvent() {    
+BossEvent() {
+    global startingMode
     BossEventMovement()
 
     while !(ok := GetFindText().FindText(&X, &Y, 400, 375, 508, 404, 0.05, 0.20, BossPlayText)) {
@@ -96,10 +99,11 @@ BossEvent() {
     }
 
     StartBossEvent()
-    RestartStage()
+    startingMode := false
 }
 
 ChallengeMode() {    
+    global startingMode
     ChallengeMovement()
 
     while !(ok := GetFindText().FindText(&X, &Y, 343, 467, 461, 496, 0.05, 0.20, Back)) {
@@ -109,14 +113,16 @@ ChallengeMode() {
     }
 
     CreateChallenge()
-    RestartStage()
 }
 
-CoopMode() {    
-    RestartStage()
+CoopMode() {
+    global startingMode
+    
+    startingMode := false
 }
 
-EasterEvent() {    
+EasterEvent() {
+    global startingMode
     EasterMovement()
 
     while !(ok := GetFindText().FindText(&X, &Y, 343, 467, 461, 496, 0.05, 0.20, Back)) {
@@ -126,12 +132,12 @@ EasterEvent() {
     }
 
     CreateChallenge()
-    RestartStage()
+    startingMode := false
 }
 
 
 LegendMode() {
-    global challengeMapIndex, challengeMapList, challengeStageCount, inChallengeMode
+    global challengeMapIndex, challengeMapList, challengeStageCount, inChallengeMode, startingMode
 
     ; Keep skipping until a valid map is found or end of list
     while (challengeMapIndex <= challengeMapList.Length && ShouldSkipMap(challengeMapList[challengeMapIndex])) {
@@ -147,7 +153,9 @@ LegendMode() {
         challengeStartTime := A_TickCount  ; Reset timer for next ranger stage trigger
         challengeMapIndex := 1  ; Reset map index for next session
         challengeStageCount := 0  ; Reset stage count for new ranger stage session
-        return CheckLobby()
+        CheckLobby()
+        startingMode := true
+        return
     }
 
     currentLegendMap := challengeMapList[challengeMapIndex]
@@ -186,11 +194,10 @@ LegendMode() {
 
     ; Handle play mode selection
     PlayHere()
-    RestartStage()
 }
 
 RaidMode() {
-    global RaidDropdown, RaidActDropdown
+    global RaidDropdown, RaidActDropdown, startingMode
     
     ; Get current map and act
     currentRaidMap := RaidDropdown.Text
@@ -209,12 +216,11 @@ RaidMode() {
     StartRaid(currentRaidMap, currentRaidAct)
 
     PlayHere()
-    RestartStage()
 }
 
 MonitorEndScreen() {
     global challengeStartTime, inChallengeMode, challengeStageCount, challengeMapIndex, challengeMapList
-    global Wins, loss, stageStartTime, lastResult, webhookSendTime
+    global Wins, loss, stageStartTime, lastResult, webhookSendTime, firstWebhook
 
     isWin := false
 
@@ -242,18 +248,19 @@ MonitorEndScreen() {
     (isWin ? Wins += 1 : loss += 1)
     Sleep(1000)
 
-    if ((A_TickCount - webhookSendTime) >= GetWebhookDelay()) { ; Custom cooldown
+    if (firstWebhook || (A_TickCount - webhookSendTime) >= GetWebhookDelay()) {
         try {
             SendWebhookWithTime(isWin, stageLength)
             webhookSendTime := A_TickCount
+            firstWebhook := false
         } catch {
             AddToLog("Error: Unable to send webhook.")
         }
     } else {
-        UpdateStreak(isWin) ; Needed for webhook
+        UpdateStreak(isWin)
     }
 
-    ; ─── End-of-Stage Handling Loop ───
+    ; ─── End-of-Stage Handling ───
     if (inChallengeMode) {
         challengeStageCount++
         AddToLog("Completed " challengeStageCount " out of 3 ranger stages for " challengeMapList[challengeMapIndex])
@@ -269,15 +276,17 @@ MonitorEndScreen() {
                 challengeStartTime := A_TickCount
                 challengeMapIndex := 1
                 ClickReturnToLobby()
-                return CheckLobby()
+                CheckLobby()
+                return
             } else {
                 AddToLog("Returning to lobby to start next map: " challengeMapList[challengeMapIndex])
                 ClickReturnToLobby()
-                return CheckLobby()
+                CheckLobby()
+                return
             }
         } else {
             ClickNextLevel()
-            return RestartStage()
+            return
         }
     }
 
@@ -289,7 +298,8 @@ MonitorEndScreen() {
             challengeStartTime := A_TickCount
             challengeStageCount := 0
             ClickReturnToLobby()
-            return CheckLobby()
+            CheckLobby()
+            return
         }
     }
 
@@ -301,7 +311,8 @@ MonitorEndScreen() {
     }
 }
 
-HandleStoryMode() {
+
+HandleStoryModeOld() {
     global lastResult
 
     if (lastResult "win" && NextLevelBox.Value && NextLevelBox.Visible) {
@@ -312,7 +323,7 @@ HandleStoryMode() {
     return RestartStage()
 }
 
-HandleDefaultMode() {
+HandleDefaultModeOld() {
     if (ReturnLobbyBox.Visible && ReturnLobbyBox.Value && ModeDropdown.Text != "Coop") {
         ClickReturnToLobby()
         return CheckLobby()
@@ -320,6 +331,28 @@ HandleDefaultMode() {
         ClickReplay()
     }
     return RestartStage()
+}
+
+HandleStoryMode() {
+    global lastResult
+
+    if (lastResult = "win" && NextLevelBox.Value && NextLevelBox.Visible) {
+        ClickNextLevel()
+    } else {
+        ClickReplay()
+    }
+    ; Don't return a function call — let control go back to MainLoop
+    return
+}
+
+HandleDefaultMode() {
+    if (ReturnLobbyBox.Visible && ReturnLobbyBox.Value && ModeDropdown.Text != "Coop") {
+        ClickReturnToLobby()
+        CheckLobby() ; call directly, no return
+    } else {
+        ClickReplay()
+    }
+    return
 }
 
 HandleLegendMode() {
@@ -339,17 +372,18 @@ HandleLegendMode() {
         }
         lastHourCheck := currentHour
         ClickReturnToLobby()
-        return CheckLobby()
+        CheckLobby()
+        return
     }
 
     if (ReturnLobbyBox.Visible && ReturnLobbyBox.Value) {
         ClickReturnToLobby()
-        return CheckLobby()
+        CheckLobby()
+        return
     } else {
         ClickReplay()
     }
-
-    return RestartStage()
+    return
 }
 
 
@@ -575,7 +609,7 @@ StartLegend(map, act) {
 }
 
 PlayHere() {
-    global inChallengeMode, challengeMapIndex, challengeStageCount, challengeStartTime
+    global inChallengeMode, challengeMapIndex, challengeStageCount, challengeStartTime, startingMode
     FixClick(485, 410)  ;Create
     if (inChallengeMode) {
         Sleep (500)
@@ -588,19 +622,24 @@ PlayHere() {
             challengeStartTime := A_TickCount  ; Reset timer for next ranger stage trigger
             challengeMapIndex := 1  ; Reset map index for next session
             challengeStageCount := 0  ; Reset stage count for new ranger stage session
-            return CheckLobby()
+            CheckLobby()
+            startingMode := true
+            return
         }
     }
     Sleep (1500)
     FixClick(400, 475) ;Start
     Sleep (1200)
+    startingMode := false
 }
 
 CreateChallenge() {
+    global startingMode
     FixClick(284, 259) ; Click Create Challenge
     Sleep(1500)
     FixClick(400, 475) ;Start
     Sleep (1000)
+    startingMode := false
 }
 
 StartBossEvent() {
@@ -689,6 +728,7 @@ BasicSetup() {
 DetectMap(waitForLoadingScreen := false) {
     global lastHourCheck
 
+    startTime := A_TickCount
     AddToLog("Trying to determine map...")
 
     mapPatterns := Map(
@@ -701,90 +741,88 @@ DetectMap(waitForLoadingScreen := false) {
         "Egg Island", EggIsland
     )
 
-    if (waitForLoadingScreen) {
-        AddToLog("Waiting for loading screen to appear (" LoadingScreenWaitTime.Text ")...")
-        loadingStart := A_TickCount
-        while (A_TickCount - loadingStart < GetLoadingScreenWaitTime()) {
-            for mapName, pattern in mapPatterns {
-                if (ok := GetFindText().FindText(&X, &Y, 11, 159, 450, 285, 0, 0, pattern)) {
-                    lastHourCheck := A_Hour
-                    return mapName
-                }
-            }
-            Sleep 500
-        }
-        AddToLog("No map detected during wait time — checking if loaded in.")
-        return "No Map Found"
-    }
-
-    startTime := A_TickCount
     Loop {
-        ; Timeout after 5 minutes
-        if (A_TickCount - startTime > 300000) {
-            if (ok := GetFindText().FindText(&X, &Y, 47, 342, 83, 374, 0, 0, AreaText)) {
-                AddToLog("Found in lobby - restarting selected mode")
-                return StartSelectedMode()
+        if (waitForLoadingScreen = true) {
+            if (A_TickCount - startTime > GetLoadingScreenWaitTime()) {
+                AddToLog("❌ No map was found after waiting " GetLoadingWaitInSeconds() " seconds.")
+                return "No Map Found"
             }
-            AddToLog("Could not detect map after 5 minutes - proceeding without movement")
-            return "No Map Found"
-        }
+        } else {
+            ; Timeout after 5 minutes
+            if (A_TickCount - startTime > 300000) {
+                if (ok := GetFindText().FindText(&X, &Y, 47, 342, 83, 374, 0, 0, AreaText)) {
+                    AddToLog("Found in lobby - restarting selected mode")
+                    return StartSelectedMode()
+                }
+                AddToLog("❌ Could not detect map after 5 minutes")
+                return "No Map Found"
+            }
 
-        ; Check for vote screen
-        if (ok := GetFindText().FindText(&X, &Y, 355, 168, 450, 196, 0.10, 0.10, VoteStart) 
-            or PixelGetColor(492, 47) = 0x5ED800) {
-            AddToLog("No Map Found or Movement Unnecessary")
-            return "No Map Found"
+            ; Check for vote screen
+            if (ok := GetFindText().FindText(&X, &Y, 355, 168, 450, 196, 0.10, 0.10, VoteStart) 
+                or PixelGetColor(492, 47) = 0x5ED800) {
+                AddToLog("❌ No map was found before loading in")
+                return "No Map Found"
+            }
         }
-
         ; Check for map
         for mapName, pattern in mapPatterns {
             if (ok := GetFindText().FindText(&X, &Y, 11, 159, 450, 285, 0, 0, pattern)) {
-                AddToLog("Detected map: " mapName)
+                AddToLog("✅ Map detected: " mapName)
                 return mapName
             }
         }
-
         Sleep 1000
         Reconnect()
     }
 }
     
 RestartStage() {
-    global currentMap, checkForUnitManager, lastHourCheck, inChallengeMode
+    global currentMap, checkForUnitManager, lastHourCheck, inChallengeMode, startingMode
 
-    currentHour := A_Hour
+    loop {
 
-    if (ModeDropdown.Text = "Challenge" && !inChallengeMode) {
-        if (currentHour != lastHourCheck) {
-            AddToLog("New hour detected (last: " lastHourCheck ", now: " currentHour ")")
-            currentMap := DetectMap(true) ; Re-detect the map
+        if (startingMode) {
+            StartSelectedMode()
+            continue ; immediately restart loop with new mode
         }
-    } else {
-        if (ModeDropdown.Text != "Coop") {
+
+
+        checkForUnitManager := true
+        currentHour := A_Hour
+
+        if (ModeDropdown.Text = "Challenge" && !inChallengeMode) {
+            if (currentHour != lastHourCheck && currentMap != "") {
+                AddToLog("New hour detected (last: " lastHourCheck ", now: " currentHour ")")
+                currentMap := DetectMap(true)  ; Force re-detect the map
+            } else {
+                currentMap := DetectMap(false)  ; Detect once if not already known
+            }
+        } else if (ModeDropdown.Text != "Coop") {
             if (currentMap = "") {
-                currentMap := DetectMap(false)
+                currentMap := DetectMap(false)  ; Normal detect
             } else {
                 AddToLog("Current Map: " currentMap)
             }
         }
+        
+
+        ; Wait for loading
+        CheckLoaded()
+
+        ; Wait for game to actually start
+        StartedGame()
+
+        ; Check for the vote start
+        CheckForVoteScreen()
+
+        ; Summon Units
+        SummonUnits()
+        
+        ; Monitor stage progress
+        MonitorEndScreen()
+
     }
-
-    checkForUnitManager := true
-
-    ; Wait for loading
-    CheckLoaded()
-
-    ; Wait for game to actually start
-    StartedGame()
-
-    ; Check for the vote start
-    CheckForVoteScreen()
-
-    ; Summon Units
-    SummonUnits()
-    
-    ; Monitor stage progress
-    MonitorEndScreen()
 }
 
 Reconnect() {
@@ -884,7 +922,7 @@ CheckForXp() {
     return false
 }
 
-CheckLobby() {
+CheckLobbyOld() {
     global currentMap
     loop {
         if (ok := GetFindText().FindText(&X, &Y, 47, 342, 83, 374, 0, 0, AreaText)) {
@@ -901,6 +939,28 @@ CheckLobby() {
     Sleep(SleepTime())
     currentMap := ""
     return StartSelectedMode()
+}
+
+CheckLobby() {
+    global currentMap, startingMode
+
+    loop {
+        if (ok := GetFindText().FindText(&X, &Y, 47, 342, 83, 374, 0, 0, AreaText)) {
+            break
+        }
+        if (CheckForXp()) {
+            AddToLog("Detected end game screen when should have already returned to lobby")
+            MonitorEndScreen() ; No need for `return` here
+            return ; Exit CheckLobby after handling MonitorEndScreen
+        }
+        Reconnect()
+        Sleep(1000)
+    }
+
+    AddToLog("Returned to lobby, restarting selected mode")
+    Sleep(SleepTime())
+    currentMap := ""
+    startingMode := true
 }
 
 CheckLoaded() {
@@ -1084,6 +1144,11 @@ GetLoadingScreenWaitTime() {
         return time[timeIndex]  ; Use the value directly from the array
 }
 
+GetLoadingWaitInSeconds() {
+    ms := GetLoadingScreenWaitTime()
+    return Round(ms / 1000, 1)  ; Return with 1 decimal place for precision
+}
+
 GetPlacementOrder() {
     placements := []
 
@@ -1173,8 +1238,9 @@ SummonUnits() {
         slotsToRemove := []
 
         for index, slotNum in enabledSlots {
+
             if CheckForXp() {
-                return MonitorEndScreen()
+                return
             }
 
             if (ModeDropdown.Text = "Challenge" && CheckForVoteScreen()) {
@@ -1214,6 +1280,10 @@ SummonUnits() {
                         AddToLog("Max upgrade reached for slot: " slotNum)
                         FixClick(250, 200)
                         upgradeEnabledSlots.Delete(slotNum)
+                        if (upgradeEnabledSlots.Count = 0 && AutoPlay.Value) {
+                            AddToLog("All units have been ugraded to max, monitoring stage...")
+                            return
+                        }
                         continue
                     }
                 } else {
@@ -1225,18 +1295,18 @@ SummonUnits() {
             if (!AutoPlay.Value) {
                 SendInput("{" slotNum "}")
                 Sleep(50)
+                FixClick(400, 495)
+                Sleep(50)
             }
 
             Reconnect()
             Sleep(500)
         }
 
-        ; Exit if nothing left to upgrade or summon
-        if (enabledSlots.Length = 0 && upgradeEnabledSlots.Count = 0) {
-            AddToLog("All units have been upgraded to the max")
-            if (AutoPlay.Value) {
-                return MonitorEndScreen()
-            }
+        ; Exit if upgrades are done and AutoPlay is enabled
+        if (upgradeEnabledSlots.Count = 0 && AutoPlay.Value) {
+            AddToLog("All units have been ugraded to max, monitoring stage...")
+            return
         }
     }
 }

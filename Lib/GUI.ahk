@@ -6,7 +6,7 @@
 ;Update Checker
 global repoOwner := "itsRynsRoblox"
 global repoName := "anime-rangers-x"
-global currentVersion := "1.3.9"
+global currentVersion := "1.4.3"
 
 ; Basic Application Info
 global aaTitle := "Ryn's Anime Rangers X "
@@ -43,6 +43,8 @@ global challengeStageCount := 0
 global challengeMapIndex := 1
 global firstStartup := true
 global challengeMapList := ["Voocha Village", "Green Planet", "Demon Forest", "Leaf Village", "Z City"]
+;Webhook
+global firstWebhook := true
 ;Gui creation
 global currentTheme := "Red"
 global uiBorders := []

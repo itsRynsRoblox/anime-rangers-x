@@ -81,7 +81,7 @@ readInSettings() {
                 case "Messages": UpdateMessages.Value := parts[2]
             }
         }
-        AddToLog("Configuration settings loaded successfully")
+        AddToLog("✅ Configuration settings loaded successfully")
         LoadMapSkipLocal()
     } 
 }
@@ -182,7 +182,7 @@ SaveSettings(*) {
         content .= "`nMessages=" UpdateMessages.Value
 
         FileAppend(content, settingsFile)
-        AddToLog("Configuration settings saved successfully")
+        AddToLog("✅ Configuration settings saved successfully")
         SaveMapSkipLocal()
     }
 }
