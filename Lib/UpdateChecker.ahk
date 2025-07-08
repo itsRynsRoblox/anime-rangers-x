@@ -14,6 +14,7 @@ CheckForUpdates() {
 
     if (http.Status != 200) {
         AddToLog("Failed to check for updates.")
+        AddToLog("Current Version: " version)
         return
     }
 

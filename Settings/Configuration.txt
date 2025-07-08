@@ -4,13 +4,16 @@ Mode=
 Sleep=2
 
 [Matchmaking]
-Matchmake=1
+Matchmake=0
 
-[AutoChallenge]
-Challenge=0
+[AutoBossAttack]
+BossAttack=0
 
 [ReturnToLobby]
 ToLobby=0
+
+[Replay]
+Replay=0
 
 [NextLevel]
 Next=0
@@ -41,12 +44,12 @@ Placement5=5
 Placement6=6
 
 [UpgradeEnabled]
-UpgradeEnabled1=1
-UpgradeEnabled2=1
-UpgradeEnabled3=1
-UpgradeEnabled4=1
-UpgradeEnabled5=1
-UpgradeEnabled6=1
+UpgradeEnabled1=0
+UpgradeEnabled2=0
+UpgradeEnabled3=0
+UpgradeEnabled4=0
+UpgradeEnabled5=0
+UpgradeEnabled6=0
 UpgradeUntilMaxed=0
 
 [UpgradeBeforeSummoning]
@@ -61,10 +64,20 @@ UpgradeBeforeSummon6=0
 LobbyDelay=2
 
 [Webhook]
-WebhookDelay=1
+WebhookDelay=5
 [Upgrading]
 UpgradeClicks=5
 [LoadingScreen]
 LoadingScreenDelay=1
 [UpdateMessages]
 Messages=1
+[AutoAbility]
+AutoAbility=1
+
+[TimersCustom]
+UltimateCheck=20
+UpgradeBeforeUltimate=10
+[BossAttackCD]
+BossAttackCDDelay=4
+[ReturnToLobbyTimer]
+ReturnToLobbyTimer=1

@@ -29,23 +29,26 @@ SaveMapSkipConfigToFile(filePath) {
     }
 
     File.WriteLine("[SkippedMaps]")
-    for index, mapDropDown in mapDropDowns
-    {
+    for index, mapDropDown in mapDropDowns {
         File.WriteLine(Format("Map{}={}", index+1, mapDropDown.Text))
+    }
+    File.WriteLine("[SkippedActs]")
+    for index, actDropDown in actDropDowns {
+        File.WriteLine(Format("Map{}={}", index+1, actDropDown.Text))
     }
 
     File.Close()
     if (debugMessages) {
-        AddToLog("Map configuration saved to " filePath ".`n")
+        AddToLog("Map+Act configuration saved to " filePath ".`n")
     }
 }
 
 LoadMapSkipConfigFromFile(filePath) {
-    global mapDropDowns
+    global mapDropDowns, actDropDowns, mapSkipPriorityOrder, actSkipPriorityOrder
 
     if !FileExist(filePath) {
         AddToLog("No map skip configuration file found. Creating new local configuration.")
-        SaveMapSkipLocal
+        SaveMapSkipLocal()
     } else {
         file := FileOpen(filePath, "r", "UTF-8")
         if !file {
@@ -74,11 +77,24 @@ LoadMapSkipConfigFromFile(filePath) {
                         mapDropDown.Text := value
                     }
                 }
+            } else if (section = "SkippedActs") {
+                if RegExMatch(line, "Map(\d+)=(.*)", &match) {
+                    slot := match.1
+                    value := match.2
+
+                    actSkipPriorityOrder[slot - 1] := value
+
+                    actDropDown := actDropDowns[slot - 1]
+                    if (actDropDown) {
+                        actDropDown.Text := value
+                    }
+                }
             }
         }
         file.Close()
+        UpdateEnabledMapSkips()
         if (debugMessages) {
-            AddToLog("Map configuration loaded successfully.")
+            AddToLog("Map+Act configuration loaded successfully.")
         }
     }
 }

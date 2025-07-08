@@ -3,15 +3,25 @@
 #Include Image.ahk
 #Include Functions.ahk
 
+;Theme colors
+global uiTheme := []
+uiTheme.Push("0xffffff")  ; Header color
+uiTheme.Push("0c000a")    ; Background color
+uiTheme.Push("0xffffff")  ; Border color
+uiTheme.Push("0c000a")    ; Accent color
+uiTheme.Push("0x3d3c36")  ; Trans color
+uiTheme.Push("000000")    ; Textbox color
+uiTheme.Push("00ffb3")    ; HighLight
+
 ;Update Checker
 global repoOwner := "itsRynsRoblox"
 global repoName := "anime-rangers-x"
-global currentVersion := "1.4.6"
+global currentVersion := "1.5.0"
 
 ; Basic Application Info
 global aaTitle := "Ryn's Anime Rangers X "
-global version := "v" . currentVersion
 global rblxID := "ahk_exe RobloxPlayerBeta.exe"
+global version := "v" . currentVersion
 ;Coordinate and Positioning Variables
 global targetWidth := 816
 global targetHeight := 638
@@ -36,33 +46,35 @@ global StartTime := A_TickCount
 global currentTime := GetCurrentTime()
 
 global unitCardsVisible := true
+global inStage := false
 ;Auto Challenge
 global challengeStartTime := A_TickCount
 global inChallengeMode := false
 global challengeStageCount := 0
 global challengeMapIndex := 1
 global firstStartup := true
-global challengeMapList := ["Voocha Village", "Green Planet", "Demon Forest", "Leaf Village", "Z City"]
+global challengeMapList := ["Voocha Village", "Green Planet", "Demon Forest", "Leaf Village", "Z City", "Ghoul City", "Night Colosseum"]
+global challengeMapActCount := [3, 3, 3, 3, 3, 5, 3]
+;Boss Attack
+global BossAttackStartTime := A_TickCount
+global inBossAttackMode := false
+global BossAttackMapStegeCount := 0
+global BossAttackMapIndex := 1
+global StartupBossAttack := true
+global justHitBossAttackCooldown := false
+global BossAttackMapList := ["Boss Attack"]
+global BossAttackMapActCount := [3] ; Only 3 act for Boss Attack
 ;Webhook
 global firstWebhook := true
 ;Gui creation
 global currentTheme := "Red"
 global uiBorders := []
 global uiBackgrounds := []
-global uiTheme := []
 global UnitData := []
 global arMainUI := Gui("+AlwaysOnTop -Caption")
 global lastlog := ""
 global arMainUIHwnd := arMainUI.Hwnd
 global ActiveControlGroup := ""
-;Theme colors
-uiTheme.Push("0xffffff")  ; Header color
-uiTheme.Push("0c000a")  ; Background color
-uiTheme.Push("0xffffff")    ; Border color
-uiTheme.Push("0c000a")  ; Accent color
-uiTheme.Push("0x3d3c36")   ; Trans color
-uiTheme.Push("000000")    ; Textbox color
-uiTheme.Push("00ffb3") ; HighLight
 ;Logs/Save settings
 global settingsGuiOpen := false
 global SettingsGUI := ""
@@ -109,9 +121,9 @@ minimizeButton.OnEvent("Click", (*) => minimizeUI()) ;Minimize gui
 arMainUI.SetFont("Bold s16 c" uiTheme[1], "Verdana") ;Font
 global windowTitle := arMainUI.Add("Text", "x10 y3 w1200 h29 +BackgroundTrans", aaTitle "" . "" version) ;Title
 
-arMainUI.Add("Text", "x805 y390 w558 h25 +Center +BackgroundTrans", "Activity Log") ;Process header
+arMainUI.Add("Text", "x805 y390 w558 h25 +Center +BackgroundTrans", "Process") ;Process header
 arMainUI.SetFont("norm s11 c" uiTheme[1]) ;Font
-global process1 := arMainUI.Add("Text", "x810 y420 w600 h18 +BackgroundTrans c" uiTheme[7], "➤ Original Creator: Ryn (@TheRealTension)") ;Processes
+global process1 := arMainUI.Add("Text", "x810 y420 w600 h18 +BackgroundTrans c" uiTheme[7], "Original Creator: Ryn (@TheRealTension)") ;Processes
 global process2 := arMainUI.Add("Text", "xp yp+22 w600 h18 +BackgroundTrans", "") ;Processes 
 global process3 := arMainUI.Add("Text", "xp yp+22 w600 h18 +BackgroundTrans", "")
 global process4 := arMainUI.Add("Text", "xp yp+22 w600 h18 +BackgroundTrans", "")
@@ -340,13 +352,16 @@ arMainUI.SetFont("s9")
 ;Normal Options
 global NextLevelBox := arMainUI.Add("Checkbox", "x900 y560 cffffff Checked", "Next Level")
 global ReturnLobbyBox := arMainUI.Add("Checkbox", "x900 y560 cffffff Checked", "Return To Lobby")
+global ReplayBox := arMainUI.Add("Checkbox", "x900 y560 cffffff Checked", "Replay")
 global MatchMaking := arMainUI.Add("Checkbox", "x900 y580 cffffff Hidden Checked", "Matchmaking") 
 ;Auto Settings
 global AutoPlay := arMainUI.Add("CheckBox", "x808 y615 cffffff", "Auto Summon")
 
-global ShouldUpgradeUnits := arMainUI.Add("CheckBox", "x928 y615 cffffff", "Auto Upgrade")
-global ChallengeBox := arMainUI.Add("CheckBox", "x1048 y615 cffffff", "Farm Ranger Stages")
-global UpdateMessages := arMainUI.Add("CheckBox", "x1215 y615 cffffff", "Update Messages")
+global ShouldUpgradeUnits := arMainUI.Add("CheckBox", "x940 y615 cffffff", "Auto Upgrade")
+;global ChallengeBox := arMainUI.Add("CheckBox", "x1048 y615 cffffff", "Farm Ranger Stages")
+global AutoAbility := arMainUI.Add("CheckBox", "x1075 y615 cffffff", "Auto Ability")
+global BossAttackBox := arMainUI.Add("CheckBox", "x1075 y595 cffffff", "Auto Boss Attack")
+global UpdateMessages := arMainUI.Add("CheckBox", "x1200 y615 cffffff", "Update Messages")
 
 ; Timer Settings
 LobbySleepText := arMainUI.Add("Text", "x818 y123.5 w130 h20 +Center Hidden", "Lobby Sleep Timer")
@@ -357,6 +372,23 @@ global WebhookSleepTimer := arMainUI.Add("DropDownList", "x950 y160 w100 h180 Hi
 
 LoadingScreenWaitTimeText := arMainUI.Add("Text", "x818 y203.5 w160 h20 +Center Hidden", "Loading Screen Timer")
 global LoadingScreenWaitTime := arMainUI.Add("DropDownList", "x980 y200 w100 h180 Hidden Choose1", ["15 Seconds", "20 Seconds", "25 Seconds", "30 Seconds", "35 Seconds", "40 Seconds", "45 Seconds", "50 Seconds", "55 Seconds", "60 Seconds"])
+
+VoteTimeoutTimerText := arMainUI.Add("Text", "x818 y243.5 w160 h20 +Center Hidden", "Vote Timeout Timer")
+global VoteTimeoutTimer := arMainUI.Add("DropDownList", "x980 y240 w100 h180 Hidden Choose1", ["2 Seconds", "3 seconds", "4 Seconds", "6 Seconds", "7 Seconds", "8 Seconds", "9 Seconds", "10 Seconds"])
+
+ReturnToLobbyTimerText := arMainUI.Add("Text", "x818 y283.5 w160 h20 +Center Hidden", "Return To Lobby Timer")
+global ReturnToLobbyTimer := arMainUI.Add("DropDownList", "x980 y280 w100 h180 Hidden Choose1", ["Never", "5 minutes", "10 minutes", "15 minutes", "20 minutes", "25 minutes", "30 minutes", "60 minutes"])
+
+BossAttackCDTimerText := arMainUI.Add("Text", "x818 y325 w160 h20 +Center Hidden", "Redo Boss Attack to") ; Will be hidden by default now
+global BossAttackCDTimer := arMainUI.Add("DropDownList", "x1000  y325 w100 h180 Hidden Choose5", ["10 minutes", "15 minutes", "20 minutes", "25 minutes", "30 minutes", "20s Test"]) ; Will be hidden
+
+; New fields for Timers GUI only
+UltimateCheckText := arMainUI.Add("Text", "x1058 y123.5 w200 h20 +Center Hidden", "Ultimate Check (seconds)")
+global UltimateCheckEdit := arMainUI.Add("Edit", "x1244 y120 w100 h20 Hidden cBlack Number", "60")
+
+; Add Upgrade (seconds) before Ultimate Check
+UpgradeBeforeUltimateText := arMainUI.Add("Text", "x1058 y163.5 w160 h20 +Center Hidden", "Upgrade (seconds)")
+global UpgradeBeforeUltimateEdit := arMainUI.Add("Edit", "x1244 y163.5 w100 h20 Hidden cBlack Number", "0")
 
 ; Unit Settings
 UpgradeClicksText := arMainUI.Add("Text", "x818 y123.5 w130 h20 +Center Hidden", "Upgrade Clicks")
@@ -380,15 +412,18 @@ global UnitSettings := arMainUI.Add("GroupBox", "x808 y85 w550 h296 +Center Hidd
 ;--------------MODE SELECT;--------------MODE SELECT;--------------MODE SELECT;--------------MODE SELECT;--------------MODE SELECT;--------------MODE SELECT
 global modeSelectionGroup := arMainUI.Add("GroupBox", "x808 y38 w500 h45 Background" uiTheme[2], "Mode Select")
 arMainUI.SetFont("s10 c" uiTheme[6])
-global ModeDropdown := arMainUI.Add("DropDownList", "x818 y53 w140 h180 Choose0 +Center", ["Story", "Challenge", "Coop", "Easter Event"])
-global StoryDropdown := arMainUI.Add("DropDownList", "x968 y53 w150 h180 Choose0 +Center", ["Voocha Village", "Green Planet", "Demon Forest", "Leaf Village", "Z City"])
+global ModeDropdown := arMainUI.Add("DropDownList", "x818 y53 w140 h180 Choose0 +Center", ["Story", "Ranger", "Raid", "Challenge", "Portal", "Co-op", "Summer Event"])
+global StoryDropdown := arMainUI.Add("DropDownList", "x968 y53 w150 h180 Choose0 +Center", ["Voocha Village", "Green Planet", "Demon Forest", "Leaf Village", "Z City", "Ghoul City", "Night Colosseum", "Bizzare Race"])
 global StoryActDropdown := arMainUI.Add("DropDownList", "x1128 y53 w80 h180 Choose0 +Center", ["Act 1", "Act 2", "Act 3", "Act 4", "Act 5", "Act 6", "Act 7", "Act 8", "Act 9", "Act 10"])
+global RangerDropdown := arMainUI.Add("DropDownList", "x968 y53 w150 h180 Choose0 +Center Hidden", ["Voocha Village", "Green Planet", "Demon Forest", "Leaf Village", "Z City", "Ghoul City", "Night Colosseum"])
+global RangerActDropdown := arMainUI.Add("DropDownList", "x1128 y53 w80 h180 Choose0 +Center Hidden", ["Act 1", "Act 2", "Act 3", "Act 4", "Act 5"])
 global LegendDropDown := arMainUI.Add("DropDownlist", "x968 y53 w150 h180 Choose0 +Center", [""] )
 global LegendActDropdown := arMainUI.Add("DropDownList", "x1128 y53 w80 h180 Choose0 +Center", ["Act 1", "Act 2", "Act 3", "Random"])
-global RaidDropdown := arMainUI.Add("DropDownList", "x968 y53 w150 h180 Choose0 +Center", [""])
-global RaidActDropdown := arMainUI.Add("DropDownList", "x1128 y53 w80 h180 Choose0 +Center", ["Act 1", "Act 2", "Act 3", "Act 4", "Act 5"])
+global RaidDropdown := arMainUI.Add("DropDownList", "x968 y53 w150 h180 Choose0 +Center", ["Steel Blitz Rush"])
+global RaidActDropdown := arMainUI.Add("DropDownList", "x1128 y53 w80 h180 Choose0 +Center", ["Act 1", "Act 2", "Act 3", "Act 4"])
 global InfinityCastleDropdown := arMainUI.Add("DropDownList", "x968 y53 w80 h180 Choose0 +Center", ["Normal", "Hard"])
 global ConfirmButton := arMainUI.Add("Button", "x1218 y53 w80 h25", "Confirm")
+global PortalDropdown := arMainUI.Add("DropDownList", "x968 y53 w150 h180 Choose0 +Center", ["Ghoul City Portal", "Night Colosseum Portal"])
 
 StoryDropdown.Visible := false
 StoryActDropdown.Visible := false
@@ -399,9 +434,11 @@ RaidActDropdown.Visible := false
 InfinityCastleDropdown.Visible := false
 MatchMaking.Visible := false
 ReturnLobbyBox.Visible := false
+ReplayBox.Visible := false
 NextLevelBox.Visible := false
 StoryDifficulty.Visible := false
 StoryDifficultyText.Visible := false
+PortalDropdown.Visible := false
 Hotkeytext.Visible := false
 Hotkeytext2.Visible := false
 
@@ -411,7 +448,22 @@ StoryActDropdown.OnEvent("Change", OnStoryActChange)
 LegendDropDown.OnEvent("Change", OnLegendChange)
 RaidDropdown.OnEvent("Change", OnRaidChange)
 ConfirmButton.OnEvent("Click", OnConfirmClick)
-;------MAIN UI------MAIN UI------MAIN UI------MAIN UI------MAIN UI------MAIN UI------MAIN UI------MAIN UI------MAIN UI------MAIN UI------MAIN UI------MAIN UI
+
+RangerDropdown.OnEvent("Change", (*) => OnRangerMapChange())
+
+OnRangerMapChange() {
+    map := RangerDropdown.Text
+    if (map = "Z City" || map = "Ghoul City") {
+        RangerActDropdown.Delete()
+        RangerActDropdown.Add(["Act 1", "Act 2", "Act 3", "Act 4", "Act 5"])
+        RangerActDropdown.Value := 1
+    } else {
+        RangerActDropdown.Delete()
+        RangerActDropdown.Add(["Act 1", "Act 2", "Act 3"])
+        RangerActDropdown.Value := 1
+    }
+}
+;------MAIN UI------MAIN UI------MAIN UI------MAIN UI------MAIN UI------MAIN UI------MAIN UI------MAIN UI------MAIN UI------MAIN UI------MAIN UI------MAIN UI------MAIN UI------
 ;------UNIT CONFIGURATION ;------UNIT CONFIGURATION ;------UNIT CONFIGURATION ;------UNIT CONFIGURATION ;------UNIT CONFIGURATION ;------UNIT CONFIGURATION ;------UNIT CONFIGURATION
 AddUnitCard(arMainUI, index, x, y) {
     unit := {}
@@ -481,7 +533,7 @@ readInSettings()
 arMainUI.Show("w1366 h633")
 WinMove(0, 0,,, "ahk_id " arMainUIHwnd)
 forceRobloxSize()  ; Initial force size and position
-;------FUNCTIONS;------FUNCTIONS;------FUNCTIONS;------FUNCTIONS;------FUNCTIONS;------FUNCTIONS;------FUNCTIONS;------FUNCTIONS;------FUNCTIONS;------FUNCTIONS;------FUNCTIONS
+;------FUNCTIONS;------FUNCTIONS;------FUNCTIONS;------FUNCTIONS;------FUNCTIONS;------FUNCTIONS;------FUNCTIONS;------FUNCTIONS;------FUNCTIONS;------FUNCTIONS;------FUNCTIONS;------FUNCTIONS
 
 ;Process text
 AddToLog(current) { 
@@ -499,7 +551,7 @@ AddToLog(current) {
     
     elapsedTime := getElapsedTime()
     Sleep(50)
-    FileAppend(current . " " . elapsedTime . "`n", currentOutputFile)
+    FileAppend(current . " " . "[" getCurrentTime() "]" . "`n", currentOutputFile)
 
     ; Add webhook logging
     lastlog := current
@@ -766,7 +818,9 @@ ShowOnlyControlGroup(groupToShow) {
     ]
     
     ControlGroups["Timers"] := [
-        TimerSettings, LobbySleepText, LobbySleepTimer, WebhookSleepText, WebhookSleepTimer, LoadingScreenWaitTime, LoadingScreenWaitTimeText
+        TimerSettings, LobbySleepText, LobbySleepTimer, WebhookSleepText, WebhookSleepTimer, LoadingScreenWaitTime, LoadingScreenWaitTimeText, VoteTimeoutTimerText, VoteTimeoutTimer, ReturnToLobbyTimerText, ReturnToLobbyTimer, BossAttackCDTimerText, BossAttackCDTimer, 
+        UltimateCheckText, UltimateCheckEdit, 
+        UpgradeBeforeUltimateText, UpgradeBeforeUltimateEdit ; , RangerCDTimerText, RangerCDTimer,
     ]
 
     for name, controls in ControlGroups {
@@ -776,4 +830,7 @@ ShowOnlyControlGroup(groupToShow) {
                 control.Visible := isVisible
         }
     }
+    ; Ensure BossAttackCDTimer controls are visible if Timers group is shown
+    BossAttackCDTimerText.Visible := (groupToShow = "Timers")
+    BossAttackCDTimer.Visible := (groupToShow = "Timers")
 }

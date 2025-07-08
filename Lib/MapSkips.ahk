@@ -5,22 +5,47 @@ MapSkipPrioritySelector.MarginX := 20
 MapSkipPrioritySelector.MarginY := 20
 MapSkipPrioritySelector.Title := "Ranger Maps"
 
-MapSkipPriorityOrder := MapSkipPrioritySelector.Add("GroupBox", "x30 y25 w180 h260 +Center cWhite", "Skipped Ranger Maps")
+MapSkipPriorityOrder := MapSkipPrioritySelector.Add("GroupBox", "x30 y25 w250 h260 +Center cWhite", "Select Ranger Maps and Act to Play")
 
-mapOptions := ["None", "Voocha Village", "Green Planet", "Demon Forest", "Leaf Village", "Z City"]
+; ปรับ mapOptions เป็น array ซ้อน (แต่ละแผนที่มีชื่อจริงเป็น index 2)
+mapOptions := [
+    ["None", "Voocha Village"], 
+    ["None", "Green Planet"], 
+    ["None", "Demon Forest"], 
+    ["None", "Leaf Village"], 
+    ["None", "Z City"], 
+    ["None", "Ghoul City"], 
+    ["None", "Night Colosseum"]
+]
 
-numDropDowns := 5
+; mapActOptions index ตรงกับ mapOptions
+mapActOptions := [
+    ["None", "Act 1", "Act 2", "Act 3"], ; Voocha Village
+    ["None", "Act 1", "Act 2", "Act 3"], ; Green Planet
+    ["None", "Act 1", "Act 2", "Act 3"], ; Demon Forest
+    ["None", "Act 1", "Act 2", "Act 3"], ; Leaf Village
+    ["None", "Act 1", "Act 2", "Act 3"], ; Z City
+    ["None", "Act 1", "Act 2", "Act 3", "Act 4", "Act 5"], ; Ghoul City
+    ["None", "Act 1", "Act 2", "Act 3"]  ; Night Colosseum
+]
+
+numDropDowns := mapOptions.Length
+
+global mapDropDowns := []
+global actDropDowns := []
+global enabledMapSkips := []
+
 yStart := 50
 ySpacing := 28
 
-global mapDropDowns := []
-global enabledMapSkips := []
-
 Loop numDropDowns {
     yPos := yStart + ((A_Index - 1) * ySpacing)
-    dropDown := MapSkipPrioritySelector.Add("DropDownList", Format("x50 y{} w135 Choose1", yPos), mapOptions)
-    mapDropDowns.Push(dropDown)
-    AttachDropDownEvent(dropDown, A_Index, OnMapDropDownChange)
+    mapDrop := MapSkipPrioritySelector.Add("DropDownList", Format("x50 y{} w135 Choose1", yPos), mapOptions[A_Index])
+    mapDropDowns.Push(mapDrop)
+    actDrop := MapSkipPrioritySelector.Add("DropDownList", Format("x200 y{} w60 Choose1", yPos), mapActOptions[A_Index])
+    actDropDowns.Push(actDrop)
+    AttachDropDownEvent(mapDrop, A_Index, OnMapDropDownChange)
+    AttachDropDownEvent(actDrop, A_Index, OnActDropDownChange)
 }
 
 OpenMapSkipPriorityPicker() {
@@ -28,38 +53,52 @@ OpenMapSkipPriorityPicker() {
 }
 
 global mapSkipPriorityOrder := []
-
+global actSkipPriorityOrder := []
 Loop numDropDowns {
     mapSkipPriorityOrder.Push("None")
+    actSkipPriorityOrder.Push("None")
 }
 
 OnMapDropDownChange(ctrl, index) {
-    if (index >= 0 and index <= 19) {
-        mapSkipPriorityOrder[index] := ctrl.Text
-        if (debugMessages) {
-            AddToLog(Format("Map {} set to {}", index, ctrl.Text))
-        }
-        RemoveEmptyStrings(mapSkipPriorityOrder)
-        UpdateEnabledMapSkips()
-        SaveMapSkipLocal
-    } else {
-        if (debugMessages) {
-            AddToLog(Format("Invalid index {} for dropdown", index))
-        }
+    global mapSkipPriorityOrder
+    mapSkipPriorityOrder[index] := ctrl.Text
+    if (debugMessages) {
+        AddToLog(Format("Map {} set to {}", index, ctrl.Text))
     }
+    RemoveEmptyStrings(mapSkipPriorityOrder)
+    UpdateEnabledMapSkips()
+    SaveMapSkipLocal
+}
+
+OnActDropDownChange(ctrl, index) {
+    global actSkipPriorityOrder
+    actSkipPriorityOrder[index] := ctrl.Text
+    if (debugMessages) {
+        AddToLog(Format("Act {} set to {}", index, ctrl.Text))
+    }
+    ; สามารถเพิ่ม logic อื่นๆ ได้ เช่น save หรือ update
+    UpdateEnabledMapSkips()
+    SaveMapSkipLocal()
 }
 
 UpdateEnabledMapSkips() {
-    global enabledMapSkips
+    global enabledMapSkips, mapSkipPriorityOrder, actSkipPriorityOrder
     enabledMapSkips := []
     for index, map in mapSkipPriorityOrder {
-        if (map != "" and map != "None") {
-            enabledMapSkips.Push(map)
+        act := actSkipPriorityOrder[index]
+        if (map != "" and map != "None" and act != "" and act != "None") {
+            enabledMapSkips.Push({map: map, act: act})
         }
     }
 }
 
-ShouldSkipMap(map) {
+; ถ้า map/act ไม่ได้อยู่ใน enabledMapSkips ให้ข้าม
+ShouldSkipMap(map, act) {
     global enabledMapSkips
-    return HasValue(enabledMapSkips, map)
+    for _, skip in enabledMapSkips {
+        if (skip.map = map && skip.act = act) {
+            return false ; "เจอ" = ไม่ข้าม (เล่น)
+        }
+    }
+    return true ; "ไม่เจอ" = ข้าม
 }

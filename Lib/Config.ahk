@@ -17,19 +17,6 @@ readInSettings() {
     ; General settings
     global mode
 
-    ; General Unit Settings
-    global LobbySleepTimer, StoryDifficulty
-
-    ; General settings
-    global ChallengeBox, MatchMaking, ReturnLobbyBox, NextLevelBox
-
-    ;Unit Settings
-    global enabled1, enabled2, enabled3, enabled4, enabled5, enabled6
-    global placement1, placement2, placement3, placement4, placement5, placement6
-    global upgradeEnabled1, upgradeEnabled2, upgradeEnabled3, upgradeEnabled4, upgradeEnabled5, upgradeEnabled6, UpgradeClicks, UpgradeUntilMaxed
-    global upgradeBeforeSummon1, upgradeBeforeSummon2, upgradeBeforeSummon3, upgradeBeforeSummon4, upgradeBeforeSummon5, upgradeBeforeSummon6
-    global AutoPlay, ShouldUpgradeUnits, LobbySleepTimer, WebhookSleepTimer, LoadingScreenWaitTime, UpdateMessages
-
     try {
         settingsFile := setupFilePath()
         if !FileExist(settingsFile) {
@@ -75,18 +62,27 @@ readInSettings() {
 
                 case "Sleep": LobbySleepTimer.Value := parts[2] ; Set the dropdown value
                 case "Matchmake": MatchMaking.Value := parts[2] ; Set the checkbox value
-                case "Challenge": ChallengeBox.Value := parts[2] ; Set the checkbox value
+                ;case "Challenge": ChallengeBox.Value := parts[2] ; Set the checkbox value
                 case "Next": NextLevelBox.Value := parts[2] ; Set the checkbox value
                 case "ToLobby": ReturnLobbyBox.Value := parts[2] ; Set the checkbox value
+                case "Replay": ReplayBox.Value := parts[2] ; Set the checkbox value
                 case "Difficulty": StoryDifficulty.Value := parts[2] ; Set the dropdown value
+                case "BossAttack": BossAttackBox.Value := parts[2] ; Set the checkbox value
                 case "Play": AutoPlay.Value := parts[2] ; Set the checkbox value
                 case "Upgrade": ShouldUpgradeUnits.Value := parts[2] ; Set the checkbox value
                 case "LobbyDelay": LobbySleepTimer.Value := parts[2]
                 case "WebhookDelay": WebhookSleepTimer.Value := parts[2]
                 case "UpgradeClicks": UpgradeClicks.Value := parts[2]
                 case "LoadingScreenDelay": LoadingScreenWaitTime.Value := parts[2]
+				;case "RangerCDDelay": RangerCDTimer.Value := parts[2]
                 case "Messages": UpdateMessages.Value := parts[2]
+                case "AutoAbility": AutoAbility.Value := Number(parts[2])
+                case "UltimateCheck": UltimateCheckEdit.Value := parts[2]
                 case "UpgradeUntilMaxed": UpgradeUntilMaxed.Value := parts[2]
+                case "UpgradeBeforeUltimate": UpgradeBeforeUltimateEdit.Value := parts[2]
+                case "BossAttackCDDelay": BossAttackCDTimer.Value := parts[2]
+                case "ReturnToLobbyTimer": ReturnToLobbyTimer.Value := parts[2]
+
             }
         }
         AddToLog("✅ Configuration settings loaded successfully")
@@ -98,19 +94,6 @@ readInSettings() {
 SaveSettings(*) {
     ; General settings
     global mode
-
-    ; General Unit Settings
-    global LobbySleepTimer, StoryDifficulty
-
-    ; General settings
-    global ChallengeBox, MatchMaking, ReturnLobbyBox, NextLevelBox
-
-    ;Unit Settings
-    global enabled1, enabled2, enabled3, enabled4, enabled5, enabled6
-    global placement1, placement2, placement3, placement4, placement5, placement6
-    global upgradeEnabled1, upgradeEnabled2, upgradeEnabled3, upgradeEnabled4, upgradeEnabled5, upgradeEnabled6, UpgradeClicks, UpgradeUntilMaxed
-    global upgradeBeforeSummon1, upgradeBeforeSummon2, upgradeBeforeSummon3, upgradeBeforeSummon4, upgradeBeforeSummon5, upgradeBeforeSummon6
-    global AutoPlay, ShouldUpgradeUnits, LobbySleepTimer, WebhookSleepTimer, LoadingScreenWaitTime, UpdateMessages
 
     try {
         settingsFile := A_ScriptDir "\Settings\Configuration.txt"
@@ -135,11 +118,17 @@ SaveSettings(*) {
         content .= "`n[Matchmaking]"
         content .= "`nMatchmake=" MatchMaking.Value "`n"
 
-        content .= "`n[AutoChallenge]"
-        content .= "`nChallenge=" ChallengeBox.Value "`n"
+        ;content .= "`n[AutoChallenge]"
+        ;content .= "`nChallenge=" ChallengeBox.Value "`n"
+
+        content .= "`n[AutoBossAttack]"
+        content .= "`nBossAttack=" BossAttackBox.Value "`n"
 
         content .= "`n[ReturnToLobby]"
         content .= "`nToLobby=" ReturnLobbyBox.Value "`n"
+
+        content .= "`n[Replay]"
+        content .= "`nReplay=" ReplayBox.Value "`n"
 
         content .= "`n[NextLevel]"
         content .= "`nNext=" NextLevelBox.Value "`n"
@@ -193,10 +182,26 @@ SaveSettings(*) {
 
         content .= "`n[LoadingScreen]"
         content .= "`nLoadingScreenDelay=" LoadingScreenWaitTime.Value
-
+				
         content .= "`n[UpdateMessages]"
         content .= "`nMessages=" UpdateMessages.Value
 
+        content .= "`n[AutoAbility]"
+        content .= "`nAutoAbility=" (AutoAbility.Value ? 1 : 0) "`n"
+
+        content .= "`n[TimersCustom]"
+        content .= "`nUltimateCheck=" UltimateCheckEdit.Value
+        content .= "`nUpgradeBeforeUltimate=" UpgradeBeforeUltimateEdit.Value
+
+		;content .= "`n[RangerCD]"
+        ;content .= "`nRangerCDDelay=" RangerCDTimer.Value
+
+        content .= "`n[BossAttackCD]"
+        content .= "`nBossAttackCDDelay=" BossAttackCDTimer.Value
+
+        content .= "`n[ReturnToLobbyTimer]"
+        content .= "`nReturnToLobbyTimer=" ReturnToLobbyTimer.Value
+		
         FileAppend(content, settingsFile)
         AddToLog("✅ Configuration settings saved successfully")
         SaveMapSkipLocal()

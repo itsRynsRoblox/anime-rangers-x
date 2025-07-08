@@ -3,12 +3,29 @@
 
 global macroStartTime := A_TickCount
 global stageStartTime := A_TickCount
+global ReturnToLobbyStartTime := A_TickCount
 
+global inBossAttackMode := false
+global inChallengeMode := false
 global currentMap := ""
 global checkForUnitManager := true
 global lastHourCheck := A_Hour
-
 global startingMode := true
+global isUpgrading := true
+global autoAbilityClicking := false
+global inStage := false
+
+global CidMapPattern1 := "|<>**50$273.000000000000000zU0000000000000000000zU0000000000000000000000CC0000000000000000000DC00000000Ts00000000000010M0000000000000007zw10M000000073U000000000000830000000000000007k3s831z000000UA00000000000010M000000000000001k03l0MQQ0000041U00000000000083000000000000000s0078320k00000U400000000000010M00000000000000C000N0ME60000040U000000000000830000000000000030001c320k00000U400000000000010M00000000000000k000BUsE60000040U000TXw7s3s1w8301zy03zw0Dzk00M0Dw37wS0zXw07sU4000TzttlUvkMt0M0w0w1s1w7U7k0307Uslzrk3ysk1Xo0U0070A3M6A661c30C01kQ01lk0700E1k3w83U00Q3086U4001U00+0lUMU50M70073006A00M060Q0010Q0030M30Q0U00M001E2M1A0c30k00Mk00H00100k300083U00M1UE3U4006000+0P0BU50MA001a006M00M060k0010Q0030660Q0U01U001E3E1c1c330004U00m00300U600083U00Q0kk2U400A000/0C070B0MM000o1yAE7sk040U0010Q003U3A0o0U01000181k0s383207U6UCz20vw00U400083k00q0NU6U400M0w09U4060N08k3a0o0zUE3y0040U0010Dk7yk1s1Y0U030Dk1A0U0E28360Tk6U0D200w00U60008320k3070AU400E3308U0000l08U3w0q00AM00k060k00108E60A0k340U020MM16000068140006k00n00300k30008120k1U20MU400E2308E0001V08U000X002A008060M00108E60600240U020MM130000A814000AA00Mk01U0E1k1w8120k0k00kU400M1a08M0001108U0070s033U0A03070sl08E20300440U0307U1100k0M81q0TzkTs09zU0U080Dw38120Q0801UU7zz80008A0602107k3ry6Ds1MzU401U040N08E1w1U084000RU0010U1k0k80C07kMUT0+1w0U04000181200U6030U000g000860D06100s001A001k00400k000908E040k0M40004k0010E180U805000B000Q001U03000181300U3060U000X000830N0A1U0g001c002U00800A000908804080k40004A0010M2A10404k00BU00q003000s007811U0U1040U000Uk1U810kUM0k0X001600AM00k001k01l0M6040M1U6000A3Uy70CA7603UAC00sS071s0Q0007U1sA60S1U2080Tzzz07wTk0z0TU07z0Tzw0zzU3zy00007zw0zU0zs0k300000000000000000000Ds00000000000000000000040E0000000000000000000000000000000000000000000U60000000000000000000000000000000000000000000A0U0000000000000000000000000000000000000000001040000000000000000000000000000000000000000000M1U0000000000000000000000000000000000000000002080000000000000000000000000000000000000000000E3000000000000000000000000000000000000000000030E0000000000000000000000000000000000000000000A600000000000000000000000000000000000000000000tU04"
+global CidMapPattern2 := "|<>**50$273.000000000000000zU0000000000000000000zU0000000000000000000000CC0000000000000000000DC00000000Ts00000000000010M0000000000000007zw10M000000073U000000000000830000000000000007k3s831z000000UA00000000000010M000000000000001k03l0MQQ0000041U00000000000083000000000000000s0078320k00000U400000000000010M00000000000000C000N0ME60000040U000000000000830000000000000030001c320k00000U400000000000010M00000000000000k000BUsE60000040U000TXw7s3s1w8301zy03zw0Dzk00M0Dw37wS0zXw07sU4000TzttlUvkMt0M0w0w1s1w7U7k0307Uslzrk3ysk1Xo0U0070A3M6A661c30C01kQ01lk0700E1k3w83U00Q3086U4001U00+0lUMU50M70073006A00M060Q0010Q0030M30Q0U00M001E2M1A0c30k00Mk00H00100k300083U00M1UE3U4006000+0P0BU50MA001a006M00M060k0010Q0030660Q0U01U001E3E1c1c330004U00m00300U600083U00Q0kk2U400A000/0C070B0MM000o1yAE7sk040U0010Q003U3A0o0U01000181k0s383207U6UCz20vw00U400083k00q0NU6U400M0w09U4060N08k3a0o0zUE3y0040U0010Dk7yk1s1Y0U030Dk1A0U0E28360Tk6U0D200w00U60008320k3070AU400E3308U0000l08U3w0q00AM00k060k00108E60A0k340U020MM16000068140006k00n00300k30008120k1U20MU400E2308E0001V08U000X002A008060M00108E60600240U020MM130000A814000AA00Mk01U0E1k1w8120k0k00kU400M1a08M0001108U0070s033U0A03070sl08E20300440U0307U1100k0M81q0TzkTs09zU0U080Dw38120Q0801UU7zz80008A0602107k3ry6Ds1MzU401U040N08E1w1U084000RU0010U1k0k80C07kMUT0+1w0U04000181200U6030U000g000860D06100s001A001k00400k000908E040k0M40004k0010E180U805000B000Q001U03000181300U3060U000X000830N0A1U0g001c002U00800A000908804080k40004A0010M2A10404k00BU00q003000s007811U0U1040U000Uk1U810kUM0k0X001600AM00k001k01l0M6040M1U6000A3Uy70CA7603UAC00sS071s0Q0007U1sA60S1U2080Tzzz07wTk0z0TU07z0Tzw0zzU3zy00007zw0zU0zs0k300000000000000000000Ds00000000000000000000040E0000000000000000000000000000000000000000000U60000000000000000000000000000000000000000000A0U0000000000000000000000000000000000000000001040000000000000000000000000000000000000000000M1U0000000000000000000000000000000000000000002080000000000000000000000000000000000000000000E3000000000000000000000000000000000000000000030E0000000000000000000000000000000000000000000A600000000000000000000000000000000000000000000tU04"
+
+global lastVoteCheck := 0
+global voteCheckCooldown := 1500
+global justHitBossAttackCooldown := false
+global currentRangerSkipIndex := 1
+
+global LawlessCityPattern := "|<>**50$273.000000000000001lk0000000000000000001tk00000003z0000000000000830000000000000000zzU8300000000sQ00000000000010M000000000000000y0T10MDs0000041U00000000000083000000000000000C00S833XU00000UA00000000000010M000000000000007000t0ME60000040U00000000000083000000000000001k0038320k00000U400000000000010M00000000000000M000B0ME60000040U000000000000830000000000000060001g720k00000U40003wTUz0T0DV0M0Dzk0TzU1zy00301zUMzXk7wTU0z40U003zzDCA7S378307U7UD0DUw0y00M0w76Dyy0Tr60ASU4000s1UP0lUkkB0M1k0C3U0CC00s020C0TV0Q003UM10o0U00A001E6A340c30s00sM00lU0300k3U0083U00M30M3U4003000+0H09U50M60036002M008060M0010Q0030A20Q0U00k001E3M1g0c31U00Ak00n00300k600083U00M0kk3U400A000+0O0B0B0MM000Y006E00M040k0010Q003U660I0U01U001M1k0s1c330006UDlW0z600U400083U00Q0NU6U400800090C070N0ME0w0o1rsE7TU040U0010S006k3A0o0U0307U1A0U0k38160Qk6U7w20Tk00U400081y0zq0D0AU400M1y09U4020F0Mk3y0o01sE07U040k0010ME60M0s1Y0U020MM14000068140TU6k01X00600k60008120k1U60MU400E3308k0000l08U000q006M00M060M00108E60A0E340U020EM120000A8140004M00FU0100k30008120k0k00EU400E3308M0001V08U001VU03600A020C0DV08E60600640U030Ak1300008814000s700MQ01U0M0s768120E0M00UU400M0w088060310Ck3zy3z01Dw040101zUN08E3U100A40zzt00011U0k0E80y0Szklz0/7w0U0A00U38120DUA010U003g000840C06101k0y343s1EDU400U000908E040k0M40005U0010k1s0k8070009U00C000U06000181200U6030U000a000820904100c001c003U00A00M000908M040M0k40004M0010M381UA05U00B000I001001U00181100U1060U000VU00830FU80U0a001g006k00M007000t08A04080U4000460A1086430604M008k01X006000C00C830k0U30A0k001UQ7ks1lUsk0Q1Vk073k0sD03U000w0D1Uk3kA0E103zzzs0zXy07s3w00zs3zzU7zw0Tzk0000zzU7w07z060M00000000000000000001z0000000000000000000000U2000000000000000000000000000000000000000000040k0000000000000000000000000000000000000000001U4000000000000000000000000000000000000000000080U00000000000000000000000000000000000000000030A0000000000000000000000000000000000000000000E1000000000000000000000000000000000000000000020M0000000000000000000000000000000000000000000M200000000000000000000000000000000000000000001Uk00000000000000000000000000000000000000000007A00U"
+
+global NewCustomMapPattern := "|<>**50$274.000000000000000Tk0000000000000000000Tk00000000000000000000003XU0000000000000000M03nU00000003z0000000000000830000000000000000zz08300000000QC0000000000000UA000000000000000D0DUUA7w0000010M00000000000020k000000000000003U0760kss0000041U00000000000083000000000000000s007M320k00000E20000000000000UA000000000000007000AUAM30000010800000000000020k00000000000000k000O0lUA0000040U000000000000830000000000000060001g660k00000E20000000000000UA00000000000000M0006TsM30000010800000000000020k000000000000030000k01UA0C00E40U000TXw7s3s1w8301zy03zw0Dzk00M0Dw33wS0zXw07sE2000DzwwskRsAQUA0S0S0w0y1k3s01U3kQMzvs1zQM0lt08001k30q1X1VUO0k3U0Q700QQ01k040Q0z20s0070k21Y0U00A001E6A340c30s00sM00lU0300k300083U00M30M3E2001U00509U4k2UA3001X001A004030A001UC001U610B0800A000I0q0P0+0kM003A00Ak00k0A1U0060s0060AA0o0U01U001E3E1c1c330004U00m00300U6000M3U00Q0kk3E20060005U703U6UAA000O0z683wM020E001UC001k1a0N0800E000G0Q0C0m0kU1s1c3jkUCz008100060w00DU6M1Y0U0307U1A0U0k38160Qk6U7w20Tk00U4000M1y0zq0D0AE200A0z04k20108UAM1r0O00w803k020M001UAs3wA0Q0l0800U660F00001W0F07s1g00Mk01U0A1U0060FUA0M1U640U020MM16000068140006E00l00300k3000M160k1U20ME200811U480000kU4E000FU016004010A001U4M30300110800U660Ek000320F00033006A00M040M0T60FUA0A00A40U030Ak1300008814000s700MQ01U0M0s76M160E0M00UE200A0S0440301UU7M1zz1zU0by0200U0zk9U4M1w1U0610DzyE000EM0A0420DU7jwATk2lz08030080q0EU3s300M4000RU0010U1k0k80C07kMUT0+1w0U04000181200U6030E000K0004307U30U0Q000a000s00200M0004U48030M0A10001A000E40G08201E002E007000M00k000G0Ek0A0k1U40004M0010M381UA05U00B000I001001U00181100k3060E000Ek0041U8k40E0H000q003M00A003U00QU46030A0E100011U30E21V0k1U16002A00Mk01U003U0320kA0A0k306000A3Uy70CA7603UAC00sS071s0Q0003U1sA60S1U2080DzzzU3yDs0TUDk03zUDzy0Tzk1zz00003zy0Tk0Tw0M1U00000000000000000003y0000000000000y00000001040000000000000000000000000000000000000000000kE000000000000000000000000000000000000000000031000000000000U"
 
 LoadKeybindSettings()  ; Load saved keybinds
 CheckForUpdates()
@@ -18,7 +35,7 @@ Hotkey(F3Key, (*) => Reload())
 Hotkey(F4Key, (*) => TogglePause())
 
 F5:: {
-    SummonUnits()
+
 }
 
 F6:: {
@@ -89,6 +106,64 @@ StoryMode() {
     PlayHere()
 }
 
+RangerMode() {
+    global enabledMapSkips, currentRangerSkipIndex
+
+    if (enabledMapSkips.Length = 0) {
+        AddToLog("No map/act selected in Map Skips.")
+        return
+    }
+
+    ; ถ้า index เกินจำนวน ให้วนกลับไป 1
+    if (currentRangerSkipIndex > enabledMapSkips.Length)
+        currentRangerSkipIndex := 1
+
+    skip := enabledMapSkips[currentRangerSkipIndex]
+    currentRangerMap := skip.map
+    currentRangerAct := skip.act
+
+    if (currentRangerAct ~= "^\d+$")
+        currentRangerAct := "Act " currentRangerAct
+
+    mapData := GetMapData("LegendMap", currentRangerMap)
+    actData := GetMapData("LegendAct", currentRangerAct)
+
+    if (!mapData.HasOwnProp("x") || !mapData.HasOwnProp("y") || !actData.HasOwnProp("x") || !actData.HasOwnProp("y")) {
+        AddToLog("❌ Map/Act data not found for: " currentRangerMap " - " currentRangerAct)
+        currentRangerSkipIndex++
+        return
+    }
+
+    AddToLog("Moving to position for " currentRangerMap)
+    RangerMovement()
+
+    ; Start stage
+    while !(ok := GetFindText().FindText(&X, &Y, 352, 101, 452, 120, 0.05, 0.20, RoomPods)) {
+        FixClick(80, 325) ; Click Leave
+        Reconnect() ; Added Disconnect Check
+        RangerMovement()
+    }
+
+    FixClick(25, 225) ; Create Room
+    Sleep(1000)
+
+    while !(ok := GetFindText().FindText(&X, &Y, 325, 163, 409, 193, 0.05, 0.20, StoryChapter)) {
+        AddToLog("Looking for Story Chapter Text...")
+        FixClick(615, 155) ; Click X on Join
+        Sleep(1000)
+        FixClick(25, 225) ; Create Room
+        Sleep(1000)
+        Reconnect() ; Added Disconnect Check
+    }
+
+    AddToLog("Starting " currentRangerMap " - " currentRangerAct)
+    StartRanger(currentRangerMap, currentRangerAct)
+
+    PlayHere()
+    currentRangerSkipIndex++ ; ไปด่านถัดไปในรอบหน้า
+    return
+}
+
 BossEvent() {
     global startingMode
     BossEventMovement()
@@ -104,63 +179,195 @@ BossEvent() {
 
 ChallengeMode() {    
     global startingMode
+    ChallengeCameraChange()
     ChallengeMovement()
 
     while !(ok := GetFindText().FindText(&X, &Y, 343, 467, 461, 496, 0.05, 0.20, Back)) {
         Reconnect() ; Added Disconnect Check
         FixClick(598, 425) ; Click Back
+        ChallengeCameraChange()
         ChallengeMovement()
     }
 
     CreateChallenge()
 }
 
-CoopMode() {
-    global startingMode
+BossAttack() {
+    global startingMode, inBossAttackMode, challengeStartTime, justHitBossAttackCooldown, BossAttackStartTime
     
+    BossAttackCameraChange()
+    BossAttackMovement()
+    Sleep(1000) 
+
+    
+    while !(ok := GetFindText().FindText(&X, &Y, 210, 147, 412, 220, 0, 0, PlayBoss)) {
+        Reconnect() ; Added Disconnect Check
+        FixClick(398, 322) ; Click close
+        Sleep (200)
+        FixClick(559, 167)
+        BossAttackCameraChange()
+        BossAttackMovement()
+    }
+    
+    StartBossAttack()
+
+    if (GetFindText().FindText(&X, &Y, 294, 300, 516, 411, 0, 0, Close)) {
+        AddToLog("Boss Attack on Cooldown...")
+        FixClick(399, 318)
+        Sleep (200)
+        FixClick(558, 164)
+        Sleep(1000)
+        inBossAttackMode := false
+        justHitBossAttackCooldown := true
+        BossAttackStartTime := A_TickCount
+        BossAttackMapStegeCount := 0
+        inStage := false
+        if (IsSet(autoAbilityClicking) && autoAbilityClicking) {
+            autoAbilityClicking := false
+            SetTimer(AutoAbility_ClickLoop, 0)
+            Sleep(200)
+        }
+        startingMode := true
+        CheckLobby()
+        return
+    }
+
+    startingMode := false
+    justHitBossAttackCooldown := false
+}
+
+Portal() {
+    global startingMode
+
+    currentPortalMap := PortalDropdown.Text
+
+    PortalMovement()
+    AddToLog("Starting Portal for " currentPortalMap)
+    Sleep(1000)
+
+    while !(ok := GetFindText().FindText(&X, &Y, 77, 196, 240, 294, 0, 0, PortalText)) {
+        RemovePortalName() ; Remove Portal Name
+        Reconnect() ; Added Disconnect Check
+        FixClick(80, 325) ; Click Leave
+        Sleep(1000)
+        PortalMovement()
+    }
+
+    StartPortal()
     startingMode := false
 }
 
-EasterEvent() {
+SummerEvent() {
     global startingMode
-    EasterMovement()
 
-    while !(ok := GetFindText().FindText(&X, &Y, 343, 467, 461, 496, 0.05, 0.20, Back)) {
-        Reconnect() ; Added Disconnect Check
-        FixClick(598, 425) ; Click Back
-        EasterMovement()
-    }
-
-    CreateChallenge()
+    FixClick(769, 223) ; Click Summer Event
+    Sleep(1000)
+    AddToLog("Starting Summer Event")
+    FixClick(449, 354) ; Click Play
+    inStage := true
+    autoAbilityClicking := true
+    Sleep (1200)
     startingMode := false
+}
+
+ClickCidMap()
+{
+    t1 := A_TickCount, Text := X := Y := ""
+    Text := "|<>**50$273.000000000000000zU0000000000000000000zU0000000000000000000000CC0000000000000000000DC00000000Ts00000000000010M0000000000000007zw10M000000073U000000000000830000000000000007k3s831z000000UA00000000000010M000000000000001k03l0MQQ0000041U00000000000083000000000000000s0078320k00000U400000000000010M00000000000000C000N0ME60000040U000000000000830000000000000030001c320k00000U400000000000010M00000000000000k000BUsE60000040U000TXw7s3s1w8301zy03zw0Dzk00M0Dw37wS0zXw07sU4000TzttlUvkMt0M0w0w1s1w7U7k0307Uslzrk3ysk1Xo0U0070A3M6A661c30C01kQ01lk0700E1k3w83U00Q3086U4001U00+0lUMU50M70073006A00M060Q0010Q0030M30Q0U00M001E2M1A0c30k00Mk00H00100k300083U00M1UE3U4006000+0P0BU50MA001a006M00M060k0010Q0030660Q0U01U001E3E1c1c330004U00m00300U600083U00Q0kk2U400A000/0C070B0MM000o1yAE7sk040U0010Q003U3A0o0U01000181k0s383207U6UCz20vw00U400083k00q0NU6U400M0w09U4060N08k3a0o0zUE3y0040U0010Dk7yk1s1Y0U030Dk1A0U0E28360Tk6U0D200w00U60008320k3070AU400E3308U0000l08U3w0q00AM00k060k00108E60A0k340U020MM16000068140006k00n00300k30008120k1U20MU400E2308E0001V08U000X002A008060M00108E60600240U020MM130000A814000AA00Mk01U0E1k1w8120k0k00kU400M1a08M0001108U0070s033U0A03070sl08E20300440U0307U1100k0M81q0TzkTs09zU0U080Dw38120Q0801UU7zz80008A0602107k3ry6Ds1MzU401U040N08E1w1U084000RU0010U1k0k80C07kMUT0+1w0U04000181200U6030U000g000860D06100s001A001k00400k000908E040k0M40004k0010E180U805000B000Q001U03000181300U3060U000X000830N0A1U0g001c002U00800A000908804080k40004A0010M2A10404k00BU00q003000s007811U0U1040U000Uk1U810kUM0k0X001600AM00k001k01l0M6040M1U6000A3Uy70CA7603UAC00sS071s0Q0007U1sA60S1U2080Tzzz07wTk0z0TU07z0Tzw0zzU3zy00007zw0zU0zs0k300000000000000000000Ds00000000000000000000040E0000000000000000000000000000000000000000000U60000000000000000000000000000000000000000000A0U0000000000000000000000000000000000000000001040000000000000000000000000000000000000000000M1U0000000000000000000000000000000000000000002080000000000000000000000000000000000000000000E3000000000000000000000000000000000000000000030E0000000000000000000000000000000000000000000A600000000000000000000000000000000000000000000tU04"
+    if (ok := FindText(&X, &Y, 5, 37, 800, 600, 0, 0, Text))
+    {
+        FindText().Click(X, Y, "L")
+        AddToLog("Clicked CID map at " X ", " Y)
+    }
+}
+
+CidMode() {
+    global startingMode, currentMap
+    startingMode := false
+
+    AddToLog("Trying to determine map...")
+    startTime := A_TickCount
+    found := false
+    patterns := [
+        {pattern: CidMapPattern1, x1: 155-15, y1: 187-15, x2: 155+15, y2: 187+15},
+        {pattern: CidMapPattern2, x1: 154-15, y1: 231-15, x2: 154+15, y2: 231+15}
+    ]
+    while !found {
+        ; First click with 0.5 second sleep
+        FixClick(775, 234)
+        Sleep(500)
+        ; Second click with 0.2 second sleep
+        FixClick(449, 367)
+        Sleep(200)
+
+        t1 := A_TickCount, Text := X := Y := ""
+        ; Check for vote screen (like in DetectMap)
+        if (GetFindText().FindText(&X, &Y, 355, 168, 450, 196, 0.10, 0.10, VoteStart) 
+            or PixelGetColor(492, 47) = 0x5ED800) {
+            AddToLog("❌ No map was found before loading in (vote screen detected)")
+            return
+        }
+        for i, p in patterns {
+            Text := p.pattern
+            if (ok := FindText(&X, &Y, p.x1, p.y1, p.x2, p.y2, 0, 0, Text)) {
+                found := true
+                break
+            }
+        }
+        Try For i,v in ok
+            if (i<=2)
+                FindText().MouseTip(ok[i].x, ok[i].y)
+        if (!found) {
+            if (A_TickCount - startTime > 120000) { ; 2 minute timeout
+                AddToLog("❌ Could not determine CID map after 2 minutes.")
+                return
+            }
+            Sleep(1000)
+            Reconnect()
+        }
+    }
+    currentMap := "Lawless City"
+    AddToLog("CID Mode map detected: " currentMap)
 }
 
 
 LegendMode() {
-    global challengeMapIndex, challengeMapList, challengeStageCount, inChallengeMode, startingMode
+    global challengeMapIndex, challengeMapList, challengeStageCount, inChallengeMode, startingMode, BossAttackMapStegeCount, BossAttackMapIndex
 
     ; Keep skipping until a valid map is found or end of list
-    while (challengeMapIndex <= challengeMapList.Length && ShouldSkipMap(challengeMapList[challengeMapIndex])) {
+    while (challengeMapIndex <= challengeMapList.Length && ShouldSkipMap(challengeMapList[challengeMapIndex], currentLegendAct)) {
         AddToLog(challengeMapList[challengeMapIndex] " is set to be skipped. Skipping...")
         challengeMapIndex++
-        Sleep(1000)
+        Sleep(250)
     }
 
-    ; Check if we ran out of maps
     if (challengeMapIndex > challengeMapList.Length) {
         AddToLog("No more valid maps to run.")
         inChallengeMode := false
-        challengeStartTime := A_TickCount  ; Reset timer for next ranger stage trigger
         challengeMapIndex := 1  ; Reset map index for next session
         challengeStageCount := 0  ; Reset stage count for new ranger stage session
-        CheckLobby()
-        startingMode := true
-        return
+        
+        if (BossAttackBox.Value) { 
+            AddToLog("All Ranger maps skipped. Switching to Boss Attack.")
+            inBossAttackMode := true
+            justHitBossAttackCooldown := false
+            BossAttackMapStegeCount := 0       ; Reset Boss Attack stage counter
+            BossAttackMapIndex := 1            ; Reset Boss Attack map index
+            BossAttack()
+            return
+        } else { 
+            AddToLog("All Ranger maps skipped. Boss Attack not selected. Resetting cycle timers.")
+            challengeStartTime := A_TickCount ; รีเซ็ต shared timer เพราะวงจรจบที่นี่
+            BossAttackStartTime := A_TickCount ; รีเซ็ต Boss Attack timer ด้วย
+            CheckLobby()
+            startingMode := true
+            return
+        }
     }
 
     currentLegendMap := challengeMapList[challengeMapIndex]
     currentLegendAct := "Act 1"
-    
+
     ; Execute the movement pattern
     AddToLog("Moving to position for " currentLegendMap)
     StoryMovement()
@@ -203,15 +410,29 @@ RaidMode() {
     currentRaidMap := RaidDropdown.Text
     currentRaidAct := RaidActDropdown.Text
     
-    ; Execute the movement pattern
+        ; Execute the movement pattern
     AddToLog("Moving to position for " currentRaidMap)
-
+    RaidMovement()
     
     ; Start stage
-    while !(ok := GetFindText().FindText(&X, &Y, 325, 520, 489, 587, 0, 0, ModeCancel)) {
+    while !(ok := GetFindText().FindText(&X, &Y, 352, 101, 452, 120, 0.05, 0.20, RoomPods)) {
+        FixClick(80, 325) ; Click Leave
         Reconnect() ; Added Disconnect Check
-
+        RaidMovement()
     }
+
+    FixClick(25, 225) ; Create Room
+    Sleep(1000)
+
+    while !(ok := GetFindText().FindText(&X, &Y, 325, 163, 409, 193, 0.05, 0.20, StoryChapter)) {
+        AddToLog("Looking for Story Chapter Text...")
+        FixClick(615, 155) ; Click X on Join
+        Sleep(1000)
+        FixClick(25, 225) ; Create Room
+        Sleep(1000)
+        Reconnect() ; Added Disconnect Check
+    }
+
     AddToLog("Starting " currentRaidMap " - " currentRaidAct)
     StartRaid(currentRaidMap, currentRaidAct)
 
@@ -219,16 +440,22 @@ RaidMode() {
 }
 
 MonitorEndScreen() {
-    global challengeStartTime, inChallengeMode, challengeStageCount, challengeMapIndex, challengeMapList
-    global Wins, loss, stageStartTime, lastResult, webhookSendTime, firstWebhook
+    global inBossAttackMode, BossAttackMapActCount, BossAttackMapIndex, BossAttackStartTime, BossAttackMapStegeCount
+    global Wins, loss, stageStartTime, lastResult, webhookSendTime, firstWebhook, justHitBossAttackCooldown, inStage
 
     isWin := false
+    if (IsSet(autoAbilityClicking) && autoAbilityClicking) {
+        autoAbilityClicking := false
+        SetTimer(AutoAbility_ClickLoop, 0)
+        SendInput("{T}")
+        Sleep(200)
+    }
 
     ; Wait for XP to appear or reconnect if necessary
     while !CheckForXp() {
         ClickThroughDrops()
         Reconnect()
-        Sleep(1000)
+        Sleep(200)
     }
 
     stageEndTime := A_TickCount
@@ -241,12 +468,23 @@ MonitorEndScreen() {
         isWin := false
     } else if (GetFindText().FindText(&X, &Y, 397, 222, 538, 273, 0.05, 0.80, VictoryText)) {
         isWin := true
+    } else if (GetFindText().FindText(&X, &Y, 380, 186, 584, 300, 0, 0, VictoryText2)) {
+        isWin := true
     }
 
     lastResult := isWin ? "win" : "lose"
     AddToLog((isWin ? "Victory" : "Defeat") " detected - Stage Length: " stageLength)
     (isWin ? Wins += 1 : loss += 1)
     Sleep(1000)
+
+    ; Stop Auto Ability if running
+    inStage := false
+    if (IsSet(autoAbilityClicking) && autoAbilityClicking) {
+        autoAbilityClicking := false
+        SetTimer(AutoAbility_ClickLoop, 0)
+        SendInput("{T}")
+        Sleep(200)
+    }
 
     if (firstWebhook || (A_TickCount - webhookSendTime) >= GetWebhookDelay()) {
         try {
@@ -260,54 +498,100 @@ MonitorEndScreen() {
         UpdateStreak(isWin)
     }
 
-    ; ─── End-of-Stage Handling ───
-    if (inChallengeMode) {
-        challengeStageCount++
-        AddToLog("Completed " challengeStageCount " out of 3 ranger stages for " challengeMapList[challengeMapIndex])
-
-        if (challengeStageCount >= 3) {
-            AddToLog("Completed all 3 ranger stages for " challengeMapList[challengeMapIndex])
-            challengeStageCount := 0
-            challengeMapIndex++
-
-            if (challengeMapIndex > challengeMapList.Length) {
-                AddToLog("All maps completed, returning to " ModeDropdown.Text)
-                inChallengeMode := false
-                challengeStartTime := A_TickCount
-                challengeMapIndex := 1
-                ClickReturnToLobby()
-                CheckLobby()
+    ; --- BossAttack Mode ---
+    if (inBossAttackMode && !justHitBossAttackCooldown) {
+        BossAttackMapStegeCount++
+        AddToLog("Boss Attack stage completed. Count: " BossAttackMapStegeCount " / " BossAttackMapActCount[BossAttackMapIndex])
+        if (BossAttackMapStegeCount >= BossAttackMapActCount[BossAttackMapIndex]) {
+            AddToLog("Completed all " BossAttackMapActCount[BossAttackMapIndex] " Boss Attack runs.")
+            BossAttackMapStegeCount := 0
+            inBossAttackMode := false
+            BossAttackStartTime := A_TickCount
+            inStage := false
+            if (IsSet(autoAbilityClicking) && autoAbilityClicking) {
+                autoAbilityClicking := false
+                SetTimer(AutoAbility_ClickLoop, 0)
+                SendInput("{T}")
+                Sleep(200)
+            }
+            ClickReturnToLobby()
+            CheckLobby()
+            return
+        } else {
+            Sleep(500)
+            if (CanReplay()) {
+                AddToLog("Need " (BossAttackMapActCount[BossAttackMapIndex] - BossAttackMapStegeCount) " more stages")
+                ClickNextLevel()
                 return
             } else {
-                AddToLog("Returning to lobby to start next map: " challengeMapList[challengeMapIndex])
+                AddToLog("Boss Attack ended early (no replay available). Returning to lobby and starting cooldown.")
+                BossAttackMapStegeCount := 0
+                inBossAttackMode := false
+                BossAttackStartTime := A_TickCount
+                inStage := false
+                if (IsSet(autoAbilityClicking) && autoAbilityClicking) {
+                    autoAbilityClicking := false
+                    SetTimer(AutoAbility_ClickLoop, 0)
+                    SendInput("{T}")
+                    Sleep(200)
+                }
+                ClickReturnToLobby()
+                CheckLobby()
+                StartSelectedMode()
+                return
+            }
+        }
+    }
+
+    ; ─── Timed Mode Start (Separate Cooldowns) ───
+    if (!inBossAttackMode) {
+        bossAttackDue := BossAttackBox.Value && ((A_TickCount - BossAttackStartTime) >= GetBossAttackCDTime())
+        if (bossAttackDue) {
+            if (BossAttackBox.Value) {
+                AddToLog(GetBossAttackCDTime() // 60000 " minutes have passed - switching to Boss Attack (independent).")
+                inBossAttackMode := true
+                BossAttackStartTime := A_TickCount
+                BossAttackMapStegeCount := 0
+                justHitBossAttackCooldown := false
+                autoAbilityClicking := false
                 ClickReturnToLobby()
                 CheckLobby()
                 return
             }
-        } else {
-            ClickNextLevel()
-            return
         }
     }
 
-    ; ─── Start Challenge Mode If Time ───
-    if (!inChallengeMode && ChallengeBox.Value) {
-        if ((A_TickCount - challengeStartTime) >= 1800000) {
-            AddToLog("30 minutes has passed - switching to Ranger Stages")
-            inChallengeMode := true
-            challengeStartTime := A_TickCount
-            challengeStageCount := 0
-            ClickReturnToLobby()
-            CheckLobby()
-            return
-        }
+    ; --- Default Mode Handling ---
+    inStage := false
+    if (IsSet(autoAbilityClicking) && autoAbilityClicking) {
+        autoAbilityClicking := false
+        SetTimer(AutoAbility_ClickLoop, 0)
+        SendInput("{T}")
+        Sleep(200)
     }
 
-    ; ─── Mode Handling ───
     if (ModeDropdown.Text = "Story") {
         HandleStoryMode()
+    } else if (ModeDropdown.Text = "Ranger") {
+        HandleRangerMode()
+    } else if (ModeDropdown.Text = "Raid") {
+        HandleStoryMode()
+    } else if (ModeDropdown.Text = "Portal") {
+        HandlePortalMode()
     } else {
         HandleDefaultMode()
+    }
+
+    ; --- Ability State interrupt on win/loss ---
+    inStage := false
+    if (IsSet(autoAbilityClicking) && autoAbilityClicking) {
+        autoAbilityClicking := false
+        SetTimer(AutoAbility_ClickLoop, 0)
+        SendInput("{T}")
+        Sleep(200)
+        if (A_IsPaused) {
+            TogglePause()
+        }
     }
 }
 
@@ -315,16 +599,16 @@ MonitorEndScreen() {
 HandleStoryModeOld() {
     global lastResult
 
-    if (lastResult "win" && NextLevelBox.Value && NextLevelBox.Visible) {
+    if (NextLevelBox.Value && NextLevelBox.Visible) {
         ClickNextLevel()
     } else {
-        ClickReplay()
+        ClickReplay2()
     }
     return RestartStage()
 }
 
 HandleDefaultModeOld() {
-    if (ReturnLobbyBox.Visible && ReturnLobbyBox.Value && ModeDropdown.Text != "Coop") {
+    if (ReturnLobbyBox.Visible && ReturnLobbyBox.Value && ModeDropdown.Text != "Cid") {
         ClickReturnToLobby()
         return CheckLobby()
     } else {
@@ -335,62 +619,117 @@ HandleDefaultModeOld() {
 
 HandleStoryMode() {
     global lastResult
+    remaining := GetReturnToLobbyTimer() - (A_TickCount - ReturnToLobbyStartTime)
 
     if (lastResult = "win" && NextLevelBox.Value && NextLevelBox.Visible) {
         ClickNextLevel()
     } else {
-        ClickReplay()
+        if (GetMapForFarming(StoryDropdown.Text) != "no map found") {
+            SwitchActiveFarm()
+            Sleep(1500)
+            ClickReturnToLobby()
+            CheckLobby()
+        } else if (GetReturnToLobbyTimer() > 0) {
+            if (remaining <= 0) {
+                AddToLog("Return to lobby timer reached - returning to lobby to restart")
+                ClickReturnToLobby()
+                CheckLobby()
+            } else {
+                ; Optional: Only log every minute or with throttling
+                FormatTimeLeft(remaining)
+            }
+        } else {
+            ClickReplay2()
+        }
     }
-    ; Don't return a function call — let control go back to MainLoop
     return
 }
 
 HandleDefaultMode() {
-    if (ReturnLobbyBox.Visible && ReturnLobbyBox.Value && ModeDropdown.Text != "Coop") {
+    global ReturnToLobbyStartTime
+    remaining := GetReturnToLobbyTimer() - (A_TickCount - ReturnToLobbyStartTime)
+
+    if (ReturnLobbyBox.Visible && ReturnLobbyBox.Value && ModeDropdown.Text != "Cid") {
         ClickReturnToLobby()
-        CheckLobby() ; call directly, no return
+        CheckLobby()
     } else {
-        ClickReplay()
-    }
-    return
-}
-
-HandleLegendMode() {
-    global lastHourCheck
-
-    currentHour := A_Hour
-    currentTime := A_Hour ":" A_Min ":" A_Sec
-
-    if (debugMessages) {
-        AddToLog("HandleLegendMode() called at " currentTime)
-    }
-
-    ; If a new hour has started
-    if (currentHour != lastHourCheck) {
-        if (debugMessages) {
-            AddToLog("New hour detected (last: " lastHourCheck ", now: " currentHour ") - returning to lobby")
+        if (GetReturnToLobbyTimer() > 0) {
+            if (remaining <= 0) {
+                AddToLog("Return to lobby timer reached - returning to lobby to restart")
+                ClickReturnToLobby()
+                CheckLobby()
+            } else {
+                ; Optional: Only log every minute or with throttling
+                FormatTimeLeft(remaining)
+            }
         }
-        lastHourCheck := currentHour
-        ClickReturnToLobby()
-        CheckLobby()
-        return
-    }
 
-    if (ReturnLobbyBox.Visible && ReturnLobbyBox.Value) {
-        ClickReturnToLobby()
-        CheckLobby()
-        return
-    } else {
         ClickReplay()
     }
     return
 }
 
+FormatTimeLeft(msRemaining) {
+    minutes := Floor(msRemaining / 60000)
+    seconds := Floor(Mod(msRemaining, 60000) / 1000)
+
+    AddToLog("Returning to lobby in " . minutes . "m " . seconds . "s")
+}
+
+HandleRangerMode() {
+    remaining := GetReturnToLobbyTimer() - (A_TickCount - ReturnToLobbyStartTime)
+    if (ReplayBox.Visible && ReplayBox.Value && ModeDropdown.Text != "Cid") {
+        if (GetReturnToLobbyTimer() > 0) {
+            if (remaining <= 0) {
+                AddToLog("Return to lobby timer reached - returning to lobby to restart")
+                ClickReturnToLobby()
+                CheckLobby()
+            } else {
+                ; Optional: Only log every minute or with throttling
+                FormatTimeLeft(remaining)
+            }
+        } else {
+            ClickReplayRanger()
+        }
+
+    } else {
+        ClickReturnToLobby()
+        CheckLobbyRanger() ; call directly, no return
+    }
+    return
+}
+
+HandlePortalMode() {
+    if (ModeDropdown.Text == "Portal") {
+        if (CanReplay()) {
+            ClickReplay()
+        } else {
+            if (GetMapForFarming(PortalDropdown.Text) != "no map found") {
+                SwitchActiveFarm()
+                Sleep(1500)
+                ClickReturnToLobby()
+                CheckLobby()
+            } else {
+                AddToLog("No map found for farming in Portal mode.")
+                ClickReturnToLobby()
+                CheckLobby() ; call directly, no return
+            }
+        }
+    }
+}
 
 StoryMovement() {
-    FixClick(65, 335)
-    Sleep (200)
-    FixClick(400, 300)
+    FixClick(63, 329)
+    Sleep (1000)
+}
+
+RangerMovement() {
+    FixClick(63, 329)
+    Sleep (1000)
+}
+
+RaidMovement() {
+    FixClick(63, 329)
     Sleep (1000)
 }
 
@@ -399,62 +738,157 @@ BossEventMovement() {
     Sleep (1000)
 }
 
-ChallengeMovement() {
-    FixClick(25, 325) ; Click Areas
-    Sleep (1000)
-    FixClick(357, 287) ; Teleport to Challenges
-    Sleep (1000)
-    SendInput ("{a down}")
+ChallengeCameraChange() {
+    SendInput ("{Escape}") ; Close any open menus
     Sleep (1500)
-    SendInput ("{a up}")
+    FixClick(252, 91) 
+    Sleep (250)
+    Loop 2 {
+        FixClick(339, 204)  
+        Sleep (100)
+    }
+    SendInput ("{Escape}")
+    Sleep (1500)
+
+    loop 2 {
+        FixClick(26, 330) ; Click Areas
+        Sleep (300)
+        FixClick(361, 226)  
+        Sleep (300)
+        FixClick(26, 330) ; Click Areas
+        Sleep (300)
+        FixClick(518, 228)
+        Sleep (300)
+    }
+
+    SendInput ("{Escape}") ; Close any open menus
+    Sleep (1500)
+    FixClick(252, 91) ; Click Camera Change
+    Sleep (250)
+    Loop 2 {
+        FixClick(339, 204) ; Click Camera Change
+        Sleep (100)
+    }
+    SendInput ("{Escape}") ; Close any open menus
+    Sleep (1500)
+    
+    SendInput ("{Tab}") ; Close Lederboard
+
 }
 
-EasterMovement() {
-    FixClick(25, 325) ; Click Areas
-    Sleep (1000)
-    FixClick(357, 225) ; Teleport To Lobby
-    Sleep (1000)
-    SendInput ("{s down}")
-    Sleep (1000)
-    SendInput ("{s up}")
-    KeyWait ("s")
-    Sleep (1000)
+ChallengeMovement() {
+
+    Sleep (250)
+    SendInput ("{d down}")
+    Sleep (500)
+    SendInput ("{d up}")
+    Sleep (250)
+    SendInput ("{w down}")
+    Sleep (350)
+    SendInput ("{w up}")
+    Sleep (250)
     SendInput ("{d down}")
     Sleep (1000)
     SendInput ("{d up}")
-    KeyWait ("d")
+    Sleep (250)
+    SendInput ("{w down}")
+    Sleep (300)
+    SendInput ("{w up}")
+    Sleep (250)
+    SendInput ("{d down}")
+    Sleep (5000)
+    SendInput ("{d up}")
+    Sleep (250)
+    SendInput ("{a down}")
     Sleep (1000)
-    SendInput ("{E}")
-    Sleep (2000)
-    if (GetFindText().FindText(&X, &Y, 343, 467, 461, 496, 0.05, 0.20, Back)) {
-        AddToLog("Correct angle, starting Easter...")
-    } else {
-        AddToLog("Wrong spawn angle, retrying...")
-        FixClick(25, 325) ; Click Areas
-        Sleep (1000)
-        FixClick(357, 225) ; Teleport To Lobby
-        Sleep (1000)
-        SendInput ("{w down}")
-        Sleep (1000)
-        SendInput ("{w up}")
-        KeyWait ("w")
-        Sleep (1000)
-        SendInput ("{a down}")
-        Sleep (1000)
-        SendInput ("{a up}")
-        KeyWait ("a")
-        Sleep (1000)
-        SendInput ("{s down}")
-        Sleep (200)
-        SendInput ("{s up}")
-        KeyWait ("s")
-        Sleep (1000)
-        SendInput ("{E}")
-        Sleep (2000)
+    SendInput ("{a up}")
+    Sleep (250)
+    SendInput ("{w down}")
+    Sleep (3000)
+    SendInput ("{w up}")
+    Sleep (250)
+    loop 2 {
+        SendInput ("{e}")
+        Sleep (100)
     }
+    Sleep (1000)
 }
 
-StartStory(map, act) {
+BossAttackCameraChange() {
+    SendInput ("{Escape}") ; Close any open menus
+    Sleep (1500)
+    FixClick(252, 91) 
+    Sleep (250)
+    Loop 2 {
+        FixClick(339, 204)  
+        Sleep (100)
+    }
+    SendInput ("{Escape}")
+    Sleep (1500)
+
+    loop 2 {
+        FixClick(26, 330) ; Click Areas
+        Sleep (300)
+        FixClick(518, 228)
+        Sleep (300)
+        FixClick(26, 330) ; Click Areas
+        Sleep (300)
+        FixClick(361, 226)  
+        Sleep (300)
+    }
+
+    SendInput ("{Escape}") ; Close any open menus
+    Sleep (1500)
+    FixClick(252, 91) ; Click Camera Change
+    Sleep (250)
+    Loop 2 {
+        FixClick(339, 204) ; Click Camera Change
+        Sleep (100)
+    }
+    SendInput ("{Escape}") ; Close any open menus
+    Sleep (1500)
+    
+    SendInput ("{Tab}") ; Close Lederboard
+}
+
+BossAttackMovement() {
+    Sleep (250)
+    SendInput ("{a down}")
+    Sleep (500) 
+    SendInput ("{a up}")
+    Sleep (250)
+    SendInput ("{s down}")
+    Sleep (1500)
+    SendInput ("{s up}")
+    Sleep (250)
+    SendInput ("{a down}")
+    Sleep (300)
+    SendInput ("{a up}")
+
+    loop 2 {
+        SendInput ("{e}")
+        Sleep (100)
+    }
+    Sleep (1000)
+}
+
+PortalMovement() {
+    FixClick(26, 328) ; Click Areas
+    Sleep(500)
+    FixClick(437, 350)
+    Sleep(500)
+    FixClick(65, 293)
+    Sleep(500)
+    FixClick(296, 198)
+    Sleep(500)
+    SendInput(PortalDropdown.Text) ; Type the portal name
+    Sleep(500)
+    FixClick(267, 238)
+    Sleep(500)
+}
+
+
+StartStory(map, act, isRanger := false) {
     AddToLog("Selecting map: " map " and act: " act)
 
     ; Get Story map 
@@ -471,6 +905,12 @@ StartStory(map, act) {
     }
     Sleep(1000)
     
+    ; Click (468, 469) for Ranger mode right before clicking the map
+    if (isRanger) {
+        Sleep(2000)
+        FixClick(468, 469)
+        Sleep(200)
+    }
     ; Click on the map
     FixClick(StoryMap.x, StoryMap.y)
     Sleep(1000)
@@ -478,6 +918,10 @@ StartStory(map, act) {
     ; Get act details
     StoryAct := GetMapData("StoryAct", act)
     
+    if (isRanger) {
+        Sleep(2000)
+        ; No click here
+    }
     ; Scroll if needed for act
     if (StoryAct.scrolls > 0) {
         AddToLog("Scrolling down " StoryAct.scrolls " times for " act)
@@ -493,7 +937,134 @@ StartStory(map, act) {
     FixClick(StoryAct.x, StoryAct.y)
     Sleep(1000)
 
-    FixClick(615, 250) ; Click nightmare
+    ; Click the correct difficulty
+    if (StoryDifficulty.Text = "Normal") {
+        FixClick(522, 260)
+    } else if (StoryDifficulty.Text = "Hard") {
+        FixClick(569, 263)
+    } else {
+        ; Default to Nightmare
+        FixClick(617, 264)
+    }
+    Sleep(1000)
+    
+    return true
+}
+
+StartRanger(map, act, isRanger := false) {
+    if (ShouldSkipMap(map, act)) {
+        AddToLog("Map Skips: Skipping " map " - " act)
+        return false
+    }
+
+    AddToLog("Selecting map: " map " and act: " act)
+
+    StoryMap := GetMapData("LegendMap", map)
+    if (!StoryMap.HasOwnProp("x") || !StoryMap.HasOwnProp("y")) {
+        AddToLog("❌ Map data not found for: " map)
+        return false
+    }
+
+    FixClick(398, 469) ; Click on Ranger Stage
+    Sleep(200)
+    FixClick(230, 191) 
+    Sleep(100)
+    loop 3 {
+        SendInput("{WheelUp}")
+        Sleep(250)
+    } 
+
+    if (StoryMap.HasOwnProp("scrolls") && StoryMap.scrolls > 0) {
+        AddToLog("Scrolling down " StoryMap.scrolls " for " map)
+        MouseMove(230, 175)
+        loop StoryMap.scrolls {
+            SendInput("{WheelDown}")
+            Sleep(250)
+        }
+    }
+    Sleep(1000)
+
+    if (isRanger) {
+        Sleep(2000)
+        FixClick(468, 469)
+        Sleep(200)
+    }
+    FixClick(StoryMap.x, StoryMap.y)
+    Sleep(1000)
+
+    StoryAct := GetMapData("LegendAct", act)
+    if (!StoryAct.HasOwnProp("x") || !StoryAct.HasOwnProp("y")) {
+        AddToLog("❌ Act data not found for: " act)
+        return false
+    }
+
+    if (isRanger) {
+        Sleep(2000)
+    }
+    if (StoryAct.HasOwnProp("scrolls") && StoryAct.scrolls > 0) {
+        AddToLog("Scrolling down " StoryAct.scrolls " times for " act)
+        MouseMove(400, 175)
+        loop StoryAct.scrolls {
+            SendInput("{WheelDown}")
+            Sleep(250)
+        }
+    }
+    Sleep(1000)
+
+    FixClick(StoryAct.x, StoryAct.y)
+    Sleep(1000)
+
+    return true
+}
+
+StartRaid(map, act, isRanger := false) {
+    AddToLog("Selecting map: " map " and act: " act)
+
+    ; Get Story map 
+    StoryMap := GetMapData("RaidMap", map)
+    FixClick(541, 468) ; Click on Raid
+    Sleep (200)
+    ; Scroll if needed
+    if (StoryMap.scrolls > 0) {
+        AddToLog("Scrolling down " StoryMap.scrolls " for " map)
+        MouseMove(230, 175)
+        loop StoryMap.scrolls {
+            SendInput("{WheelDown}")
+            Sleep(250)
+        }
+    }
+    Sleep(1000)
+    
+    ; Click (468, 469) for Ranger mode right before clicking the map
+    if (isRanger) {
+        Sleep(2000)
+        FixClick(468, 469)
+        Sleep(200)
+    }
+    ; Click on the map
+    FixClick(StoryMap.x, StoryMap.y)
+    Sleep(1000)
+    
+    ; Get act details
+    StoryAct := GetMapData("RaidAct", act)
+    
+    if (isRanger) {
+        Sleep(2000)
+        ; No click here
+    }
+    ; Scroll if needed for act
+    if (StoryAct.scrolls > 0) {
+        AddToLog("Scrolling down " StoryAct.scrolls " times for " act)
+        MouseMove(400, 175)
+        loop StoryAct.scrolls {
+            SendInput("{WheelDown}")
+            Sleep(250)
+        }
+    }
+    Sleep(1000)
+    
+    ; Click on the act
+    FixClick(StoryAct.x, StoryAct.y)
     Sleep(1000)
     
     return true
@@ -506,7 +1077,10 @@ GetMapData(type, name) {
             "Green Planet", {x: 230, y: 230, scrolls: 0},
             "Demon Forest", {x: 230, y: 290, scrolls: 0},
             "Leaf Village", {x: 230, y: 360, scrolls: 0},
-            "Z City", {x: 230, y: 360, scrolls: 1}
+            "Z City", {x: 235, y: 270, scrolls: 1},
+            "Ghoul City", {x: 236, y: 345, scrolls: 1},
+            "Night Colosseum",{x: 237, y: 316, scrolls: 2},
+            "Bizzare Race", {x: 233, y: 379, scrolls: 2}
         ),
         "StoryAct", Map(
             "Act 1", {x: 400, y: 180, scrolls: 0},
@@ -521,21 +1095,22 @@ GetMapData(type, name) {
             "Act 10", {x: 400, y: 290, scrolls: 3},
         ),
         "RaidMap", Map(
-            "Ant Kingdom", {x: 630, y: 250, scrolls: 0}
+            "Steel Blitz Rush", {x: 233, y: 173, scrolls: 0}
         ),
         "RaidAct", Map(
-            "Act 1", {x: 285, y: 235, scrolls: 0},
-            "Act 2", {x: 285, y: 270, scrolls: 0},
-            "Act 3", {x: 285, y: 305, scrolls: 0},
-            "Act 4", {x: 285, y: 340, scrolls: 0},
-            "Act 5", {x: 285, y: 375, scrolls: 0}
+            "Act 1", {x: 403, y: 191, scrolls: 0},
+            "Act 2", {x: 404, y: 245, scrolls: 0},
+            "Act 3", {x: 406, y: 305, scrolls: 0},
+            "Act 4", {x: 406, y: 305, scrolls: 1}
         ),
         "LegendMap", Map(
             "Voocha Village", {x: 230, y: 165, scrolls: 0},
             "Green Planet", {x: 230, y: 230, scrolls: 0},
             "Demon Forest", {x: 230, y: 290, scrolls: 0},
             "Leaf Village", {x: 230, y: 360, scrolls: 0},
-            "Z City", {x: 230, y: 360, scrolls: 1}
+            "Z City", {x: 235, y: 270, scrolls: 1},
+            "Ghoul City", {x: 230, y: 360, scrolls: 1},
+            "Night Colosseum",{x: 227, y: 371, scrolls: 2}
         ),
         "LegendAct", Map(
             "Act 1", {x: 400, y: 180, scrolls: 0},
@@ -609,26 +1184,44 @@ StartLegend(map, act) {
 }
 
 PlayHere() {
-    global inChallengeMode, challengeMapIndex, challengeStageCount, challengeStartTime, startingMode
+    global inChallengeMode, challengeMapIndex, challengeStageCount, challengeStartTime, startingMode, inBossAttackMode, BossAttackStartTime, BossAttackMapStegeCount, BossAttackMapIndex
+
     FixClick(485, 410)  ;Create
     if (inChallengeMode) {
         Sleep (500)
         if (CheckForCooldownMessage()) {
             AddToLog("Still on cooldown...")
             FixClick(580, 410) ; Exit Ranger Stages
-            Sleep (1000)
+            Sleep (2000)
             FixClick(70, 325) ; Exit 
             inChallengeMode := false
-            challengeStartTime := A_TickCount  ; Reset timer for next ranger stage trigger
+            ; challengeStartTime และ BossAttackStartTime จะถูกจัดการด้านล่าง
             challengeMapIndex := 1  ; Reset map index for next session
             challengeStageCount := 0  ; Reset stage count for new ranger stage session
+
+            ; --- ADDED LOGIC ---
+            if (BossAttackBox.Value) {
+                AddToLog("Ranger Stages on cooldown. Switching to Boss Attack.")
+                inBossAttackMode := true
+                justHitBossAttackCooldown := false ; เพื่อให้ Boss Attack พยายามทำงาน
+                ; BossAttackStartTime และ challengeStartTime ไม่รีเซ็ตที่นี่
+                BossAttackMapStegeCount := 0
+                BossAttackMapIndex := 1
+            } else {
+                BossAttackStartTime := A_TickCount ; รีเซ็ต Boss Attack timer ด้วย
+             }
+
             CheckLobby()
             startingMode := true
             return
         }
     }
-    Sleep (1500)
+    Sleep (2500)
+
+
     FixClick(400, 475) ;Start
+    inStage := true
+    autoAbilityClicking := true
     Sleep (1200)
     startingMode := false
 }
@@ -647,46 +1240,18 @@ StartBossEvent() {
     Sleep(1500)
 }
 
-StartRaid(map, act) {
-    AddToLog("Selecting map: " map " and act: " act)
+StartBossAttack() {
+    inStage := true
+    autoAbilityClicking := true
+    FixClick(350, 352) ; Click Boss Attack
+    Sleep(3000)
+}
 
-    ; Get Story map 
-    RaidMap := GetMapData("RaidMap", map)
-    
-    ; Scroll if needed
-    if (RaidMap.scrolls > 0) {
-        AddToLog("Scrolling down " RaidMap.scrolls " for " map)
-        MouseMove(700, 210)
-        loop RaidMap.scrolls {
-            SendInput("{WheelDown}")
-            Sleep(250)
-        }
-    }
+StartPortal() {
+    FixClick(160, 349) ; Click Use Portal
     Sleep(1000)
-    
-    ; Click on the map
-    FixClick(RaidMap.x, RaidMap.y)
-    Sleep(1000)
-    
-    ; Get act details
-    RaidAct := GetMapData("RaidAct", act)
-    
-    ; Scroll if needed for act
-    if (RaidAct.scrolls > 0) {
-        AddToLog("Scrolling down " RaidAct.scrolls " times for " act)
-        MouseMove(300, 240)
-        loop RaidAct.scrolls {
-            SendInput("{WheelDown}")
-            Sleep(250)
-        }
-    }
-    Sleep(1000)
-    
-    ; Click on the act
-    FixClick(RaidAct.x, RaidAct.y)
-    Sleep(1000)
-    
-    return true
+    FixClick(115, 323) ; Start
+    Sleep(2000)
 }
 
 Zoom() {
@@ -726,7 +1291,7 @@ BasicSetup() {
 }
 
 DetectMap(waitForLoadingScreen := false) {
-    global lastHourCheck
+    global lastHourCheck, NewCustomMapPattern
 
     startTime := A_TickCount
     AddToLog("Trying to determine map...")
@@ -737,8 +1302,14 @@ DetectMap(waitForLoadingScreen := false) {
         "Demon Forest", DemonForest,
         "Leaf Village", LeafVillage,
         "Z City", ZCity,
+        "Ghoul City", GhoulCity,
+        "Night Colosseum", NightColosseum,
         "Cursed Town", CursedTown,
-        "Egg Island", EggIsland
+        "Lawless City", LawlessCityPattern,
+        "New Custom Map", NewCustomMapPattern,
+        "Battle Arena", BattleArena,
+        "Bizzare Race", BizzareRace,
+        "Steel Blitz Rush", SteelBlitzRush
     )
 
     Loop {
@@ -749,9 +1320,9 @@ DetectMap(waitForLoadingScreen := false) {
                 return "No Map Found"
             }
         } else {
-            ; Timeout after 5 minutes
-            if (A_TickCount - startTime > 300000) {
-                if (ok := GetFindText().FindText(&X, &Y, 47, 342, 83, 374, 0, 0, AreaText)) {
+            ; Timeout after 10 minutes
+            if (A_TickCount - startTime > 600000) {
+                if (ok := GetFindText().FindText(&X, &Y, 4, 299, 91, 459, 0, 0, AreaText)) {
                     AddToLog("Found in lobby - restarting selected mode")
                     return StartSelectedMode()
                 }
@@ -768,10 +1339,18 @@ DetectMap(waitForLoadingScreen := false) {
         }
         ; Check for map
         for mapName, pattern in mapPatterns {
-            if (ok := GetFindText().FindText(&X, &Y, 11, 159, 450, 285, 0, 0, pattern)) {
-                AddToLog("✅ Map detected: " mapName)
-                lastHourCheck := A_Hour
-                return mapName
+            if (mapName = "New Custom Map") {
+                if (ok := GetFindText().FindText(&X, &Y, 155-150000, 204-150000, 155+150000, 204+150000, 0, 0, pattern)) {
+                    AddToLog("✅ Map detected: " mapName)
+                    lastHourCheck := A_Hour
+                    return mapName
+                }
+            } else {
+                if (ok := GetFindText().FindText(&X, &Y, 11, 159, 450, 285, 0, 0, pattern)) {
+                    AddToLog("✅ Map detected: " mapName)
+                    lastHourCheck := A_Hour
+                    return mapName
+                }
             }
         }
         Sleep 1000
@@ -780,7 +1359,7 @@ DetectMap(waitForLoadingScreen := false) {
 }
     
 RestartStage() {
-    global currentMap, checkForUnitManager, lastHourCheck, inChallengeMode, startingMode
+    global currentMap, checkForUnitManager, lastHourCheck, inChallengeMode, startingMode, inBossAttackMode, ReturnToLobbyStartTime
 
     loop {
 
@@ -792,35 +1371,58 @@ RestartStage() {
 
         checkForUnitManager := true
 
-        if (ModeDropdown.Text = "Challenge" && !inChallengeMode) {
+        if (ModeDropdown.Text = "Challenge" && !inChallengeMode && !inBossAttackMode) {
             if (A_Hour != lastHourCheck) {
-                AddToLog("New hour detected (last: " lastHourCheck ", now: " A_Hour ")")
                 currentMap := DetectMap(true)  ; Force re-detect the map
             } else {
                 if (currentMap = "") {
                     currentMap := DetectMap(false)  ; Detect once if not already known
                 }
             }
-        } else if (ModeDropdown.Text != "Coop") {
+
+        } else if (ModeDropdown.Text = "Summer Event") {
+            currentMap := "Summer Event"
+            AddToLog("Current Map: " currentMap)
+
+        } else if (
+            ModeDropdown.Text != "Cid"
+            && ModeDropdown.Text != "Co-op"
+        ) {
             if (currentMap = "") {
                 currentMap := DetectMap(false)  ; Normal detect
             } else {
                 AddToLog("Current Map: " currentMap)
             }
         }
-        
+
+
 
         ; Wait for loading
-        CheckLoaded()
+        WaitForGameState("loading")
 
         ; Wait for game to actually start
-        StartedGame()
+        WaitForGameState("voting")
 
         ; Check for the vote start
         CheckForVoteScreen()
 
+        ; Set Game Speed (W.I.P)
+        ;SetGameSpeed()
+
+        ReturnToLobbyStartTime := A_TickCount  ; Reset timer for next ranger stage trigger
+
         ; Summon Units
         SummonUnits()
+
+        ; ===== เพิ่มส่วนนี้ =====
+        inStage := false
+        if (IsSet(autoAbilityClicking) && autoAbilityClicking) {
+            autoAbilityClicking := false
+            SetTimer(AutoAbility_ClickLoop, 0)
+            SendInput("{T}")
+            Sleep(200)
+        }
+        ; ========================
         
         ; Monitor stage progress
         MonitorEndScreen()
@@ -829,12 +1431,23 @@ RestartStage() {
 }
 
 Reconnect() {
+    global justHitBossAttackCooldown
+    justHitBossAttackCooldown := false
+
     ;Credit: @Haie
     color_home := PixelGetColor(10, 10)
     color_reconnect := PixelGetColor(519,329)
     if (color_home == 0x121215 or color_reconnect == 0x393B3D) {
         AddToLog("Disconnected! Attempting to reconnect...")
         sendDCWebhook()
+
+        inStage := false
+        if (IsSet(autoAbilityClicking) && autoAbilityClicking) {
+            autoAbilityClicking := false
+            SetTimer(AutoAbility_ClickLoop, 0)
+            SendInput("{T}")
+            Sleep(200)
+        }
 
         try {
             if (WinExist(rblxID)) { 
@@ -860,17 +1473,26 @@ Reconnect() {
         loop {
             FixClick(490, 400)
             AddToLog("Reconnecting to Roblox...")
-            Sleep 15000
+            Sleep 5000
             if WinExist(rblxID) {
                 WinActivate(rblxID)
                 forceRobloxSize()
                 moveRobloxWindow()
                 Sleep (2000)
             }
-            if (ok := GetFindText().FindText(&X, &Y, 47, 342, 83, 374, 0, 0, AreaText)) {
+            if (ok := GetFindText().FindText(&X, &Y, 4, 299, 91, 459, 0, 0, AreaText)) {
                 AddToLog("Reconnected Successfully!")
+                ; Reset all mode-related variables to restart the sequence
+                global firstStartup := true
+                global inChallengeMode := false, challengeStartTime := A_TickCount, challengeMapIndex := 1, challengeStageCount := 0
+                global inBossAttackMode := false, BossAttackStartTime := A_TickCount, BossAttackMapIndex := 1 BossAttackMapStegeCount := 0, BossAttackMapIndex := 1
+                global justHitBossAttackCooldown := false
+                global currentMap := ""
+                ; startingMode will be true if CheckLobby was called, or StartSelectedMode will handle it via firstStartup
+                AddToLog("All modes reset. Restarting sequence.")
                 return StartSelectedMode()
             } else {
+				FixClick(560, 174)
                 Reconnect() 
             }
         }
@@ -902,15 +1524,23 @@ RejoinPrivateServer(testing := false) {
             Sleep(1000)
         }
 
-        if (ok := GetFindText().FindText(&X, &Y, 47, 342, 83, 374, 0, 0, AreaText)) {
+        if (ok := GetFindText().FindText(&X, &Y, 4, 299, 91, 459, 0, 0, AreaText)) {
             AddToLog("Reconnected Successfully!")
             if (!testing) {
+                ; Reset all mode-related variables to restart the sequence
+                global firstStartup := true
+                global inChallengeMode := false, challengeStartTime := A_TickCount, challengeMapIndex := 1, challengeStageCount := 0
+                global inBossAttackMode := false, BossAttackStartTime := A_TickCount, BossAttackMapIndex := 1 BossAttackMapStegeCount := 0, BossAttackMapIndex := 1
+                global justHitBossAttackCooldown := false
+                global currentMap := ""
+                ; startingMode will be true if CheckLobby was called, or StartSelectedMode will handle it via firstStartup
+                AddToLog("All modes reset. Restarting sequence.")
                 return StartSelectedMode()
             } else {
                 return
             }
         }
-
+		FixClick(560, 174)
         Reconnect()
     }
 }
@@ -928,7 +1558,7 @@ CheckForXp() {
 CheckLobbyOld() {
     global currentMap
     loop {
-        if (ok := GetFindText().FindText(&X, &Y, 47, 342, 83, 374, 0, 0, AreaText)) {
+        if (ok := GetFindText().FindText(&X, &Y, 4, 299, 91, 459, 0, 0, AreaText)) {
             break
         }
         if (CheckForXp()) {
@@ -947,8 +1577,16 @@ CheckLobbyOld() {
 CheckLobby() {
     global currentMap, startingMode
 
+    inStage := false
+    if (IsSet(autoAbilityClicking) && autoAbilityClicking) {
+        autoAbilityClicking := false
+        SetTimer(AutoAbility_ClickLoop, 0)
+        SendInput("{T}")
+        Sleep(200)
+    }
+
     loop {
-        if (ok := GetFindText().FindText(&X, &Y, 47, 342, 83, 374, 0, 0, AreaText)) {
+        if (ok := GetFindText().FindText(&X, &Y, 4, 299, 91, 459, 0, 0, AreaText)) {
             break
         }
         if (CheckForXp()) {
@@ -961,6 +1599,36 @@ CheckLobby() {
     }
 
     AddToLog("Returned to lobby, restarting selected mode")
+    Sleep(SleepTime())
+    currentMap := ""
+    startingMode := true
+}
+
+CheckLobbyRanger() {
+    global currentMap, startingMode
+
+    inStage := false
+    if (IsSet(autoAbilityClicking) && autoAbilityClicking) {
+        autoAbilityClicking := false
+        SetTimer(AutoAbility_ClickLoop, 0)
+        SendInput("{T}")
+        Sleep(200)
+    }
+
+    loop {
+        if (ok := GetFindText().FindText(&X, &Y, 4, 299, 91, 459, 0, 0, AreaText)) {
+            break
+        }
+        if (CheckForXp()) {
+            AddToLog("Detected end game screen when should have already returned to lobby")
+            MonitorEndScreen() ; No need for `return` here
+            return ; Exit CheckLobby after handling MonitorEndScreen
+        }
+        Reconnect()
+        Sleep(1000)
+    }
+
+    AddToLog("Returned to lobby")
     Sleep(SleepTime())
     currentMap := ""
     startingMode := true
@@ -1011,6 +1679,7 @@ StartedGame() {
     ; Record the start time for the 2-second wait period
     startTime := A_TickCount
     foundVote := false
+    timeoutTime := GetVoteTimeoutTime()
 
     loop {
         ; Sleep for a shorter period (e.g., 100ms) to keep checking within 2 seconds
@@ -1027,18 +1696,14 @@ StartedGame() {
             continue  ; Keep waiting if vote screen is still there
         }
         
-        ; If the vote screen is no longer visible and 2 seconds have passed
-        if (A_TickCount - startTime >= 2000) {
-            ; Click and proceed with game start logic after 2 seconds
+        ; If the vote screen is no longer visible / was not found
+        if (A_TickCount - startTime >= timeoutTime) {
             FixClick(400, 150) ; For those who can't follow a simple setup guide
-
-            ; Game is started and properly loaded
             AddToLog("Game started")
             stageStartTime := A_TickCount
             break
         }
 
-        ; If vote screen is found and we're inside the loop, break early
         if (foundVote) {
             FixClick(400, 150) ; For those who can't follow a simple setup guide
             AddToLog("Game started")
@@ -1048,43 +1713,125 @@ StartedGame() {
     }
 }
 
+WaitForGameState(mode := "loading") {
+    global checkForUnitManager, stageStartTime
+
+    inStage := false
+    autoAbilityClicking := false
+
+    startTime := A_TickCount
+    voteSeen := false
+    timeout := (mode = "loading") ? 120000 : GetVoteTimeoutTime()
+
+    loop {
+        Sleep((mode = "loading") ? 1000 : 100)
+
+        if (mode = "loading") {
+            if (checkForUnitManager) {
+                if (FindText(&X, &Y, 609, 463, 723, 495, 0.10, 0.20, UnitManagerBack)) {
+                    AddToLog("Successfully Loaded: Unit manager detected")
+                    checkForUnitManager := false
+                    break
+                }
+            }
+
+            if (GetFindText().FindText(&X, &Y, 355, 168, 450, 196, 0.10, 0.10, VoteStart)) {
+                AddToLog("Successfully Loaded: Vote screen detected")
+                break
+            } else if (PixelGetColor(381, 47, "RGB") = 0x5ED800) {
+                AddToLog("Successfully Loaded: Base health detected")
+                break
+            } else if (GetFindText().FindText(&X, &Y, 12, 594, 32, 615, 0.05, 0.10, InGameSettings)) {
+                AddToLog("Successfully Loaded: Settings cogwheel detected")
+                break
+            }
+
+            ; Failsafe timeout
+            if (A_TickCount - startTime > timeout) {
+                AddToLog("Failed to load within 2 minutes. Rejoining the game.")
+                return RejoinPrivateServer()
+            }
+
+            ClickThroughDrops()
+            Reconnect()
+
+        } else if (mode = "voting") {
+            ; Wait for vote screen to disappear
+            if (GetFindText().FindText(&X, &Y, 355, 168, 450, 196, 0.10, 0.10, VoteStart)) {
+                FixClick(400, 150)
+                voteSeen := true
+                startTime := A_TickCount
+                continue
+            }
+
+            ; Vote screen has disappeared
+            if (A_TickCount - startTime >= timeout || voteSeen) {
+                FixClick(400, 150)
+                AddToLog("Game started")
+                stageStartTime := A_TickCount
+                break
+            }
+        }
+    }
+}
+
 StartSelectedMode() {
-    global inChallengeMode, firstStartup, challengeStartTime
+    global inChallengeMode, firstStartup, challengeStartTime, inBossAttackMode, justHitBossAttackCooldown, currentMap, startingMode
+    global BossAttackStartTime, StartupBossAttack
+
+    inStage := false
+    autoAbilityClicking := false
 
     FixClick(640, 70) ; Closes Player leaderboard
     Sleep(500)
 
-    if (ModeDropdown.Text != "Coop") {
-        if (ChallengeBox.Value && firstStartup) {
-            AddToLog("Auto Ranger Stage enabled - starting with Ranger Stage")
-            inChallengeMode := true
-            firstStartup := false
-            challengeStartTime := A_TickCount  ; Set initial challenge time
-            LegendMode()
-            return
-        }
+    if (ModeDropdown.Text = "Co-op") {
+        inChallengeMode := false
+        inBossAttackMode := false
+        firstStartup := false
+        CoOpMode()
+        return
     }
 
-    ; If we're in challenge mode, do challenge
-    if (inChallengeMode) {
-        AddToLog("Starting Ranger Stages")
-        LegendMode()
+    if (firstStartup) {
+        justHitBossAttackCooldown := false
+        if (BossAttackBox.Value) {
+            AddToLog("Auto Boss Attack enabled - starting with Boss Attack")
+            inBossAttackMode := true
+            inChallengeMode := false
+            firstStartup := false
+            BossAttackStartTime := A_TickCount
+            challengeStartTime := A_TickCount
+            BossAttackMapStegeCount := 0
+            BossAttack()
+            return
+        }
+        firstStartup := false 
+    }
+    
+    if (justHitBossAttackCooldown) {
+        AddToLog("Boss Attack recently on cooldown. Defaulting to dropdown mode.")
+    } else if (inBossAttackMode) {
+        AddToLog("Continuing/Starting Boss Attack")
+        BossAttack()
         return
-    }    
-    else if (ModeDropdown.Text = "Story") {
+    }
+    
+    AddToLog("Starting mode: " ModeDropdown.Text)
+    if (ModeDropdown.Text = "Story") {
         StoryMode()
-    }
-    else if (ModeDropdown.Text = "Boss Event") {
+    } else if (ModeDropdown.Text = "Boss Event") {
         BossEvent()
-    }
-    else if (ModeDropdown.Text = "Challenge") {
+    } else if (ModeDropdown.Text = "Ranger") {
+        RangerMode()
+    } else if (ModeDropdown.Text = "Raid") {
+        RaidMode()
+    } else if (ModeDropdown.Text = "Challenge") {
         ChallengeMode()
-    }
-    else if (ModeDropdown.Text = "Coop") {
-        CoopMode()
-    }
-    else if (ModeDropdown.Text = "Easter Event") {
-        EasterEvent()
+    } else if (ModeDropdown.Text = "Portal") {
+        Portal()
+    } else if (ModeDropdown.Text = "Summer Event") {
+        SummerEvent()
     }
 }
 
@@ -1132,27 +1879,6 @@ IsColorInRange(color, targetColor, tolerance := 50) {
         && Abs(b1 - b2) <= tolerance
 }
 
-SleepTime() {
-    time := [0, 5000, 10000, 15000, 20000, 25000, 30000, 35000, 40000, 45000, 50000, 55000, 60000]  ; Array of sleep values
-    timeIndex := LobbySleepTimer.Value  ; Get the selected speed value
-
-    if timeIndex is number  ; Ensure it's a number
-        return time[timeIndex]  ; Use the value directly from the array
-}
-
-GetLoadingScreenWaitTime() {
-    time := [15000, 20000, 25000, 30000, 35000, 40000, 45000, 50000, 55000, 60000]  ; Array of sleep values
-    timeIndex := LoadingScreenWaitTime.Value  ; Get the selected speed value
-
-    if timeIndex is number  ; Ensure it's a number
-        return time[timeIndex]  ; Use the value directly from the array
-}
-
-GetLoadingWaitInSeconds() {
-    ms := GetLoadingScreenWaitTime()
-    return Round(ms / 1000, 1)  ; Return with 1 decimal place for precision
-}
-
 GetPlacementOrder() {
     placements := []
 
@@ -1187,6 +1913,7 @@ SummonUnits() {
     enabledSlots := []
     upgradeEnabledSlots := Map()
     waitUntilMaxSlots := Map()
+    maxUpgradeSlots := Map()
 
     for slotNum in GetPlacementOrder() {
         enabledVar := "enabled" slotNum
@@ -1199,9 +1926,12 @@ SummonUnits() {
 
         if (enabled.Value) {
             enabledSlots.Push(slotNum)
+
             if (upgradeEnabled.Value) {
                 upgradeEnabledSlots[slotNum] := true
-                waitUntilMaxSlots[slotNum] := upgradeBeforeSummon.Value
+                waitUntilMaxSlots[slotNum] := upgradeBeforeSummon.Value ? true : false
+            } else {
+                maxUpgradeSlots[slotNum] := true
             }
         }
     }
@@ -1221,8 +1951,8 @@ SummonUnits() {
         return
     }
 
-    ; Open Unit Manager if needed
-    if (upgradeUnits && checkForUnitManager) {
+    ; ==== Decide whether to open the Unit Manager ====
+    if (upgradeUnits && checkForUnitManager && upgradeEnabledSlots.Count > 0) {
         if (!GetFindText().FindText(&X, &Y, 609, 463, 723, 495, 0.10, 0.20, UnitManagerBack)) {
             AddToLog("Unit Manager isn't open - trying to open it")
             Loop {
@@ -1233,11 +1963,18 @@ SummonUnits() {
                     Sleep(1000)
                 } else {
                     AddToLog("Unit Manager is open")
-                    checkForUnitManager := false
                     break
                 }
             }
         }
+        checkForUnitManager := false
+    }
+
+    ; ==== Enable auto ability logic ====
+    inStage := true
+    if (AutoAbility.Value && inStage && !IsInLobby()) {
+        autoAbilityClicking := true
+        AutoAbilityRoutine()
     }
 
     lastScrollGroup := ""
@@ -1245,18 +1982,29 @@ SummonUnits() {
 
     ; Main loop — runs until all enabled slots are processed
     while (enabledSlots.Length > 0) {
+        if (CheckForXp()) {
+            return
+        }
         ; Track whether any upgrading was done this loop
         upgradedThisLoop := false
+
+        ; Summon maxed units first
+       /* for index, slotNum in enabledSlots {
+            SummonIfReady(slotNum, waitUntilMaxSlots, maxUpgradeSlots)
+        } */
     
         ; Handle upgrading (only one unit at a time if toggle is on)
         if (upgradeUnits && upgradeEnabledSlots.Count > 0) {
             for index, slotNum in enabledSlots {
+                
                 if !upgradeEnabledSlots.Has(slotNum)
                     continue
     
                 if CheckForXp() {
                     return
                 }
+
+                VoteCheck()
     
                 ; Scroll if needed
                 if ([1, 2, 3].Has(slotNum))
@@ -1278,6 +2026,8 @@ SummonUnits() {
                     lastSlotNum := slotNum
                 }
 
+                AddToLog("Upgrading unit in slot: " slotNum)
+
                 ; Perform one upgrade loop
                 loop UpgradeClicks.Value {
                     FixClick(70, 355)
@@ -1290,37 +2040,59 @@ SummonUnits() {
                     AddToLog("Max upgrade reached for slot: " slotNum)
                     FixClick(250, 200)
                     upgradeEnabledSlots.Delete(slotNum)
+                    maxUpgradeSlots[slotNum] := true
+                    waitUntilMaxSlots.Delete(slotNum) ; Remove from wait list
+                }
+
+                for _, slotNum in enabledSlots {
+                    SummonIfReady(slotNum, waitUntilMaxSlots, maxUpgradeSlots)
                 }
 
                 ; Break if we're only doing one unit at a time
-                if (UpgradeUntilMaxed.Value)
+                if (UpgradeUntilMaxed.Value) {
                     break
-            }
-        }
-    
-        ; Now summon all enabled units
-        for _, slotNum in enabledSlots {
-            ; If the "Upgrade Before Summon" checkbox is enabled, wait until maxed before summoning
-            if (!upgradeEnabledSlots.Has(slotNum) || (waitUntilMaxSlots.Has(slotNum) && !waitUntilMaxSlots[slotNum])) {
-                if (AutoPlay.Value) {
-                    SendInput("{" slotNum "}")
-                }
-            } else {
-                if (debugMessages) {
-                    AddToLog("Skipping summon for slot " slotNum " — waiting until maxed")
                 }
             }
-        }
-    
-        Reconnect()
-        Sleep(500)
-    
-        ; Exit if upgrades are done and AutoPlay is on
-        if (upgradeEnabledSlots.Count = 0 && !AutoPlay.Value) {
-            AddToLog("All units have been upgraded to max, monitoring stage...")
-            return
+        } else {
+
+            ; Now summon all enabled units
+            for _, slotNum in enabledSlots {
+
+                if CheckForXp() {
+                    return
+                }
+                VoteCheck()
+                SummonIfReady(slotNum, waitUntilMaxSlots, maxUpgradeSlots)
+            }
         }
     }    
+}
+
+ShouldSummon(slotNum, waitUntilMaxSlots, maxUpgradeSlots) {
+    ; If not set to wait until maxed → summon
+    if (!waitUntilMaxSlots.Has(slotNum)) {
+        return true
+    }
+
+    ; If it IS set to wait until maxed
+    if (waitUntilMaxSlots[slotNum]) {
+        return maxUpgradeSlots.Has(slotNum)
+    }
+
+    ; Otherwise, summon as normal
+    return true
+}
+
+SummonIfReady(slotNum, waitUntilMaxSlots, maxUpgradeSlots) {
+    if (ShouldSummon(slotNum, waitUntilMaxSlots, maxUpgradeSlots)) {
+        if (AutoPlay.Value) {
+            SendInput("{" slotNum "}")
+            FixClick(390, 500)
+            AddToLog("Summoning unit in slot: " slotNum)
+        }
+    } else if (debugMessages) {
+        AddToLog("Skipping summon for slot " slotNum)
+    }
 }
 
 MaxUpgraded() {
@@ -1361,4 +2133,55 @@ UnitProfilePoints(enabledCount := 6) {
         5, bottomSlots.Has(2) ? bottomSlots[2] : { x: 635, y: 275 },
         6, bottomSlots.Has(3) ? bottomSlots[3] : { x: 635, y: 275 }
     )
+}
+
+VoteCheck() {
+    global lastVoteCheck, voteCheckCooldown
+    now := A_TickCount
+    if (now - lastVoteCheck > voteCheckCooldown) {
+        CheckForVoteScreen()
+        lastVoteCheck := now
+    }
+}
+
+CoOpMode() {
+    global startingMode
+    AddToLog("Co-op mode selected. Skipping map detection.")
+    inStage := true
+    autoAbilityClicking := true
+    startingMode := false
+}
+
+; After win/loss detection, search for special text for up to 10 seconds and click it if found
+    t1 := A_TickCount, Text := X := Y := ""
+    Text := "|<>**50$29.QQ1U1ww7U3PDBb6KzvzatXVVAqH6HBBnQaMvatsNkQnEqlxkUwyTzE"
+    ok := ""
+    Loop {
+        if (ok := FindText(&X, &Y, 319, 122, 471, 234, 0, 0, Text))
+            break
+        if ((A_TickCount - t1) > 10000)
+            break
+        Sleep(100)
+    }
+    if (ok) {
+        Click X, Y
+    }
+    Try For i,v in ok  ; ok value can be get from ok:=FindText().ok
+        if (i<=2)
+            FindText().MouseTip(ok[i].x, ok[i].y)
+
+CanReplay() {
+    if (GetFindText().FindText(&X, &Y, 161, 351, 630, 522, 0, 0, Replay)) {
+        return true
+    }
+    
+    return false
+}
+
+IsInLobby() {
+    return GetFindText().FindText(&X, &Y, 4, 299, 91, 459, 0, 0, AreaText)
+}
+
+ChangeGameSpeed() {
+    FixClick(717, 15) ; 3x Speed
 }

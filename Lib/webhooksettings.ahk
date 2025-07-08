@@ -162,7 +162,7 @@ SendWebhookWithTime(isWin, stageLength) {
     . "🕒 Stage Duration: " stageLength "`n"
     . "🔥 Current Streak: " (currentStreak > 0 ? currentStreak " Win Streak" : Abs(currentStreak) " Loss Streak") "`n"
     . "🗺️ Map: " currentMap "`n"
-    . "🎮 Mode: " (inChallengeMode ? "Ranger Stage" : ModeDropdown.Text) "`n"
+    . "🎮 Mode: " (inChallengeMode ? "Ranger Stage" : inBossAttackMode ? "Boss Attack" :ModeDropdown.Text) "`n"
     . "✅ Wins: " Wins "`n"
     . "❌ Fails: " loss "`n"
     . "📊 Total Runs: " (loss + Wins) "`n"
