@@ -619,54 +619,48 @@ HandleDefaultModeOld() {
 
 HandleStoryMode() {
     global lastResult
-    remaining := GetReturnToLobbyTimer() - (A_TickCount - ReturnToLobbyStartTime)
 
     if (lastResult = "win" && NextLevelBox.Value && NextLevelBox.Visible) {
         ClickNextLevel()
+    } else if (GetMapForFarming(StoryDropdown.Text) != "no map found") {
+        SwitchActiveFarm()
+        Sleep(1500)
+        ClickReturnToLobby()
+        CheckLobby()
+    } else if (ShouldReturnToLobby()) {
+        AddToLog("Return to lobby timer reached - returning to lobby to restart")
+        ClickReturnToLobby()
+        CheckLobby()
     } else {
-        if (GetMapForFarming(StoryDropdown.Text) != "no map found") {
-            SwitchActiveFarm()
-            Sleep(1500)
-            ClickReturnToLobby()
-            CheckLobby()
-        } else if (GetReturnToLobbyTimer() > 0) {
-            if (remaining <= 0) {
-                AddToLog("Return to lobby timer reached - returning to lobby to restart")
-                ClickReturnToLobby()
-                CheckLobby()
-            } else {
-                ; Optional: Only log every minute or with throttling
-                FormatTimeLeft(remaining)
-            }
-        } else {
-            ClickReplay2()
-        }
+        ClickReplay()
     }
     return
 }
 
 HandleDefaultMode() {
-    global ReturnToLobbyStartTime
-    remaining := GetReturnToLobbyTimer() - (A_TickCount - ReturnToLobbyStartTime)
-
-    if (ReturnLobbyBox.Visible && ReturnLobbyBox.Value && ModeDropdown.Text != "Cid") {
+    if (ShouldReturnToLobby()) {
+        AddToLog("Return to lobby timer reached - returning to lobby to restart")
+        ClickReturnToLobby()
+        CheckLobby()
+    } else if (ReturnLobbyBox.Visible && ReturnLobbyBox.Value) {
         ClickReturnToLobby()
         CheckLobby()
     } else {
-        if (GetReturnToLobbyTimer() > 0) {
-            if (remaining <= 0) {
-                AddToLog("Return to lobby timer reached - returning to lobby to restart")
-                ClickReturnToLobby()
-                CheckLobby()
-            } else {
-                ; Optional: Only log every minute or with throttling
-                FormatTimeLeft(remaining)
-            }
-        }
-
         ClickReplay()
     }
     return
+}
+
+ShouldReturnToLobby() {
+    global ReturnToLobbyStartTime
+    remaining := GetReturnToLobbyTimer() - (A_TickCount - ReturnToLobbyStartTime)
+    if (GetReturnToLobbyTimer() > 0 && remaining <= 0) {
+        return true
+    }
+    if (remaining > 0) {
+        FormatTimeLeft(remaining)
+    }
+    return false
 }
 
 FormatTimeLeft(msRemaining) {
@@ -1381,9 +1375,11 @@ RestartStage() {
             }
 
         } else if (ModeDropdown.Text = "Summer Event") {
-            currentMap := "Summer Event"
-            AddToLog("Current Map: " currentMap)
-
+            if (currentMap = "") {
+                currentMap := "Summer Event"
+                AddToLog("Current Map: " currentMap)
+                Sleep (4500)
+            }
         } else if (
             ModeDropdown.Text != "Cid"
             && ModeDropdown.Text != "Co-op"
@@ -1394,8 +1390,6 @@ RestartStage() {
                 AddToLog("Current Map: " currentMap)
             }
         }
-
-
 
         ; Wait for loading
         WaitForGameState("loading")
@@ -1409,7 +1403,8 @@ RestartStage() {
         ; Set Game Speed (W.I.P)
         ;SetGameSpeed()
 
-        ReturnToLobbyStartTime := A_TickCount  ; Reset timer for next ranger stage trigger
+        ; Close Leaderboard
+        FixClick(487, 71)
 
         ; Summon Units
         SummonUnits()
@@ -1575,7 +1570,7 @@ CheckLobbyOld() {
 }
 
 CheckLobby() {
-    global currentMap, startingMode
+    global currentMap, startingMode, ReturnToLobbyStartTime
 
     inStage := false
     if (IsSet(autoAbilityClicking) && autoAbilityClicking) {
@@ -1602,6 +1597,7 @@ CheckLobby() {
     Sleep(SleepTime())
     currentMap := ""
     startingMode := true
+    ReturnToLobbyStartTime := A_TickCount
 }
 
 CheckLobbyRanger() {

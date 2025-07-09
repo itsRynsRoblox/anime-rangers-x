@@ -33,8 +33,8 @@ Enabled1=1
 Enabled2=1
 Enabled3=1
 Enabled4=1
-Enabled5=1
-Enabled6=1
+Enabled5=0
+Enabled6=0
 
 Placement1=1
 Placement2=2
@@ -80,4 +80,4 @@ UpgradeBeforeUltimate=10
 [BossAttackCD]
 BossAttackCDDelay=4
 [ReturnToLobbyTimer]
-ReturnToLobbyTimer=1
+ReturnToLobbyTimer=2

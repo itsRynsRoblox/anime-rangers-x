@@ -16,7 +16,7 @@ uiTheme.Push("00ffb3")    ; HighLight
 ;Update Checker
 global repoOwner := "itsRynsRoblox"
 global repoName := "anime-rangers-x"
-global currentVersion := "1.5.0"
+global currentVersion := "1.5.2"
 
 ; Basic Application Info
 global aaTitle := "Ryn's Anime Rangers X "
