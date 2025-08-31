@@ -35,7 +35,7 @@ Hotkey(F3Key, (*) => Reload())
 Hotkey(F4Key, (*) => TogglePause())
 
 F5:: {
-
+    ClickReplay()
 }
 
 F6:: {
@@ -257,19 +257,6 @@ Portal() {
     startingMode := false
 }
 
-SummerEvent() {
-    global startingMode
-
-    FixClick(769, 223) ; Click Summer Event
-    Sleep(1000)
-    AddToLog("Starting Summer Event")
-    FixClick(449, 354) ; Click Play
-    inStage := true
-    autoAbilityClicking := true
-    Sleep (1200)
-    startingMode := false
-}
-
 ClickCidMap()
 {
     t1 := A_TickCount, Text := X := Y := ""
@@ -451,11 +438,19 @@ MonitorEndScreen() {
         Sleep(200)
     }
 
+    lastClickTime := A_TickCount
+
     ; Wait for XP to appear or reconnect if necessary
     while !CheckForXp() {
-        ClickThroughDrops()
-        Reconnect()
-        Sleep(200)
+        if ((A_TickCount - lastClickTime) >= 10000) {
+            FixClick(400, 495)
+            lastClickTime := A_TickCount
+        }
+        Sleep (150)
+    }
+
+    if (ModeDropdown.Text = "Infinity Castle" || ModeDropdown.Text = "Boss Rush" ) {
+        SetTimer(ChangePath, 0)
     }
 
     stageEndTime := A_TickCount
@@ -475,7 +470,7 @@ MonitorEndScreen() {
     lastResult := isWin ? "win" : "lose"
     AddToLog((isWin ? "Victory" : "Defeat") " detected - Stage Length: " stageLength)
     (isWin ? Wins += 1 : loss += 1)
-    Sleep(1000)
+    Sleep(200)
 
     ; Stop Auto Ability if running
     inStage := false
@@ -486,7 +481,7 @@ MonitorEndScreen() {
         Sleep(200)
     }
 
-    if (firstWebhook || (A_TickCount - webhookSendTime) >= GetWebhookDelay()) {
+    if (WebhookEnabled.Value && (firstWebhook || (A_TickCount - webhookSendTime) >= GetWebhookDelay())) {
         try {
             SendWebhookWithTime(isWin, stageLength)
             webhookSendTime := A_TickCount
@@ -572,12 +567,14 @@ MonitorEndScreen() {
 
     if (ModeDropdown.Text = "Story") {
         HandleStoryMode()
-    } else if (ModeDropdown.Text = "Ranger") {
+    } else if (ModeDropdown.Text = "Ranger Stages") {
         HandleRangerMode()
     } else if (ModeDropdown.Text = "Raid") {
         HandleStoryMode()
     } else if (ModeDropdown.Text = "Portal") {
         HandlePortalMode()
+    } else if (ModeDropdown.Text = "Infinity Castle") {
+        HandleInfinityCastle()
     } else {
         HandleDefaultMode()
     }
@@ -622,7 +619,7 @@ HandleStoryMode() {
 
     if (lastResult = "win" && NextLevelBox.Value && NextLevelBox.Visible) {
         ClickNextLevel()
-    } else if (GetMapForFarming(StoryDropdown.Text) != "no map found") {
+    } else if (GetMapForFarming(StoryDropdown.Text) != "no map found" && PortalFarm.Value) {
         SwitchActiveFarm()
         Sleep(1500)
         ClickReturnToLobby()
@@ -632,21 +629,47 @@ HandleStoryMode() {
         ClickReturnToLobby()
         CheckLobby()
     } else {
-        ClickReplay()
+        if (AutoRetry.Value) {
+            AddToLog("Auto Retry enabled - skipping replay click")
+        } else {
+            ClickReplay()
+        }
     }
     return
 }
 
 HandleDefaultMode() {
+    global lastResult
     if (ShouldReturnToLobby()) {
         AddToLog("Return to lobby timer reached - returning to lobby to restart")
         ClickReturnToLobby()
         CheckLobby()
-    } else if (ReturnLobbyBox.Visible && ReturnLobbyBox.Value) {
+    } else if (lastResult = "win" && NextLevelBox.Value && NextLevelBox.Visible) {
+        ClickNextLevel()
+    } else {
+        if (AutoRetry.Value) {
+            AddToLog("Auto Retry enabled - skipping replay click")
+        } else {
+            ClickReplay()
+        }
+    }
+    return
+}
+
+HandleInfinityCastle() {
+    global lastResult
+    if (ShouldReturnToLobby()) {
+        AddToLog("Return to lobby timer reached - returning to lobby to restart")
         ClickReturnToLobby()
         CheckLobby()
+    } else if (lastResult = "win" && NextLevelBox.Value && NextLevelBox.Visible) {
+        ClickNextLevel()
     } else {
-        ClickReplay()
+        if (AutoRetry.Value) {
+            AddToLog("Auto Retry enabled - skipping replay click")
+        } else {
+            ClickReplay()
+        }
     }
     return
 }
@@ -654,6 +677,11 @@ HandleDefaultMode() {
 ShouldReturnToLobby() {
     global ReturnToLobbyStartTime
     remaining := GetReturnToLobbyTimer() - (A_TickCount - ReturnToLobbyStartTime)
+
+    if (ModeDropdown.Text = "Co-op" || ModeDropdown.Text = "Boss Rush") {
+        return false
+    }
+
     if (GetReturnToLobbyTimer() > 0 && remaining <= 0) {
         return true
     }
@@ -713,7 +741,7 @@ HandlePortalMode() {
 }
 
 StoryMovement() {
-    FixClick(63, 329)
+    FixClick(25, 340)
     Sleep (1000)
 }
 
@@ -1362,7 +1390,6 @@ RestartStage() {
             continue ; immediately restart loop with new mode
         }
 
-
         checkForUnitManager := true
 
         if (ModeDropdown.Text = "Challenge" && !inChallengeMode && !inBossAttackMode) {
@@ -1372,13 +1399,6 @@ RestartStage() {
                 if (currentMap = "") {
                     currentMap := DetectMap(false)  ; Detect once if not already known
                 }
-            }
-
-        } else if (ModeDropdown.Text = "Summer Event") {
-            if (currentMap = "") {
-                currentMap := "Summer Event"
-                AddToLog("Current Map: " currentMap)
-                Sleep (4500)
             }
         } else if (
             ModeDropdown.Text != "Cid"
@@ -1394,14 +1414,23 @@ RestartStage() {
         ; Wait for loading
         WaitForGameState("loading")
 
-        ; Wait for game to actually start
-        WaitForGameState("voting")
+        if (!AutoStart.Value) {
+            ; Wait for game to actually start
+            WaitForGameState("voting")
 
-        ; Check for the vote start
-        CheckForVoteScreen()
+            ; Check for the vote start
+            CheckForVoteScreen()
+        }
 
         ; Set Game Speed (W.I.P)
-        ;SetGameSpeed()
+        if (!AutoGameSpeed.Value) {
+            ChangeGameSpeed()
+        }
+
+        if (ModeDropdown.Text = "Infinity Castle" || ModeDropdown.Text = "Boss Rush") {
+            SetTimer(ChangePath, GetPathChangetimer())
+        }
+
 
         ; Close Leaderboard
         FixClick(487, 71)
@@ -1434,7 +1463,7 @@ Reconnect() {
     color_reconnect := PixelGetColor(519,329)
     if (color_home == 0x121215 or color_reconnect == 0x393B3D) {
         AddToLog("Disconnected! Attempting to reconnect...")
-        sendDCWebhook()
+        ;sendDCWebhook()
 
         inStage := false
         if (IsSet(autoAbilityClicking) && autoAbilityClicking) {
@@ -1543,30 +1572,11 @@ RejoinPrivateServer(testing := false) {
 
 CheckForXp() {
     ; Check for lobby text
-    if (ok := GetFindText().FindText(&X, &Y, 118, 181, 219, 217, 0.05, 0.05, GameEnded)) {
+    if (ok := GetFindText().FindText(&X, &Y, 118, 180, 219, 216, 0.10, 0.10, GameEnded)) {
         FixClick(560, 560)
         return true
     }
     return false
-}
-
-CheckLobbyOld() {
-    global currentMap
-    loop {
-        if (ok := GetFindText().FindText(&X, &Y, 4, 299, 91, 459, 0, 0, AreaText)) {
-            break
-        }
-        if (CheckForXp()) {
-            AddToLog("Detected end game screen when should have already returned to lobby")
-            return MonitorEndScreen()
-        }
-        Reconnect()
-        Sleep (1000)
-    }
-    AddToLog("Returned to lobby, restarting selected mode")
-    Sleep(SleepTime())
-    currentMap := ""
-    return StartSelectedMode()
 }
 
 CheckLobby() {
@@ -1710,7 +1720,7 @@ StartedGame() {
 }
 
 WaitForGameState(mode := "loading") {
-    global checkForUnitManager, stageStartTime
+    global checkForUnitManager, stageStartTime, Wins, loss
 
     inStage := false
     autoAbilityClicking := false
@@ -1753,6 +1763,11 @@ WaitForGameState(mode := "loading") {
 
         } else if (mode = "voting") {
             ; Wait for vote screen to disappear
+            if (AutoStart.Value) {
+                AddToLog("Game started (Auto Start enabled) Total Runs: " Wins + loss)
+                stageStartTime := A_TickCount
+                break
+            }
             if (GetFindText().FindText(&X, &Y, 355, 168, 450, 196, 0.10, 0.10, VoteStart)) {
                 FixClick(400, 150)
                 voteSeen := true
@@ -1780,6 +1795,9 @@ StartSelectedMode() {
 
     FixClick(640, 70) ; Closes Player leaderboard
     Sleep(500)
+
+    FixClick(558, 166) ; Closes Daily
+    Sleep (500)
 
     if (ModeDropdown.Text = "Co-op") {
         inChallengeMode := false
@@ -1818,7 +1836,7 @@ StartSelectedMode() {
         StoryMode()
     } else if (ModeDropdown.Text = "Boss Event") {
         BossEvent()
-    } else if (ModeDropdown.Text = "Ranger") {
+    } else if (ModeDropdown.Text = "Ranger Stages") {
         RangerMode()
     } else if (ModeDropdown.Text = "Raid") {
         RaidMode()
@@ -1826,9 +1844,12 @@ StartSelectedMode() {
         ChallengeMode()
     } else if (ModeDropdown.Text = "Portal") {
         Portal()
-    } else if (ModeDropdown.Text = "Summer Event") {
-        SummerEvent()
+    } else if (ModeDropdown.Text = "Infinity Castle") {
+        StartInfinityCastle()
+    } else if (ModeDropdown.Text = "Boss Rush") {
+        StartBossRush()
     }
+
 }
 
 FormatStageTime(ms) {
@@ -1942,7 +1963,7 @@ SummonUnits() {
     profilePoints := UnitProfilePoints(enabledSlots.Length)
 
     if (!AutoPlay.Value && !upgradeUnits) {
-        AddToLog("Auto summon and auto upgrade is disabled - monitoring stage")
+        AddToLog("Summon && Upgrade disabled - monitoring stage")
         checkForUnitManager := false
         return
     }
@@ -2044,6 +2065,8 @@ SummonUnits() {
                     SummonIfReady(slotNum, waitUntilMaxSlots, maxUpgradeSlots)
                 }
 
+                Reconnect()
+
                 ; Break if we're only doing one unit at a time
                 if (UpgradeUntilMaxed.Value) {
                     break
@@ -2060,6 +2083,7 @@ SummonUnits() {
                 VoteCheck()
                 SummonIfReady(slotNum, waitUntilMaxSlots, maxUpgradeSlots)
             }
+            Reconnect()
         }
     }    
 }
@@ -2081,6 +2105,7 @@ ShouldSummon(slotNum, waitUntilMaxSlots, maxUpgradeSlots) {
 
 SummonIfReady(slotNum, waitUntilMaxSlots, maxUpgradeSlots) {
     if (ShouldSummon(slotNum, waitUntilMaxSlots, maxUpgradeSlots)) {
+        Reconnect()
         if (AutoPlay.Value) {
             SendInput("{" slotNum "}")
             FixClick(390, 500)
@@ -2179,5 +2204,15 @@ IsInLobby() {
 }
 
 ChangeGameSpeed() {
-    FixClick(717, 15) ; 3x Speed
+    if (GameSpeed.Text = "2x") {
+        FixClick(569, 23)
+    }
+    else if (GameSpeed.Text = "3x") {
+        FixClick(597, 22) ; 3x Speed
+    }
+}
+
+ChangePath() {
+    AddToLog("Changing " ModeDropdown.Text " Path")
+    FixClick(471, 439)
 }

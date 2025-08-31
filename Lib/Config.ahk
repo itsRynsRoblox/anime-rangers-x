@@ -82,7 +82,18 @@ readInSettings() {
                 case "UpgradeBeforeUltimate": UpgradeBeforeUltimateEdit.Value := parts[2]
                 case "BossAttackCDDelay": BossAttackCDTimer.Value := parts[2]
                 case "ReturnToLobbyTimer": ReturnToLobbyTimer.Value := parts[2]
-
+                case "InfinityCastleTime": InfinityCastleTime.Value := parts[2]
+                case "BossRushTime": BossRushTime.Value := parts[2]
+                case "GameSpeed": GameSpeed.Value := parts[2]
+                case "AutoPortalFarm": PortalFarm.Value := parts[2]
+                case "AutoStart": AutoStart.Value := parts[2]
+                case "AutoRetry": AutoRetry.Value := parts[2]
+                case "AutoGameSpeed": AutoGameSpeed.Value := parts[2]
+                case "WebhookEnabled": WebhookEnabled.Value := parts[2]
+                case "WebhookLogsEnabled": WebhookLogsEnabled.Value := parts[2]
+                case "WebhookURL": WebhookURLBox.Text := parts[2]
+                case "PrivateServerEnabled": PrivateServerEnabled.Value := parts[2]
+                case "PrivateServerURL": PrivateServerURLBox.Text := parts[2]
             }
         }
         AddToLog("✅ Configuration settings loaded successfully")
@@ -196,11 +207,41 @@ SaveSettings(*) {
 		;content .= "`n[RangerCD]"
         ;content .= "`nRangerCDDelay=" RangerCDTimer.Value
 
-        content .= "`n[BossAttackCD]"
+        content .= "`n`n[BossAttackCD]"
         content .= "`nBossAttackCDDelay=" BossAttackCDTimer.Value
 
-        content .= "`n[ReturnToLobbyTimer]"
+        content .= "`n`n[ReturnToLobbyTimer]"
         content .= "`nReturnToLobbyTimer=" ReturnToLobbyTimer.Value
+
+        content .= "`n`n[InfinityCastle]"
+        content .= "`nInfinityCastleTime=" InfinityCastleTime.Value
+
+        content .= "`n`n[Boss Rush]"
+        content .= "`nBossRushTime=" BossRushTime.Value
+
+        content .= "`n`n[Game Speed]"
+        content .= "`nGameSpeed=" GameSpeed.Value
+
+        content .= "`n`n[Portals]"
+        content .= "`nAutoPortalFarm=" PortalFarm.Value
+
+        content .= "`n`n[AutoStart]"
+        content .= "`nAutoStart=" AutoStart.Value
+
+        content .= "`n`n[AutoRetry]"
+        content .= "`nAutoRetry=" AutoRetry.Value
+
+        content .= "`n`n[AutoGameSpeed]"
+        content .= "`nAutoGameSpeed=" AutoGameSpeed.Value
+
+        content .= "`n`n[WebhookSettings]"
+        content .= "`nWebhookEnabled=" WebhookEnabled.Value
+        content .= "`nWebhookLogsEnabled=" WebhookLogsEnabled.Value
+        content .= "`nWebhookURL=" WebhookURLBox.Text
+
+        content .= "`n`n[PrivateServerSettings]"
+        content .= "`nPrivateServerEnabled=" PrivateServerEnabled.Value
+        content .= "`nPrivateServerURL=" PrivateServerURLBox.Text
 		
         FileAppend(content, settingsFile)
         AddToLog("✅ Configuration settings saved successfully")

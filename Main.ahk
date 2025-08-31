@@ -1,6 +1,5 @@
 #Requires AutoHotkey v2.0
 #SingleInstance Force
-#NoTrayIcon
 
 SendMode "Event"
 
@@ -18,3 +17,5 @@ SendMode "Event"
 #Include %A_ScriptDir%\Lib\UpdateChecker.ahk
 #Include %A_ScriptDir%\Lib\RangerMenu.ahk
 #Include %A_ScriptDir%\Lib\Modes\Portals.ahk
+#Include %A_ScriptDir%\Lib\Modes\InfinityCastle.ahk
+#Include %A_ScriptDir%\Lib\Modes\BossRush.ahk

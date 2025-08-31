@@ -22,10 +22,10 @@ Next=0
 Difficulty=3
 
 [Autoplay]
-Play=1
+Play=0
 
 [AutoUpgrade]
-Upgrade=1
+Upgrade=0
 
 [UnitSettings]
 
@@ -33,8 +33,8 @@ Enabled1=1
 Enabled2=1
 Enabled3=1
 Enabled4=1
-Enabled5=0
-Enabled6=0
+Enabled5=1
+Enabled6=1
 
 Placement1=1
 Placement2=2
@@ -72,12 +72,44 @@ LoadingScreenDelay=1
 [UpdateMessages]
 Messages=1
 [AutoAbility]
-AutoAbility=1
+AutoAbility=0
 
 [TimersCustom]
 UltimateCheck=20
 UpgradeBeforeUltimate=10
+
 [BossAttackCD]
 BossAttackCDDelay=4
+
 [ReturnToLobbyTimer]
-ReturnToLobbyTimer=2
+ReturnToLobbyTimer=8
+
+[InfinityCastle]
+InfinityCastleTime=10
+
+[Boss Rush]
+BossRushTime=10
+
+[Game Speed]
+GameSpeed=2
+
+[Portals]
+AutoPortalFarm=0
+
+[AutoStart]
+AutoStart=1
+
+[AutoRetry]
+AutoRetry=0
+
+[AutoGameSpeed]
+AutoGameSpeed=1
+
+[WebhookSettings]
+WebhookEnabled=0
+WebhookLogsEnabled=0
+WebhookURL=
+
+[PrivateServerSettings]
+PrivateServerEnabled=0
+PrivateServerURL=

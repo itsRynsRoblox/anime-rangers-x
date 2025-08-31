@@ -43,24 +43,6 @@ global ultGuiText := "|<>**50$42.07zs0000DzM0000A1M0000Azzzs00AzPSQ00A78MA00A79t
 
 global newFindText := "|<>**50$46.03kS00000T3s00001YAk00006FnDzU00N67hz001YsS0A006HAt4k00NQ3av001ZU6Pg006KSNik00PPBiv001xwzzw0000000000000000000000003k0003s0TjU00BU1aq000q06TTzzzzsksSSrxtn31Us0m3NbCNYH9xURvaPgjg0raNimTnn61av8DNiSSvhtzbzTzzzyU"
 
-SavePsSettings(*) {
-    AddToLog("Saving Private Server")
-
-    if FileExist("Settings\PrivateServer.txt")
-        FileDelete("Settings\PrivateServer.txt")
-
-    FileAppend(PsLinkBox.Value, "Settings\PrivateServer.txt", "UTF-8")
-}
-
-SaveUINavSettings(*) {
-    AddToLog("Saving UI Navigation Key")
-
-    if FileExist("Settings\UINavigation.txt")
-        FileDelete("Settings\UINavigation.txt")
-
-    FileAppend(UINavBox.Value, "Settings\UINavigation.txt", "UTF-8")
-}
-
 ;Opens discord Link
 OpenDiscordLink() {
     Run("https://discord.gg/mistdomain")
@@ -68,16 +50,16 @@ OpenDiscordLink() {
 
  ;Minimizes the UI
  minimizeUI(*){
-    arMainUI.Minimize()
+    MainUI.Minimize()
  }
 
  Destroy(*){
-    arMainUI.Destroy()
+    MainUI.Destroy()
     ExitApp
  }
  ;Login Text
  setupOutputFile() {
-     content := "`n==" aaTitle "" version "==`n  Start Time: [" currentTime "]`n"
+     content := "`n==" GameTitle "" version "==`n  Start Time: [" currentTime "]`n"
      FileAppend(content, currentOutputFile)
  }
 
@@ -191,6 +173,7 @@ OnConfirmClick(*) {
         NextLevelBox.Visible := (StoryActDropdown.Text != "Infinity")
         StoryDifficulty.Visible := (StoryActDropdown.Text != "Infinity")
         StoryDifficultyText.Visible := (StoryActDropdown.Text != "Infinity")
+        PortalFarm.Visible := true
     } else if (ModeDropdown.Text = "Ranger") {
         mode := "Ranger"
         AddToLog("Selected Range Mode")
@@ -405,8 +388,9 @@ TeleportToSpawn() {
 }
 
 ClickReplay() {
-    xCoord := (ModeDropdown.Text != "Story" || StoryDropdown.Text = "Z City") ? -120 : -250
-    ClickUntilGone(0, 0, 135, 399, 539, 456, LobbyText, xCoord, -35)
+    xCoord := (ModeDropdown.Text != "Story" || StoryDropdown.Text = "Z City") ? 100 : 120 ; -120 : -250
+    ;ClickUntilGone(0, 0, 135, 399, 539, 456, LobbyText, xCoord, -35)
+    ClickUntilGone(0, 0, 117, 175, 229, 221, GameEnded, xCoord, 190)
     ; Resume AutoAbility if enabled
     if (IsSet(AutoAbility) && AutoAbility.Value) {
         AddToLog("[AutoAbility] Resuming after Replay.")
@@ -564,6 +548,16 @@ GetLoadingWaitInSeconds() {
     return Round(ms / 1000, 1)  ; Return with 1 decimal place for precision
 }
 
+GetPathChangetimer() {
+    if (ModeDropdown.Text = "Infinity Castle") {
+        seconds := InfinityCastleTime.Value
+    }
+    else if (ModeDropdown.Text = "Boss Rush") {
+        seconds := BossRushTime.Value
+    }
+    return Round(seconds * 1000)  ; Round to nearest millisecond
+}
+
 GetWebhookDelay() {
     return GetDuration(WebhookSleepTimer.Value, [10, 60000, 180000, 300000, 600000])
 }
@@ -706,4 +700,25 @@ AutoAbility_ClickLoop() {
         AddToLog("[AutoAbility] Auto Ability stopped and upgrading resumed.")
         ; Auto-resume after Ultimate Check if enabled
     }
+}
+
+isMenuOpen(name := "") {
+    if (name = "Unit Manager") {
+        return FindText(&X, &Y, 608, 464, 724, 496, 0.20, 0.20, MenuBackButton)
+    }
+    else if (name = "Ability Manager") {
+        return FindText(&X, &Y, 608, 464, 724, 496, 0.20, 0.20, MenuBackButton)
+    }
+    else if (name = "End Screen") {
+        return FindText(&X, &Y, 117, 175, 229, 221, 0.20, 0.20, GameEnded)
+    }
+}
+
+CalculateElapsedTime(startTime) {
+    elapsedTimeMs := A_TickCount - startTime
+    elapsedTimeSec := Floor(elapsedTimeMs / 1000)
+    elapsedHours := Floor(elapsedTimeSec / 3600)
+    elapsedMinutes := Floor(Mod(elapsedTimeSec, 3600) / 60)
+    elapsedSeconds := Mod(elapsedTimeSec, 60)
+    return Format("{:02}:{:02}:{:02}", elapsedHours, elapsedMinutes, elapsedSeconds)
 }

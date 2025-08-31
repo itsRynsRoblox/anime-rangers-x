@@ -16,10 +16,10 @@ uiTheme.Push("00ffb3")    ; HighLight
 ;Update Checker
 global repoOwner := "itsRynsRoblox"
 global repoName := "anime-rangers-x"
-global currentVersion := "1.5.2"
+global currentVersion := "1.5.8"
 
 ; Basic Application Info
-global aaTitle := "Ryn's Anime Rangers X "
+global GameTitle := "Ryn's Anime Rangers X "
 global rblxID := "ahk_exe RobloxPlayerBeta.exe"
 global version := "v" . currentVersion
 ;Coordinate and Positioning Variables
@@ -71,17 +71,14 @@ global currentTheme := "Red"
 global uiBorders := []
 global uiBackgrounds := []
 global UnitData := []
-global arMainUI := Gui("+AlwaysOnTop -Caption")
+global MainUI := Gui("+AlwaysOnTop -Caption")
 global lastlog := ""
-global arMainUIHwnd := arMainUI.Hwnd
+global MainUIHwnd := MainUI.Hwnd
 global ActiveControlGroup := ""
 ;Logs/Save settings
 global settingsGuiOpen := false
 global SettingsGUI := ""
 global currentOutputFile := A_ScriptDir "\Logs\LogFile.txt"
-global WebhookURLFile := "Settings\WebhookURL.txt"
-global DiscordUserIDFile := "Settings\DiscordUSERID.txt"
-global SendActivityLogsFile := "Settings\SendActivityLogs.txt"
 
 ;Custom Pictures
 GithubImage := "Images\github-logo.png"
@@ -97,126 +94,41 @@ if !DirExist(A_ScriptDir "\Settings") {
 setupOutputFile()
 
 ;------MAIN UI------MAIN UI------MAIN UI------MAIN UI------MAIN UI------MAIN UI------MAIN UI------MAIN UI------MAIN UI------MAIN UI------MAIN UI------MAIN UI------MAIN UI------
-arMainUI.BackColor := uiTheme[2]
-global Webhookdiverter := arMainUI.Add("Edit", "x0 y0 w1 h1 +Hidden", "") ; diversion
-uiBorders.Push(arMainUI.Add("Text", "x0 y0 w1364 h1 +Background" uiTheme[3]))  ;Top line
-uiBorders.Push(arMainUI.Add("Text", "x0 y0 w1 h697 +Background" uiTheme[3]))   ;Left line
-uiBorders.Push(arMainUI.Add("Text", "x1363 y0 w1 h630 +Background" uiTheme[3])) ;Right line
-uiBorders.Push(arMainUI.Add("Text", "x1363 y0 w1 h697 +Background" uiTheme[3])) ;Second Right line
-uiBackgrounds.Push(arMainUI.Add("Text", "x3 y3 w1360 h27 +Background" uiTheme[2])) ;Title Top
-uiBorders.Push(arMainUI.Add("Text", "x0 y30 w1363 h1 +Background" uiTheme[3])) ;Title bottom
+MainUI.BackColor := uiTheme[2]
+global Webhookdiverter := MainUI.Add("Edit", "x0 y0 w1 h1 +Hidden", "") ; diversion
+uiBorders.Push(MainUI.Add("Text", "x0 y0 w1364 h1 +Background" uiTheme[3]))  ;Top line
+uiBorders.Push(MainUI.Add("Text", "x0 y0 w1 h697 +Background" uiTheme[3]))   ;Left line
+uiBorders.Push(MainUI.Add("Text", "x1363 y0 w1 h630 +Background" uiTheme[3])) ;Right line
+uiBorders.Push(MainUI.Add("Text", "x1363 y0 w1 h697 +Background" uiTheme[3])) ;Second Right line
+uiBackgrounds.Push(MainUI.Add("Text", "x3 y3 w1360 h27 +Background" uiTheme[2])) ;Title Top
+uiBorders.Push(MainUI.Add("Text", "x0 y30 w1363 h1 +Background" uiTheme[3])) ;Title bottom
 
-uiBorders.Push(arMainUI.Add("Text", "x803 y550 w560 h1 +Background" uiTheme[3])) ;Placement bottom
-uiBorders.Push(arMainUI.Add("Text", "x803 y385 w560 h1 +Background" uiTheme[3])) ;Process bottom
-uiBorders.Push(arMainUI.Add("Text", "x803 y420 w560 h1 +Background" uiTheme[3])) ;Process bottom
-uiBorders.Push(arMainUI.Add("Text", "x803 y610 w560 h1 +Background" uiTheme[3])) ;Toggles top
-uiBorders.Push(arMainUI.Add("Text", "x802 y30 w1 h667 +Background" uiTheme[3])) ;Roblox Right
-uiBorders.Push(arMainUI.Add("Text", "x0 y632 w1364 h1 +Background" uiTheme[3], "")) ;Roblox second bottom
+uiBorders.Push(MainUI.Add("Text", "x803 y550 w560 h1 +Background" uiTheme[3])) ;Placement bottom
+uiBorders.Push(MainUI.Add("Text", "x803 y385 w560 h1 +Background" uiTheme[3])) ;Process bottom
+uiBorders.Push(MainUI.Add("Text", "x803 y420 w560 h1 +Background" uiTheme[3])) ;Process bottom
+uiBorders.Push(MainUI.Add("Text", "x803 y610 w560 h1 +Background" uiTheme[3])) ;Toggles top
+uiBorders.Push(MainUI.Add("Text", "x802 y30 w1 h667 +Background" uiTheme[3])) ;Roblox Right
+uiBorders.Push(MainUI.Add("Text", "x0 y632 w1364 h1 +Background" uiTheme[3], "")) ;Roblox second bottom
 
-global robloxHolder := arMainUI.Add("Text", "x3 y33 w797 h597 +Background" uiTheme[5], "") ;Roblox window box
-global exitButton := arMainUI.Add("Picture", "x1330 y1 w32 h32 +BackgroundTrans", Exitbutton) ;Exit image
+global robloxHolder := MainUI.Add("Text", "x3 y33 w797 h597 +Background" uiTheme[5], "") ;Roblox window box
+global exitButton := MainUI.Add("Picture", "x1330 y1 w32 h32 +BackgroundTrans", Exitbutton) ;Exit image
 exitButton.OnEvent("Click", (*) => Destroy()) ;Exit button
-global minimizeButton := arMainUI.Add("Picture", "x1300 y3 w27 h27 +Background" uiTheme[2], Minimize) ;Minimize gui
+global minimizeButton := MainUI.Add("Picture", "x1300 y3 w27 h27 +Background" uiTheme[2], Minimize) ;Minimize gui
 minimizeButton.OnEvent("Click", (*) => minimizeUI()) ;Minimize gui
-arMainUI.SetFont("Bold s16 c" uiTheme[1], "Verdana") ;Font
-global windowTitle := arMainUI.Add("Text", "x10 y3 w1200 h29 +BackgroundTrans", aaTitle "" . "" version) ;Title
+MainUI.SetFont("Bold s16 c" uiTheme[1], "Verdana") ;Font
+global windowTitle := MainUI.Add("Text", "x10 y3 w1200 h29 +BackgroundTrans", GameTitle "" . "" version) ;Title
 
-arMainUI.Add("Text", "x805 y390 w558 h25 +Center +BackgroundTrans", "Process") ;Process header
-arMainUI.SetFont("norm s11 c" uiTheme[1]) ;Font
-global process1 := arMainUI.Add("Text", "x810 y420 w600 h18 +BackgroundTrans c" uiTheme[7], "Original Creator: Ryn (@TheRealTension)") ;Processes
-global process2 := arMainUI.Add("Text", "xp yp+22 w600 h18 +BackgroundTrans", "") ;Processes 
-global process3 := arMainUI.Add("Text", "xp yp+22 w600 h18 +BackgroundTrans", "")
-global process4 := arMainUI.Add("Text", "xp yp+22 w600 h18 +BackgroundTrans", "")
-global process5 := arMainUI.Add("Text", "xp yp+22 w600 h18 +BackgroundTrans", "")
-global process6 := arMainUI.Add("Text", "xp yp+22 w600 h18 +BackgroundTrans", "") 
-WinSetTransColor(uiTheme[5], arMainUI) ;Roblox window box
+MainUI.Add("Text", "x805 y390 w558 h25 +Center +BackgroundTrans", "Process") ;Process header
+MainUI.SetFont("norm s11 c" uiTheme[1]) ;Font
+global process1 := MainUI.Add("Text", "x810 y420 w600 h18 +BackgroundTrans c" uiTheme[7], "Original Creator: Ryn (@TheRealTension)") ;Processes
+global process2 := MainUI.Add("Text", "xp yp+22 w600 h18 +BackgroundTrans", "") ;Processes 
+global process3 := MainUI.Add("Text", "xp yp+22 w600 h18 +BackgroundTrans", "")
+global process4 := MainUI.Add("Text", "xp yp+22 w600 h18 +BackgroundTrans", "")
+global process5 := MainUI.Add("Text", "xp yp+22 w600 h18 +BackgroundTrans", "")
+global process6 := MainUI.Add("Text", "xp yp+22 w600 h18 +BackgroundTrans", "") 
+WinSetTransColor(uiTheme[5], MainUI) ;Roblox window box
 
 ;--------------SETTINGS;--------------SETTINGS;--------------SETTINGS;--------------SETTINGS;--------------SETTINGS;--------------SETTINGS;--------------SETTINGS
-ShowSettingsGUI(*) {
-    global settingsGuiOpen, SettingsGUI
-    
-    ; Check if settings window already exists
-    if (SettingsGUI && WinExist("ahk_id " . SettingsGUI.Hwnd)) {
-        WinActivate("ahk_id " . SettingsGUI.Hwnd)
-        return
-    }
-    
-    if (settingsGuiOpen) {
-        return
-    }
-    
-    settingsGuiOpen := true
-    SettingsGUI := Gui("-MinimizeBox +Owner" arMainUIHwnd)  
-    SettingsGui.Title := "Settings"
-    SettingsGUI.OnEvent("Close", OnSettingsGuiClose)
-    SettingsGUI.BackColor := uiTheme[2]
-    
-    ; Window border
-    SettingsGUI.Add("Text", "x0 y0 w1 h300 +Background" uiTheme[3])     ; Left
-    SettingsGUI.Add("Text", "x599 y0 w1 h300 +Background" uiTheme[3])   ; Right
-    SettingsGUI.Add("Text", "x0 y281 w600 h1 +Background" uiTheme[3])   ; Bottom
-    
-    ; Right side sections
-    SettingsGUI.SetFont("s10", "Verdana")
-    SettingsGUI.Add("GroupBox", "x310 y5 w280 h160 Center c" uiTheme[1], "Discord Webhook")  ; Box
-    
-    SettingsGUI.SetFont("s9", "Verdana")
-    SettingsGUI.Add("Text", "x320 y30 c" uiTheme[1], "Webhook URL")     ; Webhook Text
-    global WebhookURLBox := SettingsGUI.Add("Edit", "x320 y50 w260 h20 c" uiTheme[6])  ; Store webhook
-    SettingsGUI.Add("Text", "x320 y83 c" uiTheme[1], "Discord ID (optional)")  ; Discord Id Text
-    global DiscordUserIDBox := SettingsGUI.Add("Edit", "x320 y103 w260 h20 c" uiTheme[6])  ; Store Discord ID
-    global SendActivityLogsBox := SettingsGUI.Add("Checkbox", "x320 y135 c" uiTheme[1], "Send Process")  ; Enable Activity
-
-    ; HotKeys
-    SettingsGUI.Add("GroupBox", "x10 y90 w160 h160 c" uiTheme[1], "Keybinds")
-    SettingsGUI.Add("Text", "x20 y110 c" uiTheme[1], "Position Roblox:")
-    global F1Box := SettingsGUI.Add("Edit", "x125 y110 w30 h20 c" uiTheme[6], F1Key)
-    SettingsGUI.Add("Text", "x20 y140 c" uiTheme[1], "Start Macro:")
-    global F2Box := SettingsGUI.Add("Edit", "x100 y140 w30 h20 c" uiTheme[6], F2Key)
-    SettingsGUI.Add("Text", "x20 y170 c" uiTheme[1], "Stop Macro:")
-    global F3Box := SettingsGUI.Add("Edit", "x100 y170 w30 h20 c" uiTheme[6], F3Key)
-    SettingsGUI.Add("Text", "x20 y200 c" uiTheme[1], "Pause Macro:")
-    global F4Box := SettingsGUI.Add("Edit", "x110 y200 w30 h20 c" uiTheme[6], F4Key)
-
-    ; Private Server section
-    SettingsGUI.Add("GroupBox", "x310 y175 w280 h100 Center c" uiTheme[1], "Private Server")  ; Box
-
-    SettingsGUI.Add("Text", "x320 y195 c" uiTheme[1], "Private Server Link (optional)")  ; Ps text
-    global PsLinkBox := SettingsGUI.Add("Edit", "x320 y215 w260 h20 c" uiTheme[6])  ;  ecit box
-
-    SettingsGUI.Add("GroupBox", "x10 y10 w115 h70 c" uiTheme[1], "UI Navigation")
-    SettingsGUI.Add("Text", "x20 y30 c" uiTheme[1], "Navigation Key")
-    global UINavBox := SettingsGUI.Add("Edit", "x20 y50 w20 h20 c" uiTheme[6], "\")
-
-    ; Save buttons
-    webhookSaveBtn := SettingsGUI.Add("Button", "x460 y135 w120 h25", "Save Webhook")
-    webhookSaveBtn.OnEvent("Click", (*) => SaveWebhookSettings())
-
-    PsSaveBtn := SettingsGUI.Add("Button", "x460 y240 w120 h25", "Save PsLink")
-    PsSaveBtn.OnEvent("Click", (*) => SavePsSettings())
-
-    keybindSaveBtn := SettingsGUI.Add("Button", "x20 y220 w50 h20", "Save")
-    keybindSaveBtn.OnEvent("Click", SaveKeybindSettings)
-
-    UINavSaveBtn := SettingsGUI.Add("Button", "x50 y50 w60 h20", "Save")
-    UINavSaveBtn.OnEvent("Click", (*) => SaveUINavSettings())
-
-    ; Loadsettings
-    if FileExist(WebhookURLFile)
-        WebhookURLBox.Value := FileRead(WebhookURLFile, "UTF-8")
-    if FileExist(DiscordUserIDFile)
-        DiscordUserIDBox.Value := FileRead(DiscordUserIDFile, "UTF-8")
-    if FileExist(SendActivityLogsFile)
-        SendActivityLogsBox.Value := (FileRead(SendActivityLogsFile, "UTF-8") = "1")   
-    if FileExist("Settings\PrivateServer.txt")
-        PsLinkBox.Value := FileRead("Settings\PrivateServer.txt", "UTF-8")
-    if FileExist("Settings\UINavigation.txt")
-        UINavBox.Value := FileRead("Settings\UINavigation.txt", "UTF-8")
-
-    ; Show the settings window
-    SettingsGUI.Show("w600 h285")
-    Webhookdiverter.Focus()
-}
 
 OpenDebug(*) {
     DebugGUI := Gui("+AlwaysOnTop")
@@ -323,107 +235,151 @@ OpenGuide(*) {
     NewGuideGUI.Show("w290")
 }
 
-arMainUI.SetFont("s9 Bold c" uiTheme[1])
+MainUI.SetFont("s9 Bold c" uiTheme[1])
 
 ;DEBUG
-DebugButton := arMainUI.Add("Button", "x700 y5 w90 h20 +Center", "Debug")
+DebugButton := MainUI.Add("Button", "x600 y5 w90 h20 +Center", "Debug")
 DebugButton.OnEvent("Click", (*) => OpenDebug())
 
-global guideBtn := arMainUI.Add("Button", "x800 y5 w90 h20", "Guides")
+global guideBtn := MainUI.Add("Button", "x700 y5 w90 h20", "Guides")
 guideBtn.OnEvent("Click", OpenGuide)
 
-global mapButton := arMainUI.Add("Button", "x900 y5 w90 h20", "Map Skips")
+global mapButton := MainUI.Add("Button", "x800 y5 w90 h20", "Map Skips")
 mapButton.OnEvent("Click", (*) => OpenMapSkipPriorityPicker())
 
-global timersButton := arMainUI.Add("Button", "x1100 y5 w90 h20", "Timers")
+global modesButton := MainUI.Add("Button", "x900 y5 w90 h20", "Mode Config")
+modesButton.OnEvent("Click", (*) => ToggleControlGroup("Mode"))
+
+global timersButton := MainUI.Add("Button", "x1100 y5 w90 h20", "Timers")
 timersButton.OnEvent("Click", (*) => ToggleControlGroup("Timers"))
 
-global upgradesButton := arMainUI.Add("Button", "x1000 y5 w90 h20", "Upgrades")
+global upgradesButton := MainUI.Add("Button", "x1000 y5 w90 h20", "Upgrades")
 upgradesButton.OnEvent("Click", (*) => ToggleControlGroup("Upgrade"))
 
-global settingsBtn := arMainUI.Add("Button", "x1200 y5 w90 h20", "Settings")
-settingsBtn.OnEvent("Click", ShowSettingsGUI)
+global settingsBtn := MainUI.Add("Button", "x1200 y5 w90 h20", "Settings")
+settingsBtn.OnEvent("Click", (*) => ToggleControlGroup("Settings"))
+;settingsBtn.OnEvent("Click", ShowSettingsGUI)
 
-placementSaveBtn := arMainUI.Add("Button", "x807 y585 w80 h20", "Save")
+placementSaveBtn := MainUI.Add("Button", "x807 y580 w80 h20", "Save")
 placementSaveBtn.OnEvent("Click", SaveSettings)
 
-arMainUI.SetFont("s9")
+MainUI.SetFont("s9")
 
 ;Normal Options
-global NextLevelBox := arMainUI.Add("Checkbox", "x900 y560 cffffff Checked", "Next Level")
-global ReturnLobbyBox := arMainUI.Add("Checkbox", "x900 y560 cffffff Checked", "Return To Lobby")
-global ReplayBox := arMainUI.Add("Checkbox", "x900 y560 cffffff Checked", "Replay")
-global MatchMaking := arMainUI.Add("Checkbox", "x900 y580 cffffff Hidden Checked", "Matchmaking") 
+global NextLevelBox := MainUI.Add("Checkbox", "x900 y560 cffffff Checked", "Next Level")
+global PortalFarm := MainUI.Add("Checkbox", "x1000 y560 cffffff Checked Hidden", "Auto Farm Portals")
+global ReturnLobbyBox := MainUI.Add("Checkbox", "x900 y560 cffffff Checked", "Return To Lobby")
+global ReplayBox := MainUI.Add("Checkbox", "x900 y560 cffffff Checked", "Replay")
+global MatchMaking := MainUI.Add("Checkbox", "x900 y580 cffffff Hidden Checked", "Matchmaking") 
 ;Auto Settings
-global AutoPlay := arMainUI.Add("CheckBox", "x808 y615 cffffff", "Auto Summon")
+global AutoPlay := MainUI.Add("CheckBox", "x808 y615 cffffff", "Summon Units")
 
-global ShouldUpgradeUnits := arMainUI.Add("CheckBox", "x940 y615 cffffff", "Auto Upgrade")
-;global ChallengeBox := arMainUI.Add("CheckBox", "x1048 y615 cffffff", "Farm Ranger Stages")
-global AutoAbility := arMainUI.Add("CheckBox", "x1075 y615 cffffff", "Auto Ability")
-global BossAttackBox := arMainUI.Add("CheckBox", "x1075 y595 cffffff", "Auto Boss Attack")
-global UpdateMessages := arMainUI.Add("CheckBox", "x1200 y615 cffffff", "Update Messages")
+global ShouldUpgradeUnits := MainUI.Add("CheckBox", "x940 y615 cffffff", "Upgrade Units")
+;global ChallengeBox := MainUI.Add("CheckBox", "x1048 y615 cffffff", "Farm Ranger Stages")
+global AutoAbility := MainUI.Add("CheckBox", "x1075 y615 cffffff", "Auto Ultimate")
+global BossAttackBox := MainUI.Add("CheckBox", "x1075 y595 cffffff", "Auto Boss Attack")
+global UpdateMessages := MainUI.Add("CheckBox", "x1200 y615 cffffff", "Update Messages")
 
+global GameSpeedText := MainUI.Add("Text", "x1245 y565 w100 h20 +Center ", "Game Speed")
+global GameSpeed := MainUI.Add("DropDownList", "x1250 y585 w100 h180 Choose1", ["2x", "3x"])
+
+; Mode Settings
+global AutoStart := MainUI.Add("Checkbox", "x818 y123.5 +Center Hidden", " Using Auto Start (Anime Ranger's Auto Start)")
+global AutoRetry := MainUI.Add("Checkbox", "x818 y163.5 +Center Hidden", " Using Auto Replay (Anime Ranger's Auto Replay)")
+global AutoGameSpeed := MainUI.Add("Checkbox", "x818 y203.5 +Center Hidden", " Using Auto Game Speed (Anime Ranger's Auto Game Speed)")
 ; Timer Settings
-LobbySleepText := arMainUI.Add("Text", "x818 y123.5 w130 h20 +Center Hidden", "Lobby Sleep Timer")
-global LobbySleepTimer := arMainUI.Add("DropDownList", "x950 y120 w100 h180 Hidden Choose1", ["No Delay", "5 Seconds", "10 Seconds", "15 Seconds", "20 Seconds", "25 Seconds", "30 Seconds", "35 Seconds", "40 Seconds", "45 Seconds", "50 Seconds", "55 Seconds", "60 Seconds"])
+LobbySleepText := MainUI.Add("Text", "x818 y123.5 w130 h20 +Center Hidden", "Lobby Sleep Timer")
+global LobbySleepTimer := MainUI.Add("DropDownList", "x950 y120 w100 h180 Hidden Choose1", ["No Delay", "5 Seconds", "10 Seconds", "15 Seconds", "20 Seconds", "25 Seconds", "30 Seconds", "35 Seconds", "40 Seconds", "45 Seconds", "50 Seconds", "55 Seconds", "60 Seconds"])
 
-WebhookSleepText := arMainUI.Add("Text", "x818 y163.5 w130 h20 +Center Hidden", "Webhook Timer")
-global WebhookSleepTimer := arMainUI.Add("DropDownList", "x950 y160 w100 h180 Hidden Choose1", ["No Delay", "1 minute", "3 minutes", "5 minutes", "10 minutes"])
+WebhookSleepText := MainUI.Add("Text", "x818 y163.5 w130 h20 +Center Hidden", "Webhook Timer")
+global WebhookSleepTimer := MainUI.Add("DropDownList", "x950 y160 w100 h180 Hidden Choose1", ["No Delay", "1 minute", "3 minutes", "5 minutes", "10 minutes"])
 
-LoadingScreenWaitTimeText := arMainUI.Add("Text", "x818 y203.5 w160 h20 +Center Hidden", "Loading Screen Timer")
-global LoadingScreenWaitTime := arMainUI.Add("DropDownList", "x980 y200 w100 h180 Hidden Choose1", ["15 Seconds", "20 Seconds", "25 Seconds", "30 Seconds", "35 Seconds", "40 Seconds", "45 Seconds", "50 Seconds", "55 Seconds", "60 Seconds"])
+LoadingScreenWaitTimeText := MainUI.Add("Text", "x818 y203.5 w160 h20 +Center Hidden", "Loading Screen Timer")
+global LoadingScreenWaitTime := MainUI.Add("DropDownList", "x980 y200 w100 h180 Hidden Choose1", ["15 Seconds", "20 Seconds", "25 Seconds", "30 Seconds", "35 Seconds", "40 Seconds", "45 Seconds", "50 Seconds", "55 Seconds", "60 Seconds"])
 
-VoteTimeoutTimerText := arMainUI.Add("Text", "x818 y243.5 w160 h20 +Center Hidden", "Vote Timeout Timer")
-global VoteTimeoutTimer := arMainUI.Add("DropDownList", "x980 y240 w100 h180 Hidden Choose1", ["2 Seconds", "3 seconds", "4 Seconds", "6 Seconds", "7 Seconds", "8 Seconds", "9 Seconds", "10 Seconds"])
+InfinityCastleTimeText := MainUI.Add("Text", "x1085 y203.5 w160 h20 +Center Hidden", "Inf Castle Path Timer")
+global InfinityCastleTime := MainUI.Add("Edit", "x1244 y200 w40 h20 Hidden cBlack Number", "10")
 
-ReturnToLobbyTimerText := arMainUI.Add("Text", "x818 y283.5 w160 h20 +Center Hidden", "Return To Lobby Timer")
-global ReturnToLobbyTimer := arMainUI.Add("DropDownList", "x980 y280 w100 h180 Hidden Choose1", ["Never", "5 minutes", "10 minutes", "15 minutes", "20 minutes", "25 minutes", "30 minutes", "60 minutes"])
+BossRushTimerText := MainUI.Add("Text", "x1085 y243.5 w160 h20 +Center Hidden", "Boss Rush Path Timer")
+global BossRushTime := MainUI.Add("Edit", "x1244 y240 w40 h20 Hidden cBlack Number", "10")
 
-BossAttackCDTimerText := arMainUI.Add("Text", "x818 y325 w160 h20 +Center Hidden", "Redo Boss Attack to") ; Will be hidden by default now
-global BossAttackCDTimer := arMainUI.Add("DropDownList", "x1000  y325 w100 h180 Hidden Choose5", ["10 minutes", "15 minutes", "20 minutes", "25 minutes", "30 minutes", "20s Test"]) ; Will be hidden
+VoteTimeoutTimerText := MainUI.Add("Text", "x818 y243.5 w160 h20 +Center Hidden", "Vote Timeout Timer")
+global VoteTimeoutTimer := MainUI.Add("DropDownList", "x980 y240 w100 h180 Hidden Choose1", ["2 Seconds", "3 seconds", "4 Seconds", "6 Seconds", "7 Seconds", "8 Seconds", "9 Seconds", "10 Seconds"])
+
+ReturnToLobbyTimerText := MainUI.Add("Text", "x818 y283.5 w160 h20 +Center Hidden", "Return To Lobby Timer")
+global ReturnToLobbyTimer := MainUI.Add("DropDownList", "x980 y280 w100 h180 Hidden Choose1", ["Never", "5 minutes", "10 minutes", "15 minutes", "20 minutes", "25 minutes", "30 minutes", "60 minutes"])
+
+BossAttackCDTimerText := MainUI.Add("Text", "x818 y325 w160 h20 +Center Hidden", "Redo Boss Attack to") ; Will be hidden by default now
+global BossAttackCDTimer := MainUI.Add("DropDownList", "x1000  y325 w100 h180 Hidden Choose5", ["10 minutes", "15 minutes", "20 minutes", "25 minutes", "30 minutes", "20s Test"]) ; Will be hidden
 
 ; New fields for Timers GUI only
-UltimateCheckText := arMainUI.Add("Text", "x1058 y123.5 w200 h20 +Center Hidden", "Ultimate Check (seconds)")
-global UltimateCheckEdit := arMainUI.Add("Edit", "x1244 y120 w100 h20 Hidden cBlack Number", "60")
+UltimateCheckText := MainUI.Add("Text", "x1058 y123.5 w200 h20 +Center Hidden", "Ultimate Check (seconds)")
+global UltimateCheckEdit := MainUI.Add("Edit", "x1244 y120 w100 h20 Hidden cBlack Number", "60")
 
 ; Add Upgrade (seconds) before Ultimate Check
-UpgradeBeforeUltimateText := arMainUI.Add("Text", "x1058 y163.5 w160 h20 +Center Hidden", "Upgrade (seconds)")
-global UpgradeBeforeUltimateEdit := arMainUI.Add("Edit", "x1244 y163.5 w100 h20 Hidden cBlack Number", "0")
+UpgradeBeforeUltimateText := MainUI.Add("Text", "x1058 y163.5 w160 h20 +Center Hidden", "Upgrade (seconds)")
+global UpgradeBeforeUltimateEdit := MainUI.Add("Edit", "x1244 y163.5 w100 h20 Hidden cBlack Number", "0")
 
 ; Unit Settings
-UpgradeClicksText := arMainUI.Add("Text", "x818 y123.5 w130 h20 +Center Hidden", "Upgrade Clicks")
-global UpgradeClicks := arMainUI.Add("Edit", "x950 y120 w100 Hidden cBlack Number", "1")
-global UpgradeUntilMaxed := arMainUI.Add("CheckBox", "x830 y163.5 Hidden cffffff", "Upgrade units to max before upgrading next unit")
+UpgradeClicksText := MainUI.Add("Text", "x818 y123.5 w130 h20 +Center Hidden", "Upgrade Clicks")
+global UpgradeClicks := MainUI.Add("Edit", "x950 y120 w100 Hidden cBlack Number", "1")
+global UpgradeUntilMaxed := MainUI.Add("CheckBox", "x830 y163.5 Hidden cffffff", "Upgrade units to max before upgrading next unit")
 
-StoryDifficultyText := arMainUI.Add("Text", "x890 y585 w80 h20 +Center", "Difficulty")
-global StoryDifficulty := arMainUI.Add("DropDownList", "x970 y580 w100 h180 Choose1", ["Normal", "Hard", "Nightmare"])
+global WebhookBorder := MainUI.Add("GroupBox", "x808 y85 w550 h296 +Center Hidden c" uiTheme[1], "Webhook Settings")
+global WebhookEnabled := MainUI.Add("CheckBox", "x825 y110 Hidden cffffff", "Webhook Enabled")
+WebhookEnabled.OnEvent("Click", (*) => ValidateWebhook())
+global WebhookLogsEnabled := MainUI.Add("CheckBox", "x825 y130 Hidden cffffff", "Send Console Logs")
+global WebhookURLBox := MainUI.Add("Edit", "x1000 y108 w260 h20 Hidden c" uiTheme[6], "")
 
-placementSaveText := arMainUI.Add("Text", "x807 y565 w80 h20", "Save Config")
-Hotkeytext := arMainUI.Add("Text", "x807 y35 w500 h30", "Below are the default hotkey settings ")
-Hotkeytext2 := arMainUI.Add("Text", "x807 y50 w500 h30", "F1:Fix Roblox Window|F2:Start Macro|F3:Stop Macro|F4:Pause Macro")
+global PrivateSettingsBorder := MainUI.Add("GroupBox", "x808 y145 w550 h236 +Center Hidden c" uiTheme[1], "Reconnection Settings")
+global PrivateServerEnabled := MainUI.Add("CheckBox", "x825 y175 Hidden cffffff", "Reconnect to Private Server")
+global PrivateServerURLBox := MainUI.Add("Edit", "x1050 y173 w160 h20 Hidden c" uiTheme[6], "")
+PrivateServerTestButton := MainUI.Add("Button", "x1225 y173 w80 h20 Hidden", "Test Link")
 
-DiscordButton := arMainUI.Add("Picture", "x30 y645 w60 h34 +BackgroundTrans cffffff", DiscordImage)
+; HotKeys
+global KeybindBorder := MainUI.Add("GroupBox", "x808 y205 w195 h176 +Center Hidden c" uiTheme[1], "Keybind Settings")
+global F1Text := MainUI.Add("Text", "x825 y230 Hidden c" uiTheme[1], "Position Roblox:")
+global F1Box := MainUI.Add("Edit", "x950 y228 w30 h20 Hidden c" uiTheme[6], F1Key)
+global F2Text := MainUI.Add("Text", "x825 y260 Hidden c" uiTheme[1], "Start Macro:")
+global F2Box := MainUI.Add("Edit", "x950 y258 w30 h20 Hidden c" uiTheme[6], F2Key)
+global F3Text := MainUI.Add("Text", "x825 y290 Hidden c" uiTheme[1], "Stop Macro:")
+global F3Box := MainUI.Add("Edit", "x950 y288 w30 h20 Hidden c" uiTheme[6], F3Key)
+global F4Text := MainUI.Add("Text", "x825 y320 Hidden c" uiTheme[1], "Pause Macro:")
+global F4Box := MainUI.Add("Edit", "x950 y318 w30 h20 Hidden c" uiTheme[6], F4Key)
+
+keybindSaveBtn := MainUI.Add("Button", "x880 y350 w50 h20 Hidden", "Save")
+keybindSaveBtn.OnEvent("Click", SaveKeybindSettings)
+
+StoryDifficultyText := MainUI.Add("Text", "x890 y585 w80 h20 +Center", "Difficulty")
+global StoryDifficulty := MainUI.Add("DropDownList", "x970 y580 w100 h180 Choose1", ["Normal", "Hard", "Nightmare"])
+
+placementSaveText := MainUI.Add("Text", "x807 y560 w80 h20", "Save Config")
+Hotkeytext := MainUI.Add("Text", "x807 y35 w500 h30", "Below are the default hotkey settings ")
+Hotkeytext2 := MainUI.Add("Text", "x807 y50 w500 h30", "F1:Fix Roblox Window|F2:Start Macro|F3:Stop Macro|F4:Pause Macro")
+
+DiscordButton := MainUI.Add("Picture", "x30 y645 w60 h34 +BackgroundTrans cffffff", DiscordImage)
 DiscordButton.OnEvent("Click", (*) => OpenDiscord())
 
-global TimerSettings := arMainUI.Add("GroupBox", "x808 y85 w550 h296 +Center Hidden c" uiTheme[1], "Timer Settings")
-global UnitSettings := arMainUI.Add("GroupBox", "x808 y85 w550 h296 +Center Hidden c" uiTheme[1], "Upgrade Settings")
+global TimerSettings := MainUI.Add("GroupBox", "x808 y85 w550 h296 +Center Hidden c" uiTheme[1], "Timer Settings")
+global UnitSettings := MainUI.Add("GroupBox", "x808 y85 w550 h296 +Center Hidden c" uiTheme[1], "Upgrade Settings")
+global ModeSettings := MainUI.Add("GroupBox", "x808 y85 w550 h296 +Center Hidden c" uiTheme[1], "Mode Config")
 
 ;--------------SETTINGS;--------------SETTINGS;--------------SETTINGS;--------------SETTINGS;--------------SETTINGS;--------------SETTINGS;--------------SETTINGS
 ;--------------MODE SELECT;--------------MODE SELECT;--------------MODE SELECT;--------------MODE SELECT;--------------MODE SELECT;--------------MODE SELECT
-global modeSelectionGroup := arMainUI.Add("GroupBox", "x808 y38 w500 h45 Background" uiTheme[2], "Mode Select")
-arMainUI.SetFont("s10 c" uiTheme[6])
-global ModeDropdown := arMainUI.Add("DropDownList", "x818 y53 w140 h180 Choose0 +Center", ["Story", "Ranger", "Raid", "Challenge", "Portal", "Co-op", "Summer Event"])
-global StoryDropdown := arMainUI.Add("DropDownList", "x968 y53 w150 h180 Choose0 +Center", ["Voocha Village", "Green Planet", "Demon Forest", "Leaf Village", "Z City", "Ghoul City", "Night Colosseum", "Bizzare Race"])
-global StoryActDropdown := arMainUI.Add("DropDownList", "x1128 y53 w80 h180 Choose0 +Center", ["Act 1", "Act 2", "Act 3", "Act 4", "Act 5", "Act 6", "Act 7", "Act 8", "Act 9", "Act 10"])
-global RangerDropdown := arMainUI.Add("DropDownList", "x968 y53 w150 h180 Choose0 +Center Hidden", ["Voocha Village", "Green Planet", "Demon Forest", "Leaf Village", "Z City", "Ghoul City", "Night Colosseum"])
-global RangerActDropdown := arMainUI.Add("DropDownList", "x1128 y53 w80 h180 Choose0 +Center Hidden", ["Act 1", "Act 2", "Act 3", "Act 4", "Act 5"])
-global LegendDropDown := arMainUI.Add("DropDownlist", "x968 y53 w150 h180 Choose0 +Center", [""] )
-global LegendActDropdown := arMainUI.Add("DropDownList", "x1128 y53 w80 h180 Choose0 +Center", ["Act 1", "Act 2", "Act 3", "Random"])
-global RaidDropdown := arMainUI.Add("DropDownList", "x968 y53 w150 h180 Choose0 +Center", ["Steel Blitz Rush"])
-global RaidActDropdown := arMainUI.Add("DropDownList", "x1128 y53 w80 h180 Choose0 +Center", ["Act 1", "Act 2", "Act 3", "Act 4"])
-global InfinityCastleDropdown := arMainUI.Add("DropDownList", "x968 y53 w80 h180 Choose0 +Center", ["Normal", "Hard"])
-global ConfirmButton := arMainUI.Add("Button", "x1218 y53 w80 h25", "Confirm")
-global PortalDropdown := arMainUI.Add("DropDownList", "x968 y53 w150 h180 Choose0 +Center", ["Ghoul City Portal", "Night Colosseum Portal"])
+global modeSelectionGroup := MainUI.Add("GroupBox", "x808 y38 w500 h45 Background" uiTheme[2], "Mode Select")
+MainUI.SetFont("s10 c" uiTheme[6])
+global ModeDropdown := MainUI.Add("DropDownList", "x818 y53 w140 h180 Choose0 +Center", ["Story", "Boss Rush", "Ranger Stages", "Raid", "Challenge", "Infinity Castle", "Portal", "Co-op"])
+global StoryDropdown := MainUI.Add("DropDownList", "x968 y53 w150 h180 Choose0 +Center", ["Voocha Village", "Green Planet", "Demon Forest", "Leaf Village", "Z City", "Ghoul City", "Night Colosseum", "Bizzare Race"])
+global StoryActDropdown := MainUI.Add("DropDownList", "x1128 y53 w80 h180 Choose0 +Center", ["Act 1", "Act 2", "Act 3", "Act 4", "Act 5", "Act 6", "Act 7", "Act 8", "Act 9", "Act 10"])
+global RangerDropdown := MainUI.Add("DropDownList", "x968 y53 w150 h180 Choose0 +Center Hidden", ["Voocha Village", "Green Planet", "Demon Forest", "Leaf Village", "Z City", "Ghoul City", "Night Colosseum"])
+global RangerActDropdown := MainUI.Add("DropDownList", "x1128 y53 w80 h180 Choose0 +Center Hidden", ["Act 1", "Act 2", "Act 3", "Act 4", "Act 5"])
+global LegendDropDown := MainUI.Add("DropDownlist", "x968 y53 w150 h180 Choose0 +Center", [""] )
+global LegendActDropdown := MainUI.Add("DropDownList", "x1128 y53 w80 h180 Choose0 +Center", ["Act 1", "Act 2", "Act 3", "Random"])
+global RaidDropdown := MainUI.Add("DropDownList", "x968 y53 w150 h180 Choose0 +Center", ["Steel Blitz Rush"])
+global RaidActDropdown := MainUI.Add("DropDownList", "x1128 y53 w80 h180 Choose0 +Center", ["Act 1", "Act 2", "Act 3", "Act 4"])
+global InfinityCastleDropdown := MainUI.Add("DropDownList", "x968 y53 w80 h180 Choose0 +Center", ["Normal", "Hard"])
+global ConfirmButton := MainUI.Add("Button", "x1218 y53 w80 h25", "Confirm")
+global PortalDropdown := MainUI.Add("DropDownList", "x968 y53 w150 h180 Choose0 +Center", ["Ghoul City Portal", "Night Colosseum Portal"])
 
 StoryDropdown.Visible := false
 StoryActDropdown.Visible := false
@@ -465,26 +421,26 @@ OnRangerMapChange() {
 }
 ;------MAIN UI------MAIN UI------MAIN UI------MAIN UI------MAIN UI------MAIN UI------MAIN UI------MAIN UI------MAIN UI------MAIN UI------MAIN UI------MAIN UI------MAIN UI------
 ;------UNIT CONFIGURATION ;------UNIT CONFIGURATION ;------UNIT CONFIGURATION ;------UNIT CONFIGURATION ;------UNIT CONFIGURATION ;------UNIT CONFIGURATION ;------UNIT CONFIGURATION
-AddUnitCard(arMainUI, index, x, y) {
+AddUnitCard(MainUI, index, x, y) {
     unit := {}
  
-    unit.Background := arMainUI.Add("Text", Format("x{} y{} w550 h45 +Background{}", x, y, uiTheme[4]))
-    unit.BorderTop := arMainUI.Add("Text", Format("x{} y{} w550 h2 +Background{}", x, y, uiTheme[3]))
-    unit.BorderBottom := arMainUI.Add("Text", Format("x{} y{} w552 h2 +Background{}", x, y+45, uiTheme[3]))
-    unit.BorderLeft := arMainUI.Add("Text", Format("x{} y{} w2 h45 +Background{}", x, y, uiTheme[3]))
-    unit.BorderRight := arMainUI.Add("Text", Format("x{} y{} w2 h45 +Background{}", x+85, y, uiTheme[3]))
-    unit.BorderRight2 := arMainUI.Add("Text", Format("x{} y{} w2 h45 +Background{}", x+300, y, uiTheme[3]))
-    unit.BorderRight3 := arMainUI.Add("Text", Format("x{} y{} w2 h45 +Background{}", x+550, y, uiTheme[3]))
+    unit.Background := MainUI.Add("Text", Format("x{} y{} w550 h45 +Background{}", x, y, uiTheme[4]))
+    unit.BorderTop := MainUI.Add("Text", Format("x{} y{} w550 h2 +Background{}", x, y, uiTheme[3]))
+    unit.BorderBottom := MainUI.Add("Text", Format("x{} y{} w552 h2 +Background{}", x, y+45, uiTheme[3]))
+    unit.BorderLeft := MainUI.Add("Text", Format("x{} y{} w2 h45 +Background{}", x, y, uiTheme[3]))
+    unit.BorderRight := MainUI.Add("Text", Format("x{} y{} w2 h45 +Background{}", x+85, y, uiTheme[3]))
+    unit.BorderRight2 := MainUI.Add("Text", Format("x{} y{} w2 h45 +Background{}", x+300, y, uiTheme[3]))
+    unit.BorderRight3 := MainUI.Add("Text", Format("x{} y{} w2 h45 +Background{}", x+550, y, uiTheme[3]))
 
-    arMainUI.SetFont("s11 Bold c" uiTheme[1])
-    unit.Title := arMainUI.Add("Text", Format("x{} y{} w60 h25 +BackgroundTrans", x+30, y+15), "Slot " index)
+    MainUI.SetFont("s11 Bold c" uiTheme[1])
+    unit.Title := MainUI.Add("Text", Format("x{} y{} w60 h25 +BackgroundTrans", x+30, y+15), "Slot " index)
 
-    arMainUI.SetFont("s9 c" uiTheme[1])
-    unit.PlacementText := arMainUI.Add("Text", Format("x{} y{} w200 h20 +BackgroundTrans", x+100, y+2), "Summon && Upgrade Priority")
+    MainUI.SetFont("s9 c" uiTheme[1])
+    unit.PlacementText := MainUI.Add("Text", Format("x{} y{} w200 h20 +BackgroundTrans", x+100, y+2), "Summon && Upgrade Priority")
 
-    unit.UpgradeText := arMainUI.Add("Text", Format("x{} y{} w140 h20 +BackgroundTrans", x+330, y+5), "Upgrade Enabled")
+    unit.UpgradeText := MainUI.Add("Text", Format("x{} y{} w140 h20 +BackgroundTrans", x+330, y+5), "Upgrade Enabled")
 
-    unit.UpgradeBeforeSummonText := arMainUI.Add("Text", Format("x{} y{} w200 h20 +BackgroundTrans", x+330, y+25), "Max upgrade before summon")
+    unit.UpgradeBeforeSummonText := MainUI.Add("Text", Format("x{} y{} w200 h20 +BackgroundTrans", x+330, y+25), "Max upgrade before summon")
     
     UnitData.Push(unit)
     return unit
@@ -494,44 +450,44 @@ AddUnitCard(arMainUI, index, x, y) {
 y_start := 85
 y_spacing := 50
 Loop 6 {
-    AddUnitCard(arMainUI, A_Index, 808, y_start + ((A_Index-1)*y_spacing))
+    AddUnitCard(MainUI, A_Index, 808, y_start + ((A_Index-1)*y_spacing))
 }
 
-enabled1 := arMainUI.Add("CheckBox", "x818 y102 w15 h15", "")
-enabled2 := arMainUI.Add("CheckBox", "x818 y152 w15 h15", "")
-enabled3 := arMainUI.Add("CheckBox", "x818 y202 w15 h15", "")
-enabled4 := arMainUI.Add("CheckBox", "x818 y252 w15 h15", "")
-enabled5 := arMainUI.Add("CheckBox", "x818 y302 w15 h15", "")
-enabled6 := arMainUI.Add("CheckBox", "x818 y352 w15 h15", "")
+enabled1 := MainUI.Add("CheckBox", "x818 y102 w15 h15", "")
+enabled2 := MainUI.Add("CheckBox", "x818 y152 w15 h15", "")
+enabled3 := MainUI.Add("CheckBox", "x818 y202 w15 h15", "")
+enabled4 := MainUI.Add("CheckBox", "x818 y252 w15 h15", "")
+enabled5 := MainUI.Add("CheckBox", "x818 y302 w15 h15", "")
+enabled6 := MainUI.Add("CheckBox", "x818 y352 w15 h15", "")
 
-upgradeEnabled1 := arMainUI.Add("CheckBox", "x1120 y90 w15 h15", "")
-upgradeEnabled2 := arMainUI.Add("CheckBox", "x1120 y140 w15 h15", "")
-upgradeEnabled3 := arMainUI.Add("CheckBox", "x1120 y190 w15 h15", "")
-upgradeEnabled4 := arMainUI.Add("CheckBox", "x1120 y240 w15 h15", "")
-upgradeEnabled5 := arMainUI.Add("CheckBox", "x1120 y290 w15 h15", "")
-upgradeEnabled6 := arMainUI.Add("CheckBox", "x1120 y340 w15 h15", "")
+upgradeEnabled1 := MainUI.Add("CheckBox", "x1120 y90 w15 h15", "")
+upgradeEnabled2 := MainUI.Add("CheckBox", "x1120 y140 w15 h15", "")
+upgradeEnabled3 := MainUI.Add("CheckBox", "x1120 y190 w15 h15", "")
+upgradeEnabled4 := MainUI.Add("CheckBox", "x1120 y240 w15 h15", "")
+upgradeEnabled5 := MainUI.Add("CheckBox", "x1120 y290 w15 h15", "")
+upgradeEnabled6 := MainUI.Add("CheckBox", "x1120 y340 w15 h15", "")
 
-upgradeBeforeSummon1 := arMainUI.Add("CheckBox", "x1120 y110 w15 h15", "")
-upgradeBeforeSummon2 := arMainUI.Add("CheckBox", "x1120 y160 w15 h15", "")
-upgradeBeforeSummon3 := arMainUI.Add("CheckBox", "x1120 y210 w15 h15", "")
-upgradeBeforeSummon4 := arMainUI.Add("CheckBox", "x1120 y260 w15 h15", "")
-upgradeBeforeSummon5 := arMainUI.Add("CheckBox", "x1120 y310 w15 h15", "")
-upgradeBeforeSummon6 := arMainUI.Add("CheckBox", "x1120 y360 w15 h15", "")
+upgradeBeforeSummon1 := MainUI.Add("CheckBox", "x1120 y110 w15 h15", "")
+upgradeBeforeSummon2 := MainUI.Add("CheckBox", "x1120 y160 w15 h15", "")
+upgradeBeforeSummon3 := MainUI.Add("CheckBox", "x1120 y210 w15 h15", "")
+upgradeBeforeSummon4 := MainUI.Add("CheckBox", "x1120 y260 w15 h15", "")
+upgradeBeforeSummon5 := MainUI.Add("CheckBox", "x1120 y310 w15 h15", "")
+upgradeBeforeSummon6 := MainUI.Add("CheckBox", "x1120 y360 w15 h15", "")
 
 
-arMainUI.SetFont("s8 c" uiTheme[6])
+MainUI.SetFont("s8 c" uiTheme[6])
 
 ; Placement dropdowns
-Placement1 := arMainUI.Add("DropDownList", "x970 y105 w60 h180 Choose1 +Center", ["1","2","3","4","5","6"])
-Placement2 := arMainUI.Add("DropDownList", "x970 y155 w60 h180 Choose1 +Center", ["1","2","3","4","5","6"])
-Placement3 := arMainUI.Add("DropDownList", "x970 y205 w60 h180 Choose1 +Center", ["1","2","3","4","5","6"])
-Placement4 := arMainUI.Add("DropDownList", "x970 y255 w60 h180 Choose1 +Center", ["1","2","3","4","5","6"])
-Placement5 := arMainUI.Add("DropDownList", "x970 y305 w60 h180 Choose1 +Center", ["1","2","3","4","5","6"])
-Placement6 := arMainUI.Add("DropDownList", "x970 y355 w60 h180 Choose1 +Center", ["1","2","3","4","5","6"])
+Placement1 := MainUI.Add("DropDownList", "x970 y105 w60 h180 Choose1 +Center", ["1","2","3","4","5","6"])
+Placement2 := MainUI.Add("DropDownList", "x970 y155 w60 h180 Choose1 +Center", ["1","2","3","4","5","6"])
+Placement3 := MainUI.Add("DropDownList", "x970 y205 w60 h180 Choose1 +Center", ["1","2","3","4","5","6"])
+Placement4 := MainUI.Add("DropDownList", "x970 y255 w60 h180 Choose1 +Center", ["1","2","3","4","5","6"])
+Placement5 := MainUI.Add("DropDownList", "x970 y305 w60 h180 Choose1 +Center", ["1","2","3","4","5","6"])
+Placement6 := MainUI.Add("DropDownList", "x970 y355 w60 h180 Choose1 +Center", ["1","2","3","4","5","6"])
 
 readInSettings()
-arMainUI.Show("w1366 h633")
-WinMove(0, 0,,, "ahk_id " arMainUIHwnd)
+MainUI.Show("w1366 h633")
+WinMove(0, 0,,, "ahk_id " MainUIHwnd)
 forceRobloxSize()  ; Initial force size and position
 ;------FUNCTIONS;------FUNCTIONS;------FUNCTIONS;------FUNCTIONS;------FUNCTIONS;------FUNCTIONS;------FUNCTIONS;------FUNCTIONS;------FUNCTIONS;------FUNCTIONS;------FUNCTIONS;------FUNCTIONS
 
@@ -608,7 +564,7 @@ sizeDown() {
     }
 }
 moveRobloxWindow() {
-    global arMainUIHwnd, offsetX, offsetY, rblxID
+    global MainUIHwnd, offsetX, offsetY, rblxID
     
     if !WinExist(rblxID) {
         AddToLog("Waiting for Roblox window...")
@@ -619,7 +575,7 @@ moveRobloxWindow() {
     sizeDown()
     
     ; Then move relative to main UI
-    WinGetPos(&x, &y, &w, &h, arMainUIHwnd)
+    WinGetPos(&x, &y, &w, &h, MainUIHwnd)
     WinMove(x + offsetX, y + offsetY,,, rblxID)
     WinActivate(rblxID)
 }
@@ -820,7 +776,19 @@ ShowOnlyControlGroup(groupToShow) {
     ControlGroups["Timers"] := [
         TimerSettings, LobbySleepText, LobbySleepTimer, WebhookSleepText, WebhookSleepTimer, LoadingScreenWaitTime, LoadingScreenWaitTimeText, VoteTimeoutTimerText, VoteTimeoutTimer, ReturnToLobbyTimerText, ReturnToLobbyTimer, BossAttackCDTimerText, BossAttackCDTimer, 
         UltimateCheckText, UltimateCheckEdit, 
-        UpgradeBeforeUltimateText, UpgradeBeforeUltimateEdit ; , RangerCDTimerText, RangerCDTimer,
+        UpgradeBeforeUltimateText, UpgradeBeforeUltimateEdit,
+        InfinityCastleTimeText, InfinityCastleTime,
+        BossRushTimerText, BossRushTime ; , RangerCDTimerText, RangerCDTimer,
+    ]
+
+    ControlGroups["Mode"] := [
+        ModeSettings, AutoStart, AutoRetry, AutoGameSpeed
+    ]
+
+    ControlGroups["Settings"] := [
+        WebhookBorder, WebhookEnabled, WebhookLogsEnabled, WebhookURLBox,
+        PrivateSettingsBorder, PrivateServerEnabled, PrivateServerURLBox, PrivateServerTestButton,
+        KeybindBorder, F1Text, F1Box, F2Text, F2Box, F3Text, F3Box, F4Text, F4Box, keybindSaveBtn 
     ]
 
     for name, controls in ControlGroups {
@@ -833,4 +801,22 @@ ShowOnlyControlGroup(groupToShow) {
     ; Ensure BossAttackCDTimer controls are visible if Timers group is shown
     BossAttackCDTimerText.Visible := (groupToShow = "Timers")
     BossAttackCDTimer.Visible := (groupToShow = "Timers")
+}
+
+ValidateWebhook() {
+    url := WebhookURLBox.Value
+    
+    if (url == "") {
+        WebhookEnabled.Value := false
+        WebhookURLBox.Value := ""
+        MsgBox("Webhook URL cannot be blank. Please enter a valid Webhook URL.", "Missing URL", "+0x1000")
+        return
+    }
+    
+    if (!RegExMatch(url, "^https://discord\.com/api/webhooks/.*")) {
+        WebhookEnabled.Value := false
+        WebhookURLBox.Value := ""
+        MsgBox("Invalid Webhook URL! Please ensure it follows the correct format.", "Invalid URL", "+0x1000")
+        return
+    }
 }
