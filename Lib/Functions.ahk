@@ -84,13 +84,13 @@ OpenDiscordLink() {
     ; Hide all dropdowns first
     StoryDropdown.Visible := false
     StoryActDropdown.Visible := false
+    RangerMapDropdown.Visible := false
+    RangerActDropdown.Visible := false
     LegendDropDown.Visible := false
     LegendActDropdown.Visible := false
     RaidDropdown.Visible := false
     RaidActDropdown.Visible := false
     InfinityCastleDropdown.Visible := false
-    RangerDropdown.Visible := false
-    RangerActDropdown.Visible := false
     MatchMaking.Visible := false
     ReturnLobbyBox.Visible := false
     ReplayBox.Visible := false
@@ -101,9 +101,9 @@ OpenDiscordLink() {
         StoryDropdown.Visible := true
         StoryActDropdown.Visible := true
         mode := "Story"
-    } else if (selected = "Ranger") {
-        RangerDropdown.Visible := false
-        RangerActDropdown.Visible := false
+    } else if (selected = "Ranger Stages") {
+        RangerMapDropdown.Visible := true
+        RangerActDropdown.Visible := true
         mode := "Ranger"
     } else if (selected = "Legend") {
         LegendDropDown.Visible := true
@@ -241,7 +241,7 @@ OnConfirmClick(*) {
     RaidDropdown.Visible := false
     RaidActDropdown.Visible := false
     InfinityCastleDropdown.Visible := false
-    RangerDropdown.Visible := false
+    RangerMapDropdown.Visible := false
     RangerActDropdown.Visible := false
     ConfirmButton.Visible := false
     modeSelectionGroup.Visible := false
@@ -349,18 +349,32 @@ StringJoin(array, delimiter := ", ") {
     return result
 }
 
-GetMousePos() {
+CopyMouseCoords(withColor := false) {
     MouseGetPos(&x, &y)
-    A_Clipboard := ""  ; Clear the clipboard first
-    ClipWait(0.5)  ; Optional: wait for it to clear
+    color := PixelGetColor(x, y, "RGB")  ; Correct usage in AHK v2
 
-    A_Clipboard := x ", " y
-    ClipWait(0.5)  ; Wait for the clipboard to be ready
+    A_Clipboard := ""  ; Clear clipboard
+    ClipWait(0.5)
 
-    if (A_Clipboard = x ", " y) {
-        AddToLog("Copied: " x ", " y)
+    if (withColor) {
+        A_Clipboard := x ", " y " | Color: " color
     } else {
-        AddToLog("Failed to copy coordinates.")
+        A_Clipboard := x ", " y
+    }
+
+    ClipWait(0.5)
+
+    ; Check if the clipboard content matches the expected format
+
+    if (withColor) {
+        if (A_Clipboard = x ", " y " | Color: " color) {
+            AddToLog("Copied: " x ", " y " | Color: " color)
+        }
+    } 
+    else {
+        if (A_Clipboard = x ", " y) {
+            AddToLog("Copied: " x ", " y)
+        }
     }
 }
 
@@ -388,9 +402,9 @@ TeleportToSpawn() {
 }
 
 ClickReplay() {
-    xCoord := (ModeDropdown.Text != "Story" || StoryDropdown.Text = "Z City") ? 100 : 120 ; -120 : -250
+    xCoord := (ModeDropdown.Text != "Story" || StoryDropdown.Text = "Z City") ? 10 : 120 ; -120 : -250
     ;ClickUntilGone(0, 0, 135, 399, 539, 456, LobbyText, xCoord, -35)
-    ClickUntilGone(0, 0, 117, 175, 229, 221, GameEnded, xCoord, 190)
+    ClickUntilGoneWithVariant(0, 0, 117, 175, 229, 221, GameEnded, xCoord, 140, 0.20, 0.20)
     ; Resume AutoAbility if enabled
     if (IsSet(AutoAbility) && AutoAbility.Value) {
         AddToLog("[AutoAbility] Resuming after Replay.")
@@ -400,6 +414,38 @@ ClickReplay() {
     }
     global upgradeBeforeUltimateUsed
     upgradeBeforeUltimateUsed := false
+}
+
+CheckGameOver() {
+    return GetFindText().FindText(&X, &Y, 377, 228, 536, 276, 0.05, 0.80, DefeatText) || GetFindText().FindText(&X, &Y, 397, 222, 538, 273, 0.05, 0.80, VictoryText) || GetFindText().FindText(&X, &Y, 380, 186, 584, 300, 0, 0, VictoryText2)
+}
+
+ClickReplayPixel() {
+    while CheckForXp() {
+        pixelChecks := [
+            {color: 0xECC800, x: 219, y: 386}
+        ]
+
+        for pixel in pixelChecks {
+            if GetPixel(pixel.color, pixel.x, pixel.y, 4, 4, 20) {
+                if (CustomReplay.Value) {
+                    FixClick(ReplayX.Value, ReplayY.Value)
+                } else {
+                    FixClick(pixel.x, pixel.y)
+                }
+            }
+        }
+    }
+}
+
+GetPixel(color, x1, y1, extraX, extraY, variation) {
+    global foundX, foundY
+    try {
+        if PixelSearch(&foundX, &foundY, x1, y1, x1 + extraX, y1 + extraY, color, variation) {
+            return [foundX, foundY] AND true
+        }
+        return false
+    }
 }
 
 ClickReplayRanger() {
@@ -505,6 +551,22 @@ ClickUntilGone(x, y, searchX1, searchY1, searchX2, searchY2, textToFind, offsetX
     }
 }
 
+ClickUntilGoneWithVariant(x, y, searchX1, searchY1, searchX2, searchY2, textToFind, offsetX:=0, offsetY:=0, textToFind2:="", varient1:=0, varient2:=0) {
+    waitTime := A_TickCount ; Start timer
+    while (ok := GetFindText().FindText(&X, &Y, searchX1, searchY1, searchX2, searchY2, 0, 0, textToFind) || textToFind2 && GetFindText().FindText(&X, &Y, searchX1, searchY1, searchX2, searchY2, 0, 0, textToFind2)) {
+        if ((A_TickCount - waitTime) > 300000) { ; 5-minute limit
+            AddToLog("5 minute failsafe triggered, trying to open roblox...")
+            return RejoinPrivateServer()
+        }
+        if (offsetX != 0 || offsetY != 0) {
+            FixClick(X + offsetX, Y + offsetY)
+        } else {
+            FixClick(x, y)
+        }
+        Sleep(1000)
+    }
+}
+
 RightClickUntilGone(x, y, searchX1, searchY1, searchX2, searchY2, textToFind, offsetX:=0, offsetY:=0, textToFind2:="") {
     while (ok := GetFindText().FindText(&X, &Y, searchX1, searchY1, searchX2, searchY2, 0, 0, textToFind) ||
            textToFind2 && GetFindText().FindText(&X, &Y, searchX1, searchY1, searchX2, searchY2, 0, 0, textToFind2)) {
@@ -564,6 +626,9 @@ GetWebhookDelay() {
 
 CheckForVoteScreen() {
     inStage := false
+    if (AutoStart.Value) {
+        return false
+    }
     if (ok := GetFindText().FindText(&X, &Y, 355, 168, 450, 196, 0.10, 0.10, VoteStart)) {
         FixClick(400, 150)
         return true
@@ -721,4 +786,106 @@ CalculateElapsedTime(startTime) {
     elapsedMinutes := Floor(Mod(elapsedTimeSec, 3600) / 60)
     elapsedSeconds := Mod(elapsedTimeSec, 60)
     return Format("{:02}:{:02}:{:02}", elapsedHours, elapsedMinutes, elapsedSeconds)
+}
+
+StartContent(mapName, actName, getMapFunc, getActFunc, mapScrollMousePos, actScrollMousePos) {
+    ;AddToLog("Selecting : " mapName " - " actName)
+
+    OpenPlayMenu()
+    
+    ; Start stage
+    while !(GetPixel(0x00EC00, 20, 230, 4, 4, 20)) {
+        FixClick(80, 325) ; Click Leave
+        Reconnect() ; Added Disconnect Check
+        OpenPlayMenu()
+    }
+
+    FixClick(25, 225) ; Create Room
+    Sleep(1000)
+
+    ; Get the map
+    Map := getMapFunc.Call(mapName)
+    if !Map {
+        AddToLog("Error: Map '" mapName "' not found.")
+        return false
+    }
+
+    if (ModeDropdown.Text = "Ranger Stages") {
+        FixClick(335, 470)
+        Sleep(200)
+    }
+    else if (ModeDropdown.Text = "Raid") {
+        FixClick(470, 470)
+        Sleep(200)
+    }
+
+    ; Scroll map if needed
+    if Map.scrolls > 0 {
+        AddToLog(Format("Scrolling down {} times for {}", Map.scrolls, mapName))
+        MouseMove(mapScrollMousePos.x, mapScrollMousePos.y)
+        Scroll(Map.scrolls, 'WheelDown', 250)
+    }
+
+    Sleep(1000)
+    FixClick(Map.x, Map.y)
+    Sleep(1000)
+
+    ; Get the act
+    Act := getActFunc.Call(actName)
+    if !Act {
+        AddToLog("ERROR: Act '" actName "' not found.")
+        return false
+    }
+
+    ; Scroll act if needed
+    if Act.scrolls > 0 {
+        AddToLog(Format("Scrolling down {} times for {}", Act.scrolls, actName))
+        MouseMove(actScrollMousePos.x, actScrollMousePos.y)
+        Scroll(Act.scrolls, 'WheelDown', 250)
+    }
+
+    ; Click the correct difficulty
+    if (ModeDropdown.Text = "Story") {
+        if (StoryDifficulty.Text = "Normal") {
+            FixClick(522, 260)
+        } else if (StoryDifficulty.Text = "Hard") {
+            FixClick(569, 263)
+        } else {
+            ; Default to Nightmare
+            FixClick(617, 264)
+        }
+    }
+
+    Sleep(1000)
+    FixClick(Act.x, Act.y)
+    Sleep(1000)
+
+    PlayHere()
+
+    return true
+}
+
+Scroll(times, direction, delay) {
+    if (times < 1) {
+        if (debugMessages) {
+            AddToLog("Invalid number of times")
+        }
+        return
+    }
+    if (direction != "WheelUp" and direction != "WheelDown") {
+        if (debugMessages) {
+            AddToLog("Invalid scroll direction: " direction)
+        }
+        return
+    }
+    if (delay < 0) {
+        if (debugMessages) {
+            AddToLog("Invalid delay: " delay)
+        }
+        return
+    }
+    loop times {
+        Send("{" direction "}")
+        Sleep(delay)
+    }
 }

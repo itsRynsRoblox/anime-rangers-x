@@ -94,6 +94,9 @@ readInSettings() {
                 case "WebhookURL": WebhookURLBox.Text := parts[2]
                 case "PrivateServerEnabled": PrivateServerEnabled.Value := parts[2]
                 case "PrivateServerURL": PrivateServerURLBox.Text := parts[2]
+                case "CustomReplay": CustomReplay.Value := parts[2]
+                case "ReplayX": ReplayX.Value := parts[2]
+                case "ReplayY": ReplayY.Value := parts[2]
             }
         }
         AddToLog("✅ Configuration settings loaded successfully")
@@ -224,6 +227,11 @@ SaveSettings(*) {
 
         content .= "`n`n[Portals]"
         content .= "`nAutoPortalFarm=" PortalFarm.Value
+
+        content .= "`n`n[Custom Replay]"
+        content .= "`nCustomReplay=" CustomReplay.Value
+        content .= "`nReplayX=" ReplayX.Value
+        content .= "`nReplayY=" ReplayY.Value
 
         content .= "`n`n[AutoStart]"
         content .= "`nAutoStart=" AutoStart.Value

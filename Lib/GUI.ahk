@@ -16,7 +16,7 @@ uiTheme.Push("00ffb3")    ; HighLight
 ;Update Checker
 global repoOwner := "itsRynsRoblox"
 global repoName := "anime-rangers-x"
-global currentVersion := "1.5.8"
+global currentVersion := "1.5.9"
 
 ; Basic Application Info
 global GameTitle := "Ryn's Anime Rangers X "
@@ -79,6 +79,8 @@ global ActiveControlGroup := ""
 global settingsGuiOpen := false
 global SettingsGUI := ""
 global currentOutputFile := A_ScriptDir "\Logs\LogFile.txt"
+; Custom Coords
+global waitingForClick := false
 
 ;Custom Pictures
 GithubImage := "Images\github-logo.png"
@@ -118,7 +120,7 @@ minimizeButton.OnEvent("Click", (*) => minimizeUI()) ;Minimize gui
 MainUI.SetFont("Bold s16 c" uiTheme[1], "Verdana") ;Font
 global windowTitle := MainUI.Add("Text", "x10 y3 w1200 h29 +BackgroundTrans", GameTitle "" . "" version) ;Title
 
-MainUI.Add("Text", "x805 y390 w558 h25 +Center +BackgroundTrans", "Process") ;Process header
+MainUI.Add("Text", "x805 y390 w558 h25 +Center +BackgroundTrans", "Console Logs") ;Process header
 MainUI.SetFont("norm s11 c" uiTheme[1]) ;Font
 global process1 := MainUI.Add("Text", "x810 y420 w600 h18 +BackgroundTrans c" uiTheme[7], "Original Creator: Ryn (@TheRealTension)") ;Processes
 global process2 := MainUI.Add("Text", "xp yp+22 w600 h18 +BackgroundTrans", "") ;Processes 
@@ -238,23 +240,20 @@ OpenGuide(*) {
 MainUI.SetFont("s9 Bold c" uiTheme[1])
 
 ;DEBUG
-DebugButton := MainUI.Add("Button", "x600 y5 w90 h20 +Center", "Debug")
+DebugButton := MainUI.Add("Button", "x700 y5 w90 h20 +Center", "Debug")
 DebugButton.OnEvent("Click", (*) => OpenDebug())
 
-global guideBtn := MainUI.Add("Button", "x700 y5 w90 h20", "Guides")
+global guideBtn := MainUI.Add("Button", "x800 y5 w90 h20", "Guides")
 guideBtn.OnEvent("Click", OpenGuide)
 
-global mapButton := MainUI.Add("Button", "x800 y5 w90 h20", "Map Skips")
-mapButton.OnEvent("Click", (*) => OpenMapSkipPriorityPicker())
-
-global modesButton := MainUI.Add("Button", "x900 y5 w90 h20", "Mode Config")
-modesButton.OnEvent("Click", (*) => ToggleControlGroup("Mode"))
-
-global timersButton := MainUI.Add("Button", "x1100 y5 w90 h20", "Timers")
+global timersButton := MainUI.Add("Button", "x900 y5 w90 h20", "Timers")
 timersButton.OnEvent("Click", (*) => ToggleControlGroup("Timers"))
 
 global upgradesButton := MainUI.Add("Button", "x1000 y5 w90 h20", "Upgrades")
 upgradesButton.OnEvent("Click", (*) => ToggleControlGroup("Upgrade"))
+
+global modesButton := MainUI.Add("Button", "x1100 y5 w90 h20", "Game Config")
+modesButton.OnEvent("Click", (*) => ToggleControlGroup("Game"))
 
 global settingsBtn := MainUI.Add("Button", "x1200 y5 w90 h20", "Settings")
 settingsBtn.OnEvent("Click", (*) => ToggleControlGroup("Settings"))
@@ -287,6 +286,20 @@ global GameSpeed := MainUI.Add("DropDownList", "x1250 y585 w100 h180 Choose1", [
 global AutoStart := MainUI.Add("Checkbox", "x818 y123.5 +Center Hidden", " Using Auto Start (Anime Ranger's Auto Start)")
 global AutoRetry := MainUI.Add("Checkbox", "x818 y163.5 +Center Hidden", " Using Auto Replay (Anime Ranger's Auto Replay)")
 global AutoGameSpeed := MainUI.Add("Checkbox", "x818 y203.5 +Center Hidden", " Using Auto Game Speed (Anime Ranger's Auto Game Speed)")
+
+;Custom Settings
+global CustomReplay := MainUI.Add("Checkbox", "x818 y243.5 +Center Hidden", " Custom Replay Coordinates")
+
+ReplayXText := MainUI.Add("Text", "x1043 y243.5 w20 +Center Hidden", "X:")
+global ReplayX := MainUI.Add("Edit", "x1075 y240 w40 cBlack Number +Center Hidden")
+
+ReplayYText := MainUI.Add("Text", "x1127 y243.5 w20 +Center Hidden", "Y:")
+global ReplayY := MainUI.Add("Edit", "x1160 y240 w40 cBlack Number +Center Hidden")
+
+ReplayCoordsButton := MainUI.Add("Button", "x875 y263.5 w90 h20 Hidden", "Set Coords")
+ReplayCoordsButton.OnEvent("Click", (*) => StartCoordCapture())
+
+
 ; Timer Settings
 LobbySleepText := MainUI.Add("Text", "x818 y123.5 w130 h20 +Center Hidden", "Lobby Sleep Timer")
 global LobbySleepTimer := MainUI.Add("DropDownList", "x950 y120 w100 h180 Hidden Choose1", ["No Delay", "5 Seconds", "10 Seconds", "15 Seconds", "20 Seconds", "25 Seconds", "30 Seconds", "35 Seconds", "40 Seconds", "45 Seconds", "50 Seconds", "55 Seconds", "60 Seconds"])
@@ -362,27 +375,29 @@ DiscordButton.OnEvent("Click", (*) => OpenDiscord())
 
 global TimerSettings := MainUI.Add("GroupBox", "x808 y85 w550 h296 +Center Hidden c" uiTheme[1], "Timer Settings")
 global UnitSettings := MainUI.Add("GroupBox", "x808 y85 w550 h296 +Center Hidden c" uiTheme[1], "Upgrade Settings")
-global ModeSettings := MainUI.Add("GroupBox", "x808 y85 w550 h296 +Center Hidden c" uiTheme[1], "Mode Config")
+global GameSettings := MainUI.Add("GroupBox", "x808 y85 w550 h296 +Center Hidden c" uiTheme[1], "Game Config")
 
 ;--------------SETTINGS;--------------SETTINGS;--------------SETTINGS;--------------SETTINGS;--------------SETTINGS;--------------SETTINGS;--------------SETTINGS
 ;--------------MODE SELECT;--------------MODE SELECT;--------------MODE SELECT;--------------MODE SELECT;--------------MODE SELECT;--------------MODE SELECT
 global modeSelectionGroup := MainUI.Add("GroupBox", "x808 y38 w500 h45 Background" uiTheme[2], "Mode Select")
 MainUI.SetFont("s10 c" uiTheme[6])
-global ModeDropdown := MainUI.Add("DropDownList", "x818 y53 w140 h180 Choose0 +Center", ["Story", "Boss Rush", "Ranger Stages", "Raid", "Challenge", "Infinity Castle", "Portal", "Co-op"])
-global StoryDropdown := MainUI.Add("DropDownList", "x968 y53 w150 h180 Choose0 +Center", ["Voocha Village", "Green Planet", "Demon Forest", "Leaf Village", "Z City", "Ghoul City", "Night Colosseum", "Bizzare Race"])
+global ModeDropdown := MainUI.Add("DropDownList", "x818 y53 w140 h180 Choose0 +Center", ["Story", "Raid", "Ranger Stages", "Challenge", "Boss Rush", "Infinity Castle", "Portal", "Swarm Event", "Co-op"])
+global StoryDropdown := MainUI.Add("DropDownList", "x968 y53 w150 h180 Choose0 +Center", ["Voocha Village", "Green Planet", "Demon Forest", "Leaf Village", "Z City", "Ghoul City", "Night Colosseum", "Bizzare Race", "Spirit Realm", "The City", "Virtual Sword", "Ruined Future City", "Lake Of Sacrifice", "S Rank Dungeon"])
 global StoryActDropdown := MainUI.Add("DropDownList", "x1128 y53 w80 h180 Choose0 +Center", ["Act 1", "Act 2", "Act 3", "Act 4", "Act 5", "Act 6", "Act 7", "Act 8", "Act 9", "Act 10"])
-global RangerDropdown := MainUI.Add("DropDownList", "x968 y53 w150 h180 Choose0 +Center Hidden", ["Voocha Village", "Green Planet", "Demon Forest", "Leaf Village", "Z City", "Ghoul City", "Night Colosseum"])
-global RangerActDropdown := MainUI.Add("DropDownList", "x1128 y53 w80 h180 Choose0 +Center Hidden", ["Act 1", "Act 2", "Act 3", "Act 4", "Act 5"])
+global RangerMapDropdown := MainUI.Add("DropDownList", "x968 y53 w150 h180 Choose0 +Center", ["Voocha Village", "Green Planet", "Demon Forest", "Leaf Village", "Z City", "Ghoul City", "Night Colosseum", "Bizzare Race", "Spirit Realm", "The City", "Virtual Sword", "Ruined Future City", "Lake Of Sacrifice", "S Rank Dungeon"])
+global RangerActDropdown := MainUI.Add("DropDownList", "x1128 y53 w80 h180 Choose0 +Center", ["Act 1", "Act 2", "Act 3", "Act 4", "Act 5", "Act 6", "Act 7", "Act 8", "Act 9", "Act 10"])
 global LegendDropDown := MainUI.Add("DropDownlist", "x968 y53 w150 h180 Choose0 +Center", [""] )
 global LegendActDropdown := MainUI.Add("DropDownList", "x1128 y53 w80 h180 Choose0 +Center", ["Act 1", "Act 2", "Act 3", "Random"])
-global RaidDropdown := MainUI.Add("DropDownList", "x968 y53 w150 h180 Choose0 +Center", ["Steel Blitz Rush"])
+global RaidDropdown := MainUI.Add("DropDownList", "x968 y53 w150 h180 Choose0 +Center", ["Steel Blitz Rush", "The Graveyard", "The Gated City"])
 global RaidActDropdown := MainUI.Add("DropDownList", "x1128 y53 w80 h180 Choose0 +Center", ["Act 1", "Act 2", "Act 3", "Act 4"])
 global InfinityCastleDropdown := MainUI.Add("DropDownList", "x968 y53 w80 h180 Choose0 +Center", ["Normal", "Hard"])
 global ConfirmButton := MainUI.Add("Button", "x1218 y53 w80 h25", "Confirm")
-global PortalDropdown := MainUI.Add("DropDownList", "x968 y53 w150 h180 Choose0 +Center", ["Ghoul City Portal", "Night Colosseum Portal"])
+global PortalDropdown := MainUI.Add("DropDownList", "x968 y53 w150 h180 Choose0 +Center", ["Ghoul City Portal", "Night Colosseum Portal", "Saiyan Portal"])
 
 StoryDropdown.Visible := false
 StoryActDropdown.Visible := false
+RangerMapDropdown.Visible := false
+RangerActDropdown.Visible := false
 LegendDropDown.Visible := false
 LegendActDropdown.Visible := false
 RaidDropdown.Visible := false
@@ -401,14 +416,13 @@ Hotkeytext2.Visible := false
 ModeDropdown.OnEvent("Change", OnModeChange)
 StoryDropdown.OnEvent("Change", OnStoryChange)
 StoryActDropdown.OnEvent("Change", OnStoryActChange)
+RangerMapDropdown.OnEvent("Change", (*) => OnRangerMapChange())
 LegendDropDown.OnEvent("Change", OnLegendChange)
 RaidDropdown.OnEvent("Change", OnRaidChange)
 ConfirmButton.OnEvent("Click", OnConfirmClick)
 
-RangerDropdown.OnEvent("Change", (*) => OnRangerMapChange())
-
 OnRangerMapChange() {
-    map := RangerDropdown.Text
+    map := RangerMapDropdown.Text
     if (map = "Z City" || map = "Ghoul City") {
         RangerActDropdown.Delete()
         RangerActDropdown.Add(["Act 1", "Act 2", "Act 3", "Act 4", "Act 5"])
@@ -781,8 +795,8 @@ ShowOnlyControlGroup(groupToShow) {
         BossRushTimerText, BossRushTime ; , RangerCDTimerText, RangerCDTimer,
     ]
 
-    ControlGroups["Mode"] := [
-        ModeSettings, AutoStart, AutoRetry, AutoGameSpeed
+    ControlGroups["Game"] := [
+        GameSettings, AutoStart, AutoRetry, AutoGameSpeed, CustomReplay, ReplayX, ReplayY, ReplayXText, ReplayYText, ReplayCoordsButton
     ]
 
     ControlGroups["Settings"] := [
@@ -819,4 +833,67 @@ ValidateWebhook() {
         MsgBox("Invalid Webhook URL! Please ensure it follows the correct format.", "Invalid URL", "+0x1000")
         return
     }
+}
+
+StartCoordCapture() {
+    global waitingForClick
+
+    if (WinExist(rblxID)) {
+        WinActivate(rblxID)
+    }
+
+    waitingForClick := true
+    AddToLog("Press LShift to stop coordinate capture")
+    SetTimer UpdateTooltip, 50  ; Update tooltip position every 50ms
+}
+
+UpdateTooltip() {
+    global waitingForClick
+    if waitingForClick {
+        MouseGetPos &x, &y
+        ToolTip "Click anywhere to save coordinates...", x + 10, y + 10  ; Offset tooltip slightly
+    } else {
+        ToolTip()  ; Hide tooltip when not waiting
+        SetTimer UpdateTooltip, 0  ; Stop the timer
+    }
+}
+
+~LShift::
+{
+    global waitingForClick
+    if waitingForClick {
+        AddToLog("Stopping coordinate capture")
+        waitingForClick := false
+    }
+}
+
+~LButton::
+{
+    global waitingForClick
+
+    if waitingForClick {
+
+        MouseGetPos(&x, &y)
+        SetTimer(UpdateTooltip, 0)
+
+        ; Use your function here
+        GetCoords()
+    }
+}
+
+ClearToolTip() {
+    ToolTip()  ; Properly clear tooltip
+    Sleep 100  ; Small delay to ensure clearing happens across all systems
+    ToolTip()  ; Redundant clear to catch edge cases
+}
+
+GetCoords(*) {
+    global waitingForClick
+    MouseGetPos &x, &y
+    ReplayX.Value := x
+    ReplayY.Value := y
+    ToolTip("[Replay Coordinates] Set → X: " x ", Y: " y, x + 10, y + 10)
+    AddToLog("📌 [Replay Coordinates] Set → X: " x ", Y: " y)
+    SetTimer(ClearToolTip, -1200)
+    waitingForClick := false
 }

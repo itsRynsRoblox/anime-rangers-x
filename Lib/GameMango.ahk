@@ -35,7 +35,7 @@ Hotkey(F3Key, (*) => Reload())
 Hotkey(F4Key, (*) => TogglePause())
 
 F5:: {
-    ClickReplay()
+
 }
 
 F6:: {
@@ -43,7 +43,7 @@ F6:: {
 }
 
 F7:: {
-    GetMousePos()
+    CopyMouseCoords(true)
 }
 
 F8:: {
@@ -70,98 +70,7 @@ TogglePause(*) {
 }
 
 StoryMode() {
-    global startingMode
-    global StoryDropdown, StoryActDropdown
-    
-    ; Get current map and act
-    currentStoryMap := StoryDropdown.Text
-    currentStoryAct := StoryActDropdown.Text
-    
-    ; Execute the movement pattern
-    AddToLog("Moving to position for " currentStoryMap)
-    StoryMovement()
-    
-    ; Start stage
-    while !(ok := GetFindText().FindText(&X, &Y, 352, 101, 452, 120, 0.05, 0.20, RoomPods)) {
-        FixClick(80, 325) ; Click Leave
-        Reconnect() ; Added Disconnect Check
-        StoryMovement()
-    }
-
-    FixClick(25, 225) ; Create Room
-    Sleep(1000)
-
-    while !(ok := GetFindText().FindText(&X, &Y, 325, 163, 409, 193, 0.05, 0.20, StoryChapter)) {
-        AddToLog("Looking for Story Chapter Text...")
-        FixClick(615, 155) ; Click X on Join
-        Sleep(1000)
-        FixClick(25, 225) ; Create Room
-        Sleep(1000)
-        Reconnect() ; Added Disconnect Check
-    }
-
-    AddToLog("Starting " currentStoryMap " - " currentStoryAct)
-    StartStory(currentStoryMap, currentStoryAct)
-
-    PlayHere()
-}
-
-RangerMode() {
-    global enabledMapSkips, currentRangerSkipIndex
-
-    if (enabledMapSkips.Length = 0) {
-        AddToLog("No map/act selected in Map Skips.")
-        return
-    }
-
-    ; ถ้า index เกินจำนวน ให้วนกลับไป 1
-    if (currentRangerSkipIndex > enabledMapSkips.Length)
-        currentRangerSkipIndex := 1
-
-    skip := enabledMapSkips[currentRangerSkipIndex]
-    currentRangerMap := skip.map
-    currentRangerAct := skip.act
-
-    if (currentRangerAct ~= "^\d+$")
-        currentRangerAct := "Act " currentRangerAct
-
-    mapData := GetMapData("LegendMap", currentRangerMap)
-    actData := GetMapData("LegendAct", currentRangerAct)
-
-    if (!mapData.HasOwnProp("x") || !mapData.HasOwnProp("y") || !actData.HasOwnProp("x") || !actData.HasOwnProp("y")) {
-        AddToLog("❌ Map/Act data not found for: " currentRangerMap " - " currentRangerAct)
-        currentRangerSkipIndex++
-        return
-    }
-
-    AddToLog("Moving to position for " currentRangerMap)
-    RangerMovement()
-
-    ; Start stage
-    while !(ok := GetFindText().FindText(&X, &Y, 352, 101, 452, 120, 0.05, 0.20, RoomPods)) {
-        FixClick(80, 325) ; Click Leave
-        Reconnect() ; Added Disconnect Check
-        RangerMovement()
-    }
-
-    FixClick(25, 225) ; Create Room
-    Sleep(1000)
-
-    while !(ok := GetFindText().FindText(&X, &Y, 325, 163, 409, 193, 0.05, 0.20, StoryChapter)) {
-        AddToLog("Looking for Story Chapter Text...")
-        FixClick(615, 155) ; Click X on Join
-        Sleep(1000)
-        FixClick(25, 225) ; Create Room
-        Sleep(1000)
-        Reconnect() ; Added Disconnect Check
-    }
-
-    AddToLog("Starting " currentRangerMap " - " currentRangerAct)
-    StartRanger(currentRangerMap, currentRangerAct)
-
-    PlayHere()
-    currentRangerSkipIndex++ ; ไปด่านถัดไปในรอบหน้า
-    return
+    StartContent(StoryDropdown.Text, StoryActDropdown.Text, GetStoryMap, GetStoryAct, { x: 230, y: 155 }, { x: 405, y: 195 })
 }
 
 BossEvent() {
@@ -357,7 +266,7 @@ LegendMode() {
 
     ; Execute the movement pattern
     AddToLog("Moving to position for " currentLegendMap)
-    StoryMovement()
+    OpenPlayMenu()
     
     ; Start stage
     while !(ok := GetFindText().FindText(&X, &Y, 352, 101, 452, 120, 0.05, 0.20, RoomPods)) {
@@ -366,7 +275,7 @@ LegendMode() {
         }
         FixClick(80, 325) ; Click Leave
         Reconnect() ; Added Disconnect Check
-        StoryMovement()
+        OpenPlayMenu()
     }
 
     FixClick(25, 225) ; Create Room
@@ -650,7 +559,7 @@ HandleDefaultMode() {
         if (AutoRetry.Value) {
             AddToLog("Auto Retry enabled - skipping replay click")
         } else {
-            ClickReplay()
+            ClickReplayPixel()
         }
     }
     return
@@ -740,7 +649,7 @@ HandlePortalMode() {
     }
 }
 
-StoryMovement() {
+OpenPlayMenu() {
     FixClick(25, 340)
     Sleep (1000)
 }
@@ -909,8 +818,7 @@ PortalMovement() {
     Sleep(500)
 }
 
-
-StartStory(map, act, isRanger := false) {
+StartStoryOld(map, act, isRanger := false) {
     AddToLog("Selecting map: " map " and act: " act)
 
     ; Get Story map 
@@ -944,6 +852,7 @@ StartStory(map, act, isRanger := false) {
         Sleep(2000)
         ; No click here
     }
+
     ; Scroll if needed for act
     if (StoryAct.scrolls > 0) {
         AddToLog("Scrolling down " StoryAct.scrolls " times for " act)
@@ -1150,6 +1059,34 @@ GetMapData(type, name) {
     )
 
     return data.Has(type) && data[type].Has(name) ? data[type][name] : {}
+}
+
+GetLegendMap(map) {
+    switch map {
+        case "Voocha Village": return { x: 230, y: 165, scrolls: 0 }
+        case "Green Planet": return { x: 230, y: 230, scrolls: 0 }
+        case "Demon Forest": return { x: 230, y: 290, scrolls: 0 }
+        case "Leaf Village": return { x: 230, y: 360, scrolls: 0 }
+        case "Z City": return { x: 235, y: 270, scrolls: 1 }
+        case "Ghoul City": return { x: 230, y: 360, scrolls: 1 }
+        case "Night Colosseum": return { x: 227, y: 371, scrolls: 2 }
+    }
+}
+
+GetLegendAct(act) {
+    switch act {
+        case "Act 1": return { x: 400, y: 180, scrolls: 0 }
+        case "Act 2": return { x: 400, y: 245, scrolls: 0 }
+        case "Act 3": return { x: 400, y: 300, scrolls: 0 }
+        case "Act 4": return { x: 400, y: 225, scrolls: 1 }
+        case "Act 5": return { x: 400, y: 275, scrolls: 1 }
+        case "Act 6": return { x: 400, y: 200, scrolls: 2 }
+        case "Act 7": return { x: 400, y: 250, scrolls: 2 }
+        case "Act 8": return { x: 400, y: 300, scrolls: 2 }
+        case "Act 9": return { x: 400, y: 235, scrolls: 3 }
+        case "Act 10": return { x: 400, y: 290, scrolls: 3 }
+        case "Random": return GetRandomAct()
+    }
 }
 
 GetRandomAct() {
@@ -1400,10 +1337,7 @@ RestartStage() {
                     currentMap := DetectMap(false)  ; Detect once if not already known
                 }
             }
-        } else if (
-            ModeDropdown.Text != "Cid"
-            && ModeDropdown.Text != "Co-op"
-        ) {
+        } else if (ModeValidForMapDetection(ModeDropdown.Text)) {
             if (currentMap = "") {
                 currentMap := DetectMap(false)  ; Normal detect
             } else {
@@ -1422,7 +1356,7 @@ RestartStage() {
             CheckForVoteScreen()
         }
 
-        ; Set Game Speed (W.I.P)
+        ; Set Game Speed
         if (!AutoGameSpeed.Value) {
             ChangeGameSpeed()
         }
@@ -1430,7 +1364,6 @@ RestartStage() {
         if (ModeDropdown.Text = "Infinity Castle" || ModeDropdown.Text = "Boss Rush") {
             SetTimer(ChangePath, GetPathChangetimer())
         }
-
 
         ; Close Leaderboard
         FixClick(487, 71)
@@ -1573,7 +1506,6 @@ RejoinPrivateServer(testing := false) {
 CheckForXp() {
     ; Check for lobby text
     if (ok := GetFindText().FindText(&X, &Y, 118, 180, 219, 216, 0.10, 0.10, GameEnded)) {
-        FixClick(560, 560)
         return true
     }
     return false
@@ -1732,23 +1664,23 @@ WaitForGameState(mode := "loading") {
     loop {
         Sleep((mode = "loading") ? 1000 : 100)
 
-        if (mode = "loading") {
+        if (mode = "loading" && !IsInLobby()) {
             if (checkForUnitManager) {
                 if (FindText(&X, &Y, 609, 463, 723, 495, 0.10, 0.20, UnitManagerBack)) {
-                    AddToLog("Successfully Loaded: Unit manager detected")
+                    AddToLog("Loaded into the game: Unit manager was detected")
                     checkForUnitManager := false
                     break
                 }
             }
 
             if (GetFindText().FindText(&X, &Y, 355, 168, 450, 196, 0.10, 0.10, VoteStart)) {
-                AddToLog("Successfully Loaded: Vote screen detected")
+                AddToLog("Loaded into the game: Vote screen was detected")
                 break
-            } else if (PixelGetColor(381, 47, "RGB") = 0x5ED800) {
-                AddToLog("Successfully Loaded: Base health detected")
+            } else if (GetPixel(0x6DE000, 454, 46, 2, 2, 10)) {
+                AddToLog("Loaded into the game: Base health was detected")
                 break
             } else if (GetFindText().FindText(&X, &Y, 12, 594, 32, 615, 0.05, 0.10, InGameSettings)) {
-                AddToLog("Successfully Loaded: Settings cogwheel detected")
+                AddToLog("Loaded into the game: Settings cogwheel was detected")
                 break
             }
 
@@ -1833,13 +1765,13 @@ StartSelectedMode() {
     
     AddToLog("Starting mode: " ModeDropdown.Text)
     if (ModeDropdown.Text = "Story") {
-        StoryMode()
+        StartContent(StoryDropdown.Text, StoryActDropdown.Text, GetStoryMap, GetStoryAct, { x: 230, y: 155 }, { x: 405, y: 195 })
+    } else if (ModeDropdown.Text = "Ranger Stages") {
+        StartContent(RangerMapDropdown.Text, RangerActDropdown.Text, GetStoryMap, GetStoryAct, { x: 230, y: 155 }, { x: 405, y: 195 })
+    } else if (ModeDropdown.Text = "Raid") {
+        StartContent(RaidDropdown.Text, RaidActDropdown.Text, GetRaidMap, GetRaidAct, { x: 230, y: 155 }, { x: 405, y: 195 })
     } else if (ModeDropdown.Text = "Boss Event") {
         BossEvent()
-    } else if (ModeDropdown.Text = "Ranger Stages") {
-        RangerMode()
-    } else if (ModeDropdown.Text = "Raid") {
-        RaidMode()
     } else if (ModeDropdown.Text = "Challenge") {
         ChallengeMode()
     } else if (ModeDropdown.Text = "Portal") {
@@ -1848,7 +1780,10 @@ StartSelectedMode() {
         StartInfinityCastle()
     } else if (ModeDropdown.Text = "Boss Rush") {
         StartBossRush()
+    } else if (ModeDropdown.Text = "Swarm Event") {
+        StartSwarmEvent()
     }
+
 
 }
 
@@ -2215,4 +2150,17 @@ ChangeGameSpeed() {
 ChangePath() {
     AddToLog("Changing " ModeDropdown.Text " Path")
     FixClick(471, 439)
+}
+
+ModeValidForMapDetection(mode) {
+    ; If the mode is any of these, skip map detection
+    excludedModes := ["Co-op", "Swarm Event"]
+
+    for modes, excludedMode in excludedModes {
+        if (mode = excludedMode) {
+            return false
+        }
+    }
+
+    return true
 }

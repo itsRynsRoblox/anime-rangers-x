@@ -96,6 +96,11 @@ GameSpeed=2
 [Portals]
 AutoPortalFarm=0
 
+[Custom Replay]
+CustomReplay=0
+ReplayX=
+ReplayY=
+
 [AutoStart]
 AutoStart=1
 

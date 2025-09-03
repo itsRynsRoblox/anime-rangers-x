@@ -1,6 +1,8 @@
 #Requires AutoHotkey v2.0
 #SingleInstance Force
 
+global scriptInitialized := false
+
 SendMode "Event"
 
 #Include %A_ScriptDir%\Lib\Image.ahk
@@ -16,6 +18,12 @@ SendMode "Event"
 #Include %A_ScriptDir%\Lib\webhooksettings.ahk
 #Include %A_ScriptDir%\Lib\UpdateChecker.ahk
 #Include %A_ScriptDir%\Lib\RangerMenu.ahk
+#Include %A_ScriptDir%\Lib\Modes\Story.ahk
+#Include %A_ScriptDir%\Lib\Modes\RangerStages.ahk
+#Include %A_ScriptDir%\Lib\Modes\Raids.ahk
 #Include %A_ScriptDir%\Lib\Modes\Portals.ahk
 #Include %A_ScriptDir%\Lib\Modes\InfinityCastle.ahk
 #Include %A_ScriptDir%\Lib\Modes\BossRush.ahk
+#Include %A_ScriptDir%\Lib\Modes\Swarm.ahk
+
+global scriptInitialized := true
