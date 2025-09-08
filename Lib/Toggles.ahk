@@ -2,5 +2,7 @@
 
 global debugMessages := false
 
+global evading := false
+
 
 

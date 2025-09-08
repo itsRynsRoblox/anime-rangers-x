@@ -476,21 +476,6 @@ ClickNextLevel() {
     upgradeBeforeUltimateUsed := false
 }
 
-ClickReplayBossAttack() {
-    AddToLog("[Boss Attack] Clicking Replay Boss Attack...")
-    FixClick(250, 397)
-    Sleep (500)
-    ; Resume AutoAbility if enabled
-    if (IsSet(AutoAbility) && AutoAbility.Value) {
-        AddToLog("[AutoAbility] Resuming after Replay Boss Attack.")
-        AutoAbilityRoutine()
-        Sleep(50)
-        SendInput("{T}")
-    }
-    global upgradeBeforeUltimateUsed
-    upgradeBeforeUltimateUsed := false
-}
-
 ClickReplay2() {
     AddToLog("Clicking Replay...")
     FixClick(211, 390)
@@ -599,10 +584,6 @@ GetVoteTimeoutTime() {
 
 GetReturnToLobbyTimer() {
     return GetDuration(ReturnToLobbyTimer.Value, [0, 300000, 600000, 900000, 1200000, 1500000, 1800000, 3600000])
-}
-
-GetBossAttackCDTime() {
-    return GetDuration(BossAttackCDTimer.Value, [600000, 900000, 1200000, 1500000, 1800000, 20000])
 }
 
 GetLoadingWaitInSeconds() {

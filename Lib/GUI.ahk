@@ -16,7 +16,7 @@ uiTheme.Push("00ffb3")    ; HighLight
 ;Update Checker
 global repoOwner := "itsRynsRoblox"
 global repoName := "anime-rangers-x"
-global currentVersion := "1.5.9"
+global currentVersion := "1.6.0"
 
 ; Basic Application Info
 global GameTitle := "Ryn's Anime Rangers X "
@@ -55,15 +55,6 @@ global challengeMapIndex := 1
 global firstStartup := true
 global challengeMapList := ["Voocha Village", "Green Planet", "Demon Forest", "Leaf Village", "Z City", "Ghoul City", "Night Colosseum"]
 global challengeMapActCount := [3, 3, 3, 3, 3, 5, 3]
-;Boss Attack
-global BossAttackStartTime := A_TickCount
-global inBossAttackMode := false
-global BossAttackMapStegeCount := 0
-global BossAttackMapIndex := 1
-global StartupBossAttack := true
-global justHitBossAttackCooldown := false
-global BossAttackMapList := ["Boss Attack"]
-global BossAttackMapActCount := [3] ; Only 3 act for Boss Attack
 ;Webhook
 global firstWebhook := true
 ;Gui creation
@@ -240,14 +231,17 @@ OpenGuide(*) {
 MainUI.SetFont("s9 Bold c" uiTheme[1])
 
 ;DEBUG
-DebugButton := MainUI.Add("Button", "x700 y5 w90 h20 +Center", "Debug")
+DebugButton := MainUI.Add("Button", "x600 y5 w90 h20 +Center", "Debug")
 DebugButton.OnEvent("Click", (*) => OpenDebug())
 
-global guideBtn := MainUI.Add("Button", "x800 y5 w90 h20", "Guides")
+global guideBtn := MainUI.Add("Button", "x700 y5 w90 h20", "Guides")
 guideBtn.OnEvent("Click", OpenGuide)
 
-global timersButton := MainUI.Add("Button", "x900 y5 w90 h20", "Timers")
+global timersButton := MainUI.Add("Button", "x800 y5 w90 h20", "Timers")
 timersButton.OnEvent("Click", (*) => ToggleControlGroup("Timers"))
+
+global modeButton := MainUI.Add("Button", "x900 y5 w90 h20", "Mode Config")
+modeButton.OnEvent("Click", (*) => ToggleControlGroup("Mode"))
 
 global upgradesButton := MainUI.Add("Button", "x1000 y5 w90 h20", "Upgrades")
 upgradesButton.OnEvent("Click", (*) => ToggleControlGroup("Upgrade"))
@@ -276,11 +270,10 @@ global AutoPlay := MainUI.Add("CheckBox", "x808 y615 cffffff", "Summon Units")
 global ShouldUpgradeUnits := MainUI.Add("CheckBox", "x940 y615 cffffff", "Upgrade Units")
 ;global ChallengeBox := MainUI.Add("CheckBox", "x1048 y615 cffffff", "Farm Ranger Stages")
 global AutoAbility := MainUI.Add("CheckBox", "x1075 y615 cffffff", "Auto Ultimate")
-global BossAttackBox := MainUI.Add("CheckBox", "x1075 y595 cffffff", "Auto Boss Attack")
 global UpdateMessages := MainUI.Add("CheckBox", "x1200 y615 cffffff", "Update Messages")
 
-global GameSpeedText := MainUI.Add("Text", "x1245 y565 w100 h20 +Center ", "Game Speed")
-global GameSpeed := MainUI.Add("DropDownList", "x1250 y585 w100 h180 Choose1", ["2x", "3x"])
+global GameSpeedText := MainUI.Add("Text", "x1245 y560 w100 h20 +Center ", "Game Speed")
+global GameSpeed := MainUI.Add("DropDownList", "x1250 y580 w100 h180 Choose1", ["2x", "3x"])
 
 ; Mode Settings
 global AutoStart := MainUI.Add("Checkbox", "x818 y123.5 +Center Hidden", " Using Auto Start (Anime Ranger's Auto Start)")
@@ -321,9 +314,6 @@ global VoteTimeoutTimer := MainUI.Add("DropDownList", "x980 y240 w100 h180 Hidde
 
 ReturnToLobbyTimerText := MainUI.Add("Text", "x818 y283.5 w160 h20 +Center Hidden", "Return To Lobby Timer")
 global ReturnToLobbyTimer := MainUI.Add("DropDownList", "x980 y280 w100 h180 Hidden Choose1", ["Never", "5 minutes", "10 minutes", "15 minutes", "20 minutes", "25 minutes", "30 minutes", "60 minutes"])
-
-BossAttackCDTimerText := MainUI.Add("Text", "x818 y325 w160 h20 +Center Hidden", "Redo Boss Attack to") ; Will be hidden by default now
-global BossAttackCDTimer := MainUI.Add("DropDownList", "x1000  y325 w100 h180 Hidden Choose5", ["10 minutes", "15 minutes", "20 minutes", "25 minutes", "30 minutes", "20s Test"]) ; Will be hidden
 
 ; New fields for Timers GUI only
 UltimateCheckText := MainUI.Add("Text", "x1058 y123.5 w200 h20 +Center Hidden", "Ultimate Check (seconds)")
@@ -377,11 +367,16 @@ global TimerSettings := MainUI.Add("GroupBox", "x808 y85 w550 h296 +Center Hidde
 global UnitSettings := MainUI.Add("GroupBox", "x808 y85 w550 h296 +Center Hidden c" uiTheme[1], "Upgrade Settings")
 global GameSettings := MainUI.Add("GroupBox", "x808 y85 w550 h296 +Center Hidden c" uiTheme[1], "Game Config")
 
+global ModeBorder := MainUI.Add("GroupBox", "x808 y85 w550 h296 +Center Hidden c" uiTheme[1], "Mode Configuration")
+
+global MaxEndureText := MainUI.Add("Text", "x825 y110 h20 +Center Hidden", "Adventure Mode Max Endures")
+global MaxEndures := MainUI.Add("Edit", "x1025 y108.5 w40 cBlack Number +Center Hidden")
+
 ;--------------SETTINGS;--------------SETTINGS;--------------SETTINGS;--------------SETTINGS;--------------SETTINGS;--------------SETTINGS;--------------SETTINGS
 ;--------------MODE SELECT;--------------MODE SELECT;--------------MODE SELECT;--------------MODE SELECT;--------------MODE SELECT;--------------MODE SELECT
 global modeSelectionGroup := MainUI.Add("GroupBox", "x808 y38 w500 h45 Background" uiTheme[2], "Mode Select")
 MainUI.SetFont("s10 c" uiTheme[6])
-global ModeDropdown := MainUI.Add("DropDownList", "x818 y53 w140 h180 Choose0 +Center", ["Story", "Raid", "Ranger Stages", "Challenge", "Boss Rush", "Infinity Castle", "Portal", "Swarm Event", "Co-op"])
+global ModeDropdown := MainUI.Add("DropDownList", "x818 y53 w140 h180 Choose0 +Center", ["Story", "Raid", "Ranger Stages", "Challenge", "Boss Rush", "Infinity Castle", "Portal", "Swarm Event", "Adventure Mode", "Custom"])
 global StoryDropdown := MainUI.Add("DropDownList", "x968 y53 w150 h180 Choose0 +Center", ["Voocha Village", "Green Planet", "Demon Forest", "Leaf Village", "Z City", "Ghoul City", "Night Colosseum", "Bizzare Race", "Spirit Realm", "The City", "Virtual Sword", "Ruined Future City", "Lake Of Sacrifice", "S Rank Dungeon"])
 global StoryActDropdown := MainUI.Add("DropDownList", "x1128 y53 w80 h180 Choose0 +Center", ["Act 1", "Act 2", "Act 3", "Act 4", "Act 5", "Act 6", "Act 7", "Act 8", "Act 9", "Act 10"])
 global RangerMapDropdown := MainUI.Add("DropDownList", "x968 y53 w150 h180 Choose0 +Center", ["Voocha Village", "Green Planet", "Demon Forest", "Leaf Village", "Z City", "Ghoul City", "Night Colosseum", "Bizzare Race", "Spirit Realm", "The City", "Virtual Sword", "Ruined Future City", "Lake Of Sacrifice", "S Rank Dungeon"])
@@ -786,9 +781,13 @@ ShowOnlyControlGroup(groupToShow) {
     ControlGroups["Upgrade"] := [
         UnitSettings, UpgradeClicks, UpgradeClicksText, UpgradeUntilMaxed
     ]
+
+    ControlGroups["Mode"] := [
+        ModeBorder, MaxEndureText, MaxEndures
+    ]
     
     ControlGroups["Timers"] := [
-        TimerSettings, LobbySleepText, LobbySleepTimer, WebhookSleepText, WebhookSleepTimer, LoadingScreenWaitTime, LoadingScreenWaitTimeText, VoteTimeoutTimerText, VoteTimeoutTimer, ReturnToLobbyTimerText, ReturnToLobbyTimer, BossAttackCDTimerText, BossAttackCDTimer, 
+        TimerSettings, LobbySleepText, LobbySleepTimer, WebhookSleepText, WebhookSleepTimer, LoadingScreenWaitTime, LoadingScreenWaitTimeText, VoteTimeoutTimerText, VoteTimeoutTimer, ReturnToLobbyTimerText, ReturnToLobbyTimer,
         UltimateCheckText, UltimateCheckEdit, 
         UpgradeBeforeUltimateText, UpgradeBeforeUltimateEdit,
         InfinityCastleTimeText, InfinityCastleTime,
@@ -812,9 +811,6 @@ ShowOnlyControlGroup(groupToShow) {
                 control.Visible := isVisible
         }
     }
-    ; Ensure BossAttackCDTimer controls are visible if Timers group is shown
-    BossAttackCDTimerText.Visible := (groupToShow = "Timers")
-    BossAttackCDTimer.Visible := (groupToShow = "Timers")
 }
 
 ValidateWebhook() {

@@ -6,9 +6,6 @@ Sleep=2
 [Matchmaking]
 Matchmake=0
 
-[AutoBossAttack]
-BossAttack=0
-
 [ReturnToLobby]
 ToLobby=0
 
@@ -78,9 +75,6 @@ AutoAbility=0
 UltimateCheck=20
 UpgradeBeforeUltimate=10
 
-[BossAttackCD]
-BossAttackCDDelay=4
-
 [ReturnToLobbyTimer]
 ReturnToLobbyTimer=8
 
@@ -109,6 +103,9 @@ AutoRetry=0
 
 [AutoGameSpeed]
 AutoGameSpeed=1
+
+[Adventure Mode]
+MaxEndures=0
 
 [WebhookSettings]
 WebhookEnabled=0

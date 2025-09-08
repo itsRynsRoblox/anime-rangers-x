@@ -67,7 +67,6 @@ readInSettings() {
                 case "ToLobby": ReturnLobbyBox.Value := parts[2] ; Set the checkbox value
                 case "Replay": ReplayBox.Value := parts[2] ; Set the checkbox value
                 case "Difficulty": StoryDifficulty.Value := parts[2] ; Set the dropdown value
-                case "BossAttack": BossAttackBox.Value := parts[2] ; Set the checkbox value
                 case "Play": AutoPlay.Value := parts[2] ; Set the checkbox value
                 case "Upgrade": ShouldUpgradeUnits.Value := parts[2] ; Set the checkbox value
                 case "LobbyDelay": LobbySleepTimer.Value := parts[2]
@@ -80,7 +79,6 @@ readInSettings() {
                 case "UltimateCheck": UltimateCheckEdit.Value := parts[2]
                 case "UpgradeUntilMaxed": UpgradeUntilMaxed.Value := parts[2]
                 case "UpgradeBeforeUltimate": UpgradeBeforeUltimateEdit.Value := parts[2]
-                case "BossAttackCDDelay": BossAttackCDTimer.Value := parts[2]
                 case "ReturnToLobbyTimer": ReturnToLobbyTimer.Value := parts[2]
                 case "InfinityCastleTime": InfinityCastleTime.Value := parts[2]
                 case "BossRushTime": BossRushTime.Value := parts[2]
@@ -97,6 +95,7 @@ readInSettings() {
                 case "CustomReplay": CustomReplay.Value := parts[2]
                 case "ReplayX": ReplayX.Value := parts[2]
                 case "ReplayY": ReplayY.Value := parts[2]
+                case "MaxEndures": MaxEndures.Value := parts[2]
             }
         }
         AddToLog("✅ Configuration settings loaded successfully")
@@ -131,12 +130,6 @@ SaveSettings(*) {
 
         content .= "`n[Matchmaking]"
         content .= "`nMatchmake=" MatchMaking.Value "`n"
-
-        ;content .= "`n[AutoChallenge]"
-        ;content .= "`nChallenge=" ChallengeBox.Value "`n"
-
-        content .= "`n[AutoBossAttack]"
-        content .= "`nBossAttack=" BossAttackBox.Value "`n"
 
         content .= "`n[ReturnToLobby]"
         content .= "`nToLobby=" ReturnLobbyBox.Value "`n"
@@ -207,12 +200,6 @@ SaveSettings(*) {
         content .= "`nUltimateCheck=" UltimateCheckEdit.Value
         content .= "`nUpgradeBeforeUltimate=" UpgradeBeforeUltimateEdit.Value
 
-		;content .= "`n[RangerCD]"
-        ;content .= "`nRangerCDDelay=" RangerCDTimer.Value
-
-        content .= "`n`n[BossAttackCD]"
-        content .= "`nBossAttackCDDelay=" BossAttackCDTimer.Value
-
         content .= "`n`n[ReturnToLobbyTimer]"
         content .= "`nReturnToLobbyTimer=" ReturnToLobbyTimer.Value
 
@@ -241,6 +228,9 @@ SaveSettings(*) {
 
         content .= "`n`n[AutoGameSpeed]"
         content .= "`nAutoGameSpeed=" AutoGameSpeed.Value
+
+        content .= "`n`n[Adventure Mode]"
+        content .= "`nMaxEndures=" MaxEndures.Value
 
         content .= "`n`n[WebhookSettings]"
         content .= "`nWebhookEnabled=" WebhookEnabled.Value

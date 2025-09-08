@@ -25,5 +25,6 @@ SendMode "Event"
 #Include %A_ScriptDir%\Lib\Modes\InfinityCastle.ahk
 #Include %A_ScriptDir%\Lib\Modes\BossRush.ahk
 #Include %A_ScriptDir%\Lib\Modes\Swarm.ahk
+#Include %A_ScriptDir%\Lib\Modes\AdventureMode.ahk
 
 global scriptInitialized := true
