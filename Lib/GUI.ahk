@@ -16,7 +16,7 @@ uiTheme.Push("00ffb3")    ; HighLight
 ;Update Checker
 global repoOwner := "itsRynsRoblox"
 global repoName := "anime-rangers-x"
-global currentVersion := "1.6.0"
+global currentVersion := "1.6.1"
 
 ; Basic Application Info
 global GameTitle := "Ryn's Anime Rangers X "
@@ -269,7 +269,7 @@ global AutoPlay := MainUI.Add("CheckBox", "x808 y615 cffffff", "Summon Units")
 
 global ShouldUpgradeUnits := MainUI.Add("CheckBox", "x940 y615 cffffff", "Upgrade Units")
 ;global ChallengeBox := MainUI.Add("CheckBox", "x1048 y615 cffffff", "Farm Ranger Stages")
-global AutoAbility := MainUI.Add("CheckBox", "x1075 y615 cffffff", "Auto Ultimate")
+global AutoAbility := MainUI.Add("CheckBox", "x1075 y615 cffffff Hidden", "Auto Ultimate")
 global UpdateMessages := MainUI.Add("CheckBox", "x1200 y615 cffffff", "Update Messages")
 
 global GameSpeedText := MainUI.Add("Text", "x1245 y560 w100 h20 +Center ", "Game Speed")

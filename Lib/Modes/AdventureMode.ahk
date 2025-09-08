@@ -6,7 +6,7 @@ CheckForContinue() {
 
 HandleEndureOrEvade() {
     global enduresPerRun
-    if (CheckForContinue() or evading) {
+    if (CheckForContinue()) {
         if (enduresPerRun == MaxEndures.Value) {
             AddToLog("Reached max endures, evading instead")
             FixClick(450, 395)

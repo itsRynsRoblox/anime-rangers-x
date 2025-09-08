@@ -10,8 +10,6 @@ global checkForUnitManager := true
 global lastHourCheck := A_Hour
 global startingMode := true
 global isUpgrading := true
-global autoAbilityClicking := false
-global inStage := false
 global lastVoteCheck := 0
 global voteCheckCooldown := 1500
 global currentRangerSkipIndex := 1
@@ -69,10 +67,6 @@ TogglePause(*) {
     }
 }
 
-StoryMode() {
-    StartContent(StoryDropdown.Text, StoryActDropdown.Text, GetStoryMap, GetStoryAct, { x: 230, y: 155 }, { x: 405, y: 195 })
-}
-
 BossEvent() {
     global startingMode
     BossEventMovement()
@@ -99,27 +93,6 @@ ChallengeMode() {
     }
 
     CreateChallenge()
-}
-
-Portal() {
-    global startingMode
-
-    currentPortalMap := PortalDropdown.Text
-
-    PortalMovement()
-    AddToLog("Starting Portal for " currentPortalMap)
-    Sleep(1000)
-
-    while !(ok := GetFindText().FindText(&X, &Y, 77, 196, 240, 294, 0, 0, PortalText)) {
-        RemovePortalName() ; Remove Portal Name
-        Reconnect() ; Added Disconnect Check
-        FixClick(80, 325) ; Click Leave
-        Sleep(1000)
-        PortalMovement()
-    }
-
-    StartPortal()
-    startingMode := false
 }
 
 
@@ -178,52 +151,10 @@ LegendMode() {
     PlayHere()
 }
 
-RaidMode() {
-    global RaidDropdown, RaidActDropdown, startingMode
-    
-    ; Get current map and act
-    currentRaidMap := RaidDropdown.Text
-    currentRaidAct := RaidActDropdown.Text
-    
-        ; Execute the movement pattern
-    AddToLog("Moving to position for " currentRaidMap)
-    RaidMovement()
-    
-    ; Start stage
-    while !(ok := GetFindText().FindText(&X, &Y, 352, 101, 452, 120, 0.05, 0.20, RoomPods)) {
-        FixClick(80, 325) ; Click Leave
-        Reconnect() ; Added Disconnect Check
-        RaidMovement()
-    }
-
-    FixClick(25, 225) ; Create Room
-    Sleep(1000)
-
-    while !(ok := GetFindText().FindText(&X, &Y, 325, 163, 409, 193, 0.05, 0.20, StoryChapter)) {
-        AddToLog("Looking for Story Chapter Text...")
-        FixClick(615, 155) ; Click X on Join
-        Sleep(1000)
-        FixClick(25, 225) ; Create Room
-        Sleep(1000)
-        Reconnect() ; Added Disconnect Check
-    }
-
-    AddToLog("Starting " currentRaidMap " - " currentRaidAct)
-    StartRaid(currentRaidMap, currentRaidAct)
-
-    PlayHere()
-}
-
 MonitorEndScreen() {
-    global Wins, loss, stageStartTime, lastResult, webhookSendTime, firstWebhook, inStage
+    global Wins, loss, stageStartTime, lastResult, webhookSendTime, firstWebhook
 
     isWin := false
-    if (IsSet(autoAbilityClicking) && autoAbilityClicking) {
-        autoAbilityClicking := false
-        SetTimer(AutoAbility_ClickLoop, 0)
-        SendInput("{T}")
-        Sleep(200)
-    }
 
     lastClickTime := A_TickCount
 
@@ -238,6 +169,11 @@ MonitorEndScreen() {
             lastClickTime := A_TickCount
         }
         Sleep (150)
+    }
+
+    ; --- Handle Auto Ability ---
+    if (AutoAbility.Value) {
+        SetTimer(CheckAutoAbility, 0)
     }
 
     if (ModeDropdown.Text = "Infinity Castle" || ModeDropdown.Text = "Boss Rush" ) {
@@ -263,15 +199,6 @@ MonitorEndScreen() {
     (isWin ? Wins += 1 : loss += 1)
     Sleep(200)
 
-    ; Stop Auto Ability if running
-    inStage := false
-    if (IsSet(autoAbilityClicking) && autoAbilityClicking) {
-        autoAbilityClicking := false
-        SetTimer(AutoAbility_ClickLoop, 0)
-        SendInput("{T}")
-        Sleep(200)
-    }
-
     if (WebhookEnabled.Value && (firstWebhook || (A_TickCount - webhookSendTime) >= GetWebhookDelay())) {
         try {
             SendWebhookWithTime(isWin, stageLength)
@@ -284,15 +211,7 @@ MonitorEndScreen() {
         UpdateStreak(isWin)
     }
 
-    ; --- Default Mode Handling ---
-    inStage := false
-    if (IsSet(autoAbilityClicking) && autoAbilityClicking) {
-        autoAbilityClicking := false
-        SetTimer(AutoAbility_ClickLoop, 0)
-        SendInput("{T}")
-        Sleep(200)
-    }
-
+    ; --- Mode Handling ---
     if (ModeDropdown.Text = "Adventure Mode") {
         enduresPerRun := 0
     }
@@ -309,18 +228,6 @@ MonitorEndScreen() {
         HandleInfinityCastle()
     } else {
         HandleDefaultMode()
-    }
-
-    ; --- Ability State interrupt on win/loss ---
-    inStage := false
-    if (IsSet(autoAbilityClicking) && autoAbilityClicking) {
-        autoAbilityClicking := false
-        SetTimer(AutoAbility_ClickLoop, 0)
-        SendInput("{T}")
-        Sleep(200)
-        if (A_IsPaused) {
-            TogglePause()
-        }
     }
 }
 
@@ -399,13 +306,6 @@ ShouldReturnToLobby() {
         FormatTimeLeft(remaining)
     }
     return false
-}
-
-FormatTimeLeft(msRemaining) {
-    minutes := Floor(msRemaining / 60000)
-    seconds := Floor(Mod(msRemaining, 60000) / 1000)
-
-    AddToLog("Returning to lobby in " . minutes . "m " . seconds . "s")
 }
 
 HandleRangerMode() {
@@ -546,85 +446,6 @@ ChallengeMovement() {
     Sleep (1000)
 }
 
-PortalMovement() {
-    FixClick(26, 328) ; Click Areas
-    Sleep(500)
-    FixClick(437, 350)
-    Sleep(500)
-    FixClick(65, 293)
-    Sleep(500)
-    FixClick(296, 198)
-    Sleep(500)
-    SendInput(PortalDropdown.Text) ; Type the portal name
-    Sleep(500)
-    FixClick(267, 238)
-    Sleep(500)
-}
-
-StartStoryOld(map, act, isRanger := false) {
-    AddToLog("Selecting map: " map " and act: " act)
-
-    ; Get Story map 
-    StoryMap := GetMapData("StoryMap", map)
-    
-    ; Scroll if needed
-    if (StoryMap.scrolls > 0) {
-        AddToLog("Scrolling down " StoryMap.scrolls " for " map)
-        MouseMove(230, 175)
-        loop StoryMap.scrolls {
-            SendInput("{WheelDown}")
-            Sleep(250)
-        }
-    }
-    Sleep(1000)
-    
-    ; Click (468, 469) for Ranger mode right before clicking the map
-    if (isRanger) {
-        Sleep(2000)
-        FixClick(468, 469)
-        Sleep(200)
-    }
-    ; Click on the map
-    FixClick(StoryMap.x, StoryMap.y)
-    Sleep(1000)
-    
-    ; Get act details
-    StoryAct := GetMapData("StoryAct", act)
-    
-    if (isRanger) {
-        Sleep(2000)
-        ; No click here
-    }
-
-    ; Scroll if needed for act
-    if (StoryAct.scrolls > 0) {
-        AddToLog("Scrolling down " StoryAct.scrolls " times for " act)
-        MouseMove(400, 175)
-        loop StoryAct.scrolls {
-            SendInput("{WheelDown}")
-            Sleep(250)
-        }
-    }
-    Sleep(1000)
-    
-    ; Click on the act
-    FixClick(StoryAct.x, StoryAct.y)
-    Sleep(1000)
-
-    ; Click the correct difficulty
-    if (StoryDifficulty.Text = "Normal") {
-        FixClick(522, 260)
-    } else if (StoryDifficulty.Text = "Hard") {
-        FixClick(569, 263)
-    } else {
-        ; Default to Nightmare
-        FixClick(617, 264)
-    }
-    Sleep(1000)
-    
-    return true
-}
-
 StartRanger(map, act, isRanger := false) {
     if (ShouldSkipMap(map, act)) {
         AddToLog("Map Skips: Skipping " map " - " act)
@@ -688,59 +509,6 @@ StartRanger(map, act, isRanger := false) {
     FixClick(StoryAct.x, StoryAct.y)
     Sleep(1000)
 
-    return true
-}
-
-StartRaid(map, act, isRanger := false) {
-    AddToLog("Selecting map: " map " and act: " act)
-
-    ; Get Story map 
-    StoryMap := GetMapData("RaidMap", map)
-    FixClick(541, 468) ; Click on Raid
-    Sleep (200)
-    ; Scroll if needed
-    if (StoryMap.scrolls > 0) {
-        AddToLog("Scrolling down " StoryMap.scrolls " for " map)
-        MouseMove(230, 175)
-        loop StoryMap.scrolls {
-            SendInput("{WheelDown}")
-            Sleep(250)
-        }
-    }
-    Sleep(1000)
-    
-    ; Click (468, 469) for Ranger mode right before clicking the map
-    if (isRanger) {
-        Sleep(2000)
-        FixClick(468, 469)
-        Sleep(200)
-    }
-    ; Click on the map
-    FixClick(StoryMap.x, StoryMap.y)
-    Sleep(1000)
-    
-    ; Get act details
-    StoryAct := GetMapData("RaidAct", act)
-    
-    if (isRanger) {
-        Sleep(2000)
-        ; No click here
-    }
-    ; Scroll if needed for act
-    if (StoryAct.scrolls > 0) {
-        AddToLog("Scrolling down " StoryAct.scrolls " times for " act)
-        MouseMove(400, 175)
-        loop StoryAct.scrolls {
-            SendInput("{WheelDown}")
-            Sleep(250)
-        }
-    }
-    Sleep(1000)
-    
-    ; Click on the act
-    FixClick(StoryAct.x, StoryAct.y)
-    Sleep(1000)
-    
     return true
 }
 
@@ -936,37 +704,6 @@ StartPortal() {
     Sleep(2000)
 }
 
-Zoom() {
-    MouseMove(400, 300)
-    Sleep 100
-
-    ; Zoom in smoothly
-    Loop 10 {
-        Send "{WheelUp}"
-        Sleep 50
-    }
-
-    ; Look down
-    Click
-    MouseMove(400, 400)  ; Move mouse down to angle camera down
-    
-    ; Zoom back out smoothly
-    Loop 20 {
-        Send "{WheelDown}"
-        Sleep 50
-    }
-    
-    ; Move mouse back to center
-    MouseMove(400, 300)
-}
-
-CloseChat() {
-    if (ok := GetFindText().FindText(&X, &Y, 123, 50, 156, 79, 0, 0, OpenChat)) {
-        AddToLog "Closing Chat"
-        FixClick(138, 30) ;close chat
-    }
-}
-
 BasicSetup() {
     CloseChat()
     Sleep 300
@@ -1009,16 +746,6 @@ RestartStage() {
 
         ; Summon Units
         SummonUnits()
-
-        ; ===== เพิ่มส่วนนี้ =====
-        inStage := false
-        if (IsSet(autoAbilityClicking) && autoAbilityClicking) {
-            autoAbilityClicking := false
-            SetTimer(AutoAbility_ClickLoop, 0)
-            SendInput("{T}")
-            Sleep(200)
-        }
-        ; ========================
         
         ; Monitor stage progress
         MonitorEndScreen()
@@ -1035,12 +762,8 @@ Reconnect() {
         AddToLog("Disconnected! Attempting to reconnect...")
         ;sendDCWebhook()
 
-        inStage := false
-        if (IsSet(autoAbilityClicking) && autoAbilityClicking) {
-            autoAbilityClicking := false
-            SetTimer(AutoAbility_ClickLoop, 0)
-            SendInput("{T}")
-            Sleep(200)
+        if (AutoAbility.Value) {
+            SetTimer(CheckAutoAbility, 0)
         }
 
         try {
@@ -1147,14 +870,6 @@ CheckForXp() {
 CheckLobby() {
     global currentMap, startingMode, ReturnToLobbyStartTime
 
-    inStage := false
-    if (IsSet(autoAbilityClicking) && autoAbilityClicking) {
-        autoAbilityClicking := false
-        SetTimer(AutoAbility_ClickLoop, 0)
-        SendInput("{T}")
-        Sleep(200)
-    }
-
     loop {
         if (ok := GetFindText().FindText(&X, &Y, 4, 299, 91, 459, 0, 0, AreaText)) {
             break
@@ -1177,14 +892,6 @@ CheckLobby() {
 
 CheckLobbyRanger() {
     global currentMap, startingMode
-
-    inStage := false
-    if (IsSet(autoAbilityClicking) && autoAbilityClicking) {
-        autoAbilityClicking := false
-        SetTimer(AutoAbility_ClickLoop, 0)
-        SendInput("{T}")
-        Sleep(200)
-    }
 
     loop {
         if (ok := GetFindText().FindText(&X, &Y, 4, 299, 91, 459, 0, 0, AreaText)) {
@@ -1354,350 +1061,41 @@ WaitForGameState(mode := "loading") {
 StartSelectedMode() {
     global inChallengeMode, firstStartup, challengeStartTime, currentMap, startingMode
 
-    inStage := false
-    autoAbilityClicking := false
-
     FixClick(640, 70) ; Closes Player leaderboard
     Sleep(500)
 
     FixClick(558, 166) ; Closes Daily
-    Sleep (500)
-
-    if (ModeDropdown.Text = "Custom") {
-        inChallengeMode := false
-        firstStartup := false
-        CoOpMode()
-        return
-    }
+    Sleep(500)
 
     if (firstStartup) {
         firstStartup := false 
     }
     
     AddToLog("Starting mode: " ModeDropdown.Text)
-    if (ModeDropdown.Text = "Story") {
-        StartContent(StoryDropdown.Text, StoryActDropdown.Text, GetStoryMap, GetStoryAct, { x: 230, y: 155 }, { x: 405, y: 195 })
-    } else if (ModeDropdown.Text = "Ranger Stages") {
-        StartContent(RangerMapDropdown.Text, RangerActDropdown.Text, GetStoryMap, GetStoryAct, { x: 230, y: 155 }, { x: 405, y: 195 })
-    } else if (ModeDropdown.Text = "Raid") {
-        StartContent(RaidDropdown.Text, RaidActDropdown.Text, GetRaidMap, GetRaidAct, { x: 230, y: 155 }, { x: 405, y: 195 })
-    } else if (ModeDropdown.Text = "Boss Event") {
-        BossEvent()
-    } else if (ModeDropdown.Text = "Challenge") {
-        ChallengeMode()
-    } else if (ModeDropdown.Text = "Portal") {
-        Portal()
-    } else if (ModeDropdown.Text = "Infinity Castle") {
-        StartInfinityCastle()
-    } else if (ModeDropdown.Text = "Boss Rush") {
-        StartBossRush()
-    } else if (ModeDropdown.Text = "Swarm Event") {
-        StartSwarmEvent()
+    switch ModeDropdown.Text {
+        case "Story":
+            StartContent(StoryDropdown.Text, StoryActDropdown.Text, GetStoryMap, GetStoryAct, { x: 230, y: 155 }, { x: 405, y: 195 })
+        case "Ranger Stages":
+            StartContent(RangerMapDropdown.Text, RangerActDropdown.Text, GetStoryMap, GetStoryAct, { x: 230, y: 155 }, { x: 405, y: 195 })
+        case "Raid":
+            StartContent(RaidDropdown.Text, RaidActDropdown.Text, GetRaidMap, GetRaidAct, { x: 230, y: 155 }, { x: 405, y: 195 })
+        case "Boss Event":
+            BossEvent()
+        case "Challenge":
+            ChallengeMode()
+        case "Portal":
+            Portal()
+        case "Infinity Castle":
+            StartInfinityCastle()
+        case "Boss Rush":
+            StartBossRush()
+        case "Swarm Event":
+            StartSwarmEvent()   
+        case "Adventure Mode":
+            startingMode := false
+        case "Custom":
+            CoOpMode()
     }
-}
-
-FormatStageTime(ms) {
-    seconds := Floor(ms / 1000)
-    minutes := Floor(seconds / 60)
-    hours := Floor(minutes / 60)
-    
-    minutes := Mod(minutes, 60)
-    seconds := Mod(seconds, 60)
-    
-    return Format("{:02}:{:02}:{:02}", hours, minutes, seconds)
-}
-
-ValidateMode() {
-    if (ModeDropdown.Text = "") {
-        AddToLog("Please select a gamemode before starting the macro!")
-        return false
-    }
-    if (!confirmClicked) {
-        AddToLog("Please click the confirm button before starting the macro!")
-        return false
-    }
-    return true
-}
-
-GetNavKeys() {
-    return StrSplit(FileExist("Settings\UINavigation.txt") ? FileRead("Settings\UINavigation.txt", "UTF-8") : "\,#,}", ",")
-}
-
-IsColorInRange(color, targetColor, tolerance := 50) {
-    ; Extract RGB components
-    r1 := (color >> 16) & 0xFF
-    g1 := (color >> 8) & 0xFF
-    b1 := color & 0xFF
-    
-    ; Extract target RGB components
-    r2 := (targetColor >> 16) & 0xFF
-    g2 := (targetColor >> 8) & 0xFF
-    b2 := targetColor & 0xFF
-    
-    ; Check if within tolerance range
-    return Abs(r1 - r2) <= tolerance 
-        && Abs(g1 - g2) <= tolerance 
-        && Abs(b1 - b2) <= tolerance
-}
-
-GetPlacementOrder() {
-    placements := []
-
-    Loop 6 {
-        slotNum := A_Index
-        order := "placement" slotNum
-        order := %order%
-        order := Integer(order.Text)
-        placements.Push({slot: slotNum, order: order})
-    }
-
-    for i, _ in placements {
-        j := i
-        while (j > 1 && placements[j].order < placements[j - 1].order) {
-            temp := placements[j]
-            placements[j] := placements[j - 1]
-            placements[j - 1] := temp
-            j--
-        }
-    }
-
-    orderedSlots := []
-    for item in placements
-        orderedSlots.Push(item.slot)
-
-    return orderedSlots
-}
-
-SummonUnits() {
-    global checkForUnitManager
-    upgradeUnits := ShouldUpgradeUnits.Value
-    enabledSlots := []
-    upgradeEnabledSlots := Map()
-    waitUntilMaxSlots := Map()
-    maxUpgradeSlots := Map()
-
-    for slotNum in GetPlacementOrder() {
-        enabledVar := "enabled" slotNum
-        upgradeEnabledVar := "upgradeEnabled" slotNum
-        upgradeBeforeSummonVar := "upgradeBeforeSummon" slotNum
-
-        enabled := %enabledVar%
-        upgradeEnabled := %upgradeEnabledVar%
-        upgradeBeforeSummon := %upgradeBeforeSummonVar%
-
-        if (enabled.Value) {
-            enabledSlots.Push(slotNum)
-
-            if (upgradeEnabled.Value) {
-                upgradeEnabledSlots[slotNum] := true
-                waitUntilMaxSlots[slotNum] := upgradeBeforeSummon.Value ? true : false
-            } else {
-                maxUpgradeSlots[slotNum] := true
-            }
-        }
-    }
-
-    if (enabledSlots.Length = 0) {
-        if (debugMessages) {
-            AddToLog("No units enabled - monitoring stage")
-        }
-        return
-    }
-
-    profilePoints := UnitProfilePoints(enabledSlots.Length)
-
-    if (!AutoPlay.Value && !upgradeUnits) {
-        AddToLog("Summon && Upgrade disabled - monitoring stage")
-        checkForUnitManager := false
-        return
-    }
-
-    ; ==== Decide whether to open the Unit Manager ====
-    if (upgradeUnits && checkForUnitManager && upgradeEnabledSlots.Count > 0) {
-        if (!GetFindText().FindText(&X, &Y, 609, 463, 723, 495, 0.10, 0.20, UnitManagerBack)) {
-            AddToLog("Unit Manager isn't open - trying to open it")
-            Loop {
-                CheckForVoteScreen()
-                if (!GetFindText().FindText(&X, &Y, 609, 463, 723, 495, 0.10, 0.20, UnitManagerBack)) {
-                    SendInput("{T}")
-                    FixClick(750, 330)
-                    Sleep(1000)
-                } else {
-                    AddToLog("Unit Manager is open")
-                    break
-                }
-            }
-        }
-        checkForUnitManager := false
-    }
-
-    ; ==== Enable auto ability logic ====
-    inStage := true
-    if (AutoAbility.Value && inStage && !IsInLobby()) {
-        autoAbilityClicking := true
-        AutoAbilityRoutine()
-    }
-
-    lastScrollGroup := ""
-    lastSlotNum := ""
-
-    ; Main loop — runs until all enabled slots are processed
-    while (enabledSlots.Length > 0) {
-        if (CheckForXp()) {
-            return
-        }
-        ; Track whether any upgrading was done this loop
-        upgradedThisLoop := false
-
-        ; Summon maxed units first
-       /* for index, slotNum in enabledSlots {
-            SummonIfReady(slotNum, waitUntilMaxSlots, maxUpgradeSlots)
-        } */
-    
-        ; Handle upgrading (only one unit at a time if toggle is on)
-        if (upgradeUnits && upgradeEnabledSlots.Count > 0) {
-            for index, slotNum in enabledSlots {
-                
-                if !upgradeEnabledSlots.Has(slotNum)
-                    continue
-    
-                if CheckForXp() {
-                    return
-                }
-
-                VoteCheck()
-    
-                ; Scroll if needed
-                if ([1, 2, 3].Has(slotNum))
-                    currentGroup := "top"
-                else
-                    currentGroup := "bottom"
-    
-                if (currentGroup != lastScrollGroup) {
-                    FixClick(660, 155)
-                    (currentGroup = "top") ? ScrollToTop() : ScrollToBottom()
-                    lastScrollGroup := currentGroup
-                    Sleep(200)
-                }
-    
-                profile := profilePoints[slotNum]
-    
-                if (slotNum != lastSlotNum) {
-                    FixClick(profile.x, profile.y)
-                    lastSlotNum := slotNum
-                }
-
-                AddToLog("Upgrading unit in slot: " slotNum)
-
-                ; Perform one upgrade loop
-                loop UpgradeClicks.Value {
-                    FixClick(70, 355)
-                    Sleep(50)
-                }
-
-                upgradedThisLoop := true
-
-                if (MaxUpgraded()) {
-                    AddToLog("Max upgrade reached for slot: " slotNum)
-                    FixClick(250, 200)
-                    upgradeEnabledSlots.Delete(slotNum)
-                    maxUpgradeSlots[slotNum] := true
-                    waitUntilMaxSlots.Delete(slotNum) ; Remove from wait list
-                }
-
-                for _, slotNum in enabledSlots {
-                    SummonIfReady(slotNum, waitUntilMaxSlots, maxUpgradeSlots)
-                }
-
-                Reconnect()
-
-                ; Break if we're only doing one unit at a time
-                if (UpgradeUntilMaxed.Value) {
-                    break
-                }
-            }
-        } else {
-
-            ; Now summon all enabled units
-            for _, slotNum in enabledSlots {
-
-                if CheckForXp() {
-                    return
-                }
-                VoteCheck()
-                SummonIfReady(slotNum, waitUntilMaxSlots, maxUpgradeSlots)
-            }
-            Reconnect()
-        }
-    }    
-}
-
-ShouldSummon(slotNum, waitUntilMaxSlots, maxUpgradeSlots) {
-    ; If not set to wait until maxed → summon
-    if (!waitUntilMaxSlots.Has(slotNum)) {
-        return true
-    }
-
-    ; If it IS set to wait until maxed
-    if (waitUntilMaxSlots[slotNum]) {
-        return maxUpgradeSlots.Has(slotNum)
-    }
-
-    ; Otherwise, summon as normal
-    return true
-}
-
-SummonIfReady(slotNum, waitUntilMaxSlots, maxUpgradeSlots) {
-    if (ShouldSummon(slotNum, waitUntilMaxSlots, maxUpgradeSlots)) {
-        Reconnect()
-        if (AutoPlay.Value) {
-            SendInput("{" slotNum "}")
-            FixClick(390, 500)
-            AddToLog("Summoning unit in slot: " slotNum)
-        }
-    } else if (debugMessages) {
-        AddToLog("Skipping summon for slot " slotNum)
-    }
-}
-
-MaxUpgraded() {
-    Sleep 500
-    ; Check for max text
-    if (ok := GetFindText().FindText(&X, &Y, 108, 246, 158, 263, 0, 0, UnitMaxText)) {
-        return true
-    }
-    return false
-}
-
-UnitProfilePoints(enabledCount := 6) {
-    topSlots := [
-        { x: 635, y: 190 }, ; Slot 1
-        { x: 635, y: 275 }, ; Slot 2
-        { x: 635, y: 350 }  ; Slot 3
-    ]
-
-    ; Adjust bottom slot positions based on how many slots are enabled
-    if (enabledCount <= 4) {
-        bottomY := [365] ; Centered
-    } else if (enabledCount = 5) {
-        bottomY := [275, 365] ; Spread for 2
-    } else {
-        bottomY := [190, 275, 365] ; Evenly spread for 3
-    }
-
-    bottomSlots := []
-    for index, y in bottomY {
-        bottomSlots.Push({ x: 635, y: y })
-    }
-
-    return Map(
-        1, topSlots[1],
-        2, topSlots[2],
-        3, topSlots[3],
-        4, bottomSlots.Has(1) ? bottomSlots[1] : { x: 635, y: 275 },
-        5, bottomSlots.Has(2) ? bottomSlots[2] : { x: 635, y: 275 },
-        6, bottomSlots.Has(3) ? bottomSlots[3] : { x: 635, y: 275 }
-    )
 }
 
 VoteCheck() {
@@ -1711,8 +1109,6 @@ VoteCheck() {
 
 CoOpMode() {
     global startingMode
-    inStage := true
-    autoAbilityClicking := true
     startingMode := false
 }
 
@@ -1727,31 +1123,9 @@ IsInLobby() {
     return GetFindText().FindText(&X, &Y, 4, 299, 91, 459, 0, 0, AreaText)
 }
 
-ChangeGameSpeed() {
-    if (GameSpeed.Text = "2x") {
-        FixClick(569, 23)
-    }
-    else if (GameSpeed.Text = "3x") {
-        FixClick(597, 22) ; 3x Speed
-    }
-}
-
 ChangePath() {
     AddToLog("Changing " ModeDropdown.Text " Path")
     FixClick(471, 439)
-}
-
-ModeValidForMapDetection(mode) {
-    ; If the mode is any of these, skip map detection
-    excludedModes := ["Custom", "Swarm Event"]
-
-    for modes, excludedMode in excludedModes {
-        if (mode = excludedMode) {
-            return false
-        }
-    }
-
-    return true
 }
 
 DoesntStartInLobby(ModeName) {

@@ -228,7 +228,7 @@ OnConfirmClick(*) {
         MatchMaking.Visible := false
     } else {
         mode := ModeDropdown.Text
-        AddToLog("Selected " ModeDropdown.Text " mode")
+        AddToLog("Selected " ModeDropdown.Text)
         MatchMaking.Visible := false
     }
 
@@ -405,15 +405,6 @@ ClickReplay() {
     xCoord := (ModeDropdown.Text != "Story" || StoryDropdown.Text = "Z City") ? 10 : 120 ; -120 : -250
     ;ClickUntilGone(0, 0, 135, 399, 539, 456, LobbyText, xCoord, -35)
     ClickUntilGoneWithVariant(0, 0, 117, 175, 229, 221, GameEnded, xCoord, 140, 0.20, 0.20)
-    ; Resume AutoAbility if enabled
-    if (IsSet(AutoAbility) && AutoAbility.Value) {
-        AddToLog("[AutoAbility] Resuming after Replay.")
-        AutoAbilityRoutine()
-        Sleep(50)
-        SendInput("{T}")
-    }
-    global upgradeBeforeUltimateUsed
-    upgradeBeforeUltimateUsed := false
 }
 
 CheckGameOver() {
@@ -452,57 +443,20 @@ ClickReplayRanger() {
     AddToLog("Clicking Replay...")
     FixClick(213, 394)
     Sleep (500)
-    ; Resume AutoAbility if enabled
-    if (IsSet(AutoAbility) && AutoAbility.Value) {
-        AddToLog("[AutoAbility] Resuming after Replay.")
-        AutoAbilityRoutine()
-        Sleep(50)
-        SendInput("{T}")
-    }
-    global upgradeBeforeUltimateUsed
-    upgradeBeforeUltimateUsed := false
 }
 
 ClickNextLevel() {
     ClickUntilGone(0, 0, 135, 399, 539, 456, LobbyText, -120, -35)
-    ; Resume AutoAbility if enabled
-    if (IsSet(AutoAbility) && AutoAbility.Value) {
-        AddToLog("[AutoAbility] Resuming after Next Level.")
-        AutoAbilityRoutine()
-        Sleep(50)
-        SendInput("{T}")
-    }
-    global upgradeBeforeUltimateUsed
-    upgradeBeforeUltimateUsed := false
 }
 
 ClickReplay2() {
     AddToLog("Clicking Replay...")
     FixClick(211, 390)
     Sleep (500)
-    ; Resume AutoAbility if enabled
-    if (IsSet(AutoAbility) && AutoAbility.Value) {
-        AddToLog("[AutoAbility] Resuming after Replay Boss Attack.")
-        AutoAbilityRoutine()
-        Sleep(50)
-        SendInput("{T}")
-    }
-    global upgradeBeforeUltimateUsed
-    upgradeBeforeUltimateUsed := false
 }
 
 ClickReturnToLobby() {
-    inStage := false
     ClickUntilGone(0, 0, 135, 399, 539, 456, LobbyText, 0, -35)
-    ; Stop Auto Ability if running
-    if (IsSet(autoAbilityClicking) && autoAbilityClicking) {
-        AddToLog("[AutoAbility] Stopped after returning to lobby.")
-        autoAbilityClicking := false
-        SetTimer(AutoAbility_ClickLoop, 0)
-        Sleep(200)
-    }
-    global upgradeBeforeUltimateUsed
-    upgradeBeforeUltimateUsed := false
 }
 
 ClickStartStory() {
@@ -628,135 +582,12 @@ GetFindText() {
     return obj
 }
 
-AutoAbilityRoutine() {
-    global autoAbilityClicking, autoAbilityTimerId, UltimateCheckEdit, UpgradeBeforeUltimateEdit, upgradeBeforeUltimateUsed
-    
-    ; เช็คว่ากลับ lobby แล้วหรือยัง
-    if (IsInLobby()) {
-        AddToLog("[AutoAbility] Detected lobby. Stopping Auto Ability.")
-        autoAbilityClicking := false
-        if (autoAbilityTimerId) {
-            SetTimer(autoAbilityTimerId, 0)
-            autoAbilityTimerId := 0
-        }
-        SetTimer(AutoAbility_ClickLoop, 0)
-        return
-    }
-
-    AddToLog("[AutoAbility] Cycle started. Checking if Upgrade (seconds) pause is needed...")
-    autoAbilityClicking := false
-    if (autoAbilityTimerId) {
-        SetTimer(autoAbilityTimerId, 0)
-        autoAbilityTimerId := 0
-    }
-    ; Only run Upgrade (seconds) timer once per game, and only as a pause before Ultimate Check
-    if (!upgradeBeforeUltimateUsed && (UpgradeBeforeUltimateEdit && UpgradeBeforeUltimateEdit.Value != "" && UpgradeBeforeUltimateEdit.Value > 0)) {
-        upgradeBeforeUltimateUsed := true
-        AddToLog("[AutoAbility] Pausing for Upgrade (seconds): " UpgradeBeforeUltimateEdit.Value " seconds before starting Ultimate Check.")
-        isUpgrading := true
-        SetTimer(AutoAbilityRoutine, -UpgradeBeforeUltimateEdit.Value * 1000)
-        return
-    }
-    ; Now start the Ultimate Check timer
-    ultimateDelay := (UltimateCheckEdit && UltimateCheckEdit.Value != "") ? UltimateCheckEdit.Value * 1000 : 60000
-    AddToLog("[AutoAbility] Starting Ultimate Check timer for " (ultimateDelay/1000) " seconds.")
-    SetTimer(AutoAbility_UltimateCheckEnd, -ultimateDelay)
-}
-
-AutoAbility_UltimateCheckEnd() {
-    global autoAbilityClicking, isUpgrading
-    AddToLog("[AutoAbility] Ultimate Check timer ended. Stopping upgrades and sending X.")
-    ; Stop upgrading
-    isUpgrading := false
-    Sleep(200)
-    ; Send X key (simulate close)
-    AddToLog("[AutoAbility] Sending X key.")
-    SendInput("{X}")
-    AddToLog("[AutoAbility] X key sent.")
-    Sleep(200)
-    ; Start ability detection loop
-    autoAbilityClicking := true
-    SetTimer(AutoAbility_ClickLoop, 100)
-}
-
-AutoAbility_ClickLoop() {
-    global autoAbilityClicking, ability1Text, ability2Text, ability3Text, ability4Text, ability5Text, ability6Text, ability7Text, ultGuiText, isUpgrading
-    if (!autoAbilityClicking) {
-        SetTimer(AutoAbility_ClickLoop, 0)
-        return
-    }
-
-    ; Function to click all instances of an ability
-    ClickAllInstances(x1, y1, x2, y2, text) {
-        local foundAny := false
-        while (ok := FindText(&X, &Y, x1, y1, x2, y2, 0, 0, text)) {
-            foundAny := true
-            ; Click at (158, 535) first to ensure clicks work
-            FindText().Click(158, 535, "L")
-            Sleep(1)
-            ; Click all found instances
-            for i, v in ok {
-                FindText().Click(v.x, v.y, "L")
-                Sleep(1)
-            }
-            Sleep(500)  ; 1 second sleep between different abilities
-        }
-        return foundAny
-    }
-
-    ; List abilities to check
-    abilities := [
-        [1240-150000, 408-150000, 1240+150000, 408+150000, ability1Text],
-        [1237-150000, 405-150000, 1237+150000, 405+150000, ability2Text],
-        [666-150000, 229-150000, 666+150000, 229+150000, ability3Text],
-        [666-150000, 227-150000, 666+150000, 227+150000, ability4Text],
-        [666-150000, 227-150000, 666+150000, 227+150000, ability5Text],
-        [667-150000, 225-150000, 667+150000, 225+150000, ability6Text],
-        [666-150000, 298-150000, 666+150000, 298+150000, ability7Text],
-        [528, 151, 797, 457, ability9Text],
-        [666-150000, 226-150000, 666+150000, 226+150000, ultGuiText],
-        [666-150000, 226-150000, 666+150000, 226+150000, newFindText]
-    ]
-
-    foundAnyAbility := false
-    for _, ab in abilities {
-        if (ok := FindText(&X, &Y, ab[1], ab[2], ab[3], ab[4], 0, 0, ab[5])) {
-            ; เจอสกิล กดใช้
-            FindText().Click(158, 535, "L")
-            Sleep(1)
-            for i, v in ok {
-                FindText().Click(v.x, v.y, "L")
-                Sleep(1)
-            }
-            Sleep(500) ; กันกดรัว
-            foundAnyAbility := true
-            break ; ออกจากลูปทันทีหลังเจอสกิล
-        }
-    }
-
-    if (foundAnyAbility) {
-        ; รีเซ็ต timer ใหม่ (วนกลับมาเช็คอีกครั้งหลัง delay)
-        SetTimer(AutoAbility_ClickLoop, -1000) ; 1 วินาที (ปรับได้)
-    } else {
-        ; ไม่เจอสกิล หยุด AutoAbility
-        AddToLog("[AutoAbility] No abilities detected, stopping and resuming upgrades.")
-        isUpgrading := true
-        SendInput("{T}")
-        SetTimer(AutoAbility_ClickLoop, 0)
-        AddToLog("[AutoAbility] Auto Ability stopped and upgrading resumed.")
-        ; Auto-resume after Ultimate Check if enabled
-    }
-}
-
 isMenuOpen(name := "") {
     if (name = "Unit Manager") {
-        return FindText(&X, &Y, 608, 464, 724, 496, 0.20, 0.20, MenuBackButton)
+        return GetFindText().FindText(&X, &Y, 609, 463, 723, 495, 0.10, 0.20, UnitManagerBack)
     }
     else if (name = "Ability Manager") {
-        return FindText(&X, &Y, 608, 464, 724, 496, 0.20, 0.20, MenuBackButton)
-    }
-    else if (name = "End Screen") {
-        return FindText(&X, &Y, 117, 175, 229, 221, 0.20, 0.20, GameEnded)
+        return GetFindText().FindText(&X, &Y, 609, 463, 723, 495, 0.10, 0.20, UnitManagerBack)
     }
 }
 
@@ -868,5 +699,160 @@ Scroll(times, direction, delay) {
     loop times {
         Send("{" direction "}")
         Sleep(delay)
+    }
+}
+
+GetNavKeys() {
+    return StrSplit(FileExist("Settings\UINavigation.txt") ? FileRead("Settings\UINavigation.txt", "UTF-8") : "\,#,}", ",")
+}
+
+IsColorInRange(color, targetColor, tolerance := 50) {
+    ; Extract RGB components
+    r1 := (color >> 16) & 0xFF
+    g1 := (color >> 8) & 0xFF
+    b1 := color & 0xFF
+    
+    ; Extract target RGB components
+    r2 := (targetColor >> 16) & 0xFF
+    g2 := (targetColor >> 8) & 0xFF
+    b2 := targetColor & 0xFF
+    
+    ; Check if within tolerance range
+    return Abs(r1 - r2) <= tolerance 
+        && Abs(g1 - g2) <= tolerance 
+        && Abs(b1 - b2) <= tolerance
+}
+
+ValidateMode() {
+    if (ModeDropdown.Text = "") {
+        AddToLog("Please select a gamemode before starting the macro!")
+        return false
+    }
+    if (!confirmClicked) {
+        AddToLog("Please click the confirm button before starting the macro!")
+        return false
+    }
+    return true
+}
+
+FormatStageTime(ms) {
+    seconds := Floor(ms / 1000)
+    minutes := Floor(seconds / 60)
+    hours := Floor(minutes / 60)
+    
+    minutes := Mod(minutes, 60)
+    seconds := Mod(seconds, 60)
+    
+    return Format("{:02}:{:02}:{:02}", hours, minutes, seconds)
+}
+
+CloseChat() {
+    if (ok := GetFindText().FindText(&X, &Y, 123, 50, 156, 79, 0, 0, OpenChat)) {
+        AddToLog "Closing Chat"
+        FixClick(138, 30)
+    }
+}
+
+Zoom() {
+    MouseMove(400, 300)
+    Sleep 100
+
+    ; Zoom in smoothly
+    Loop 10 {
+        Send "{WheelUp}"
+        Sleep 50
+    }
+
+    ; Look down
+    Click
+    MouseMove(400, 400)  ; Move mouse down to angle camera down
+    
+    ; Zoom back out smoothly
+    Loop 20 {
+        Send "{WheelDown}"
+        Sleep 50
+    }
+    
+    ; Move mouse back to center
+    MouseMove(400, 300)
+}
+
+ChangeGameSpeed() {
+    if (GameSpeed.Text = "2x") {
+        FixClick(569, 23)
+    }
+    else if (GameSpeed.Text = "3x") {
+        FixClick(597, 22) ; 3x Speed
+    }
+}
+
+FormatTimeLeft(msRemaining) {
+    minutes := Floor(msRemaining / 60000)
+    seconds := Floor(Mod(msRemaining, 60000) / 1000)
+
+    AddToLog("Returning to lobby in " . minutes . "m " . seconds . "s")
+}
+
+CheckAutoAbility() {
+    AddToLog("Checking for ultimates...")
+    OpenMenu("Ability Manager")
+    Sleep (1000)
+
+    if (CheckForXP()) {
+        AddToLog("Stopping auto ultimate check because the game ended")
+        CloseMenu("Ability Manager")
+        SetTimer(CheckAutoAbility, 0)  ; Stop the timer
+        return
+    }
+
+    if (CheckForContinue()) {
+        AddToLog("Pausing auto ultimate check because the continue screen is up")
+        HandleEndureOrEvade()
+    }
+
+    HandleAutoAbilityUnitManager()
+    Sleep (1000)
+    CloseMenu("Ability Manager")
+    AddToLog("Finished looking for abilities")
+}
+
+CloseMenu(name := "") {
+    if (!name)
+        return
+
+    key := ""
+    clickX := 0, clickY := 0
+    if (name = "Unit Manager")
+        key := "F"
+    else if (name = "Ability Manager")
+        key := "Z"
+
+    if (!key)
+        return  ; Unknown menu name
+
+    if (isMenuOpen(name)) {
+        AddToLog("Closing " name)
+        Send(key)  ; Close menu if it's open
+        Sleep(300)
+    }
+}
+
+OpenMenu(name := "") {
+    if (!name)
+        return
+
+    key := ""
+    if (name = "Unit Manager")
+        key := "F"
+    else if (name = "Ability Manager")
+        key := "X"
+
+    if (!key)
+        return  ; Unknown menu name
+
+    if (!isMenuOpen(name)) {
+        AddToLog("Opening " name)
+        Send(key)
+        Sleep(1000)
     }
 }
