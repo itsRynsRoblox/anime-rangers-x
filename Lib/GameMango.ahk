@@ -152,7 +152,7 @@ LegendMode() {
 }
 
 MonitorEndScreen() {
-    global Wins, loss, stageStartTime, lastResult, webhookSendTime, firstWebhook
+    global Wins, loss, stageStartTime, lastResult, webhookSendTime, firstWebhook, enduresPerRun
 
     isWin := false
 
@@ -161,11 +161,12 @@ MonitorEndScreen() {
     ; Wait for XP to appear or reconnect if necessary
     while !CheckForXp() {
         if ((A_TickCount - lastClickTime) >= 2000) {
-            if (CheckForContinue()) {
-                HandleEndureOrEvade()
-            } else {
-                FixClick(400, 495)
+            if (ModeDropdown.Text = "Adventure Mode" || ModeDropdown.Text = "Custom") {
+                if (CheckForContinue()) {
+                    HandleEndureOrEvade()
+                }
             }
+            FixClick(400, 495)
             lastClickTime := A_TickCount
         }
         Sleep (150)
@@ -176,7 +177,7 @@ MonitorEndScreen() {
         SetTimer(CheckAutoAbility, 0)
     }
 
-    if (ModeDropdown.Text = "Infinity Castle" || ModeDropdown.Text = "Boss Rush" ) {
+    if (ModeDropdown.Text = "Infinity Castle" || ModeDropdown.Text = "Boss Rush") {
         SetTimer(ChangePath, 0)
     }
 
@@ -197,9 +198,9 @@ MonitorEndScreen() {
     lastResult := isWin ? "win" : "lose"
     AddToLog((isWin ? "Victory" : "Defeat") " detected - Stage Length: " stageLength)
     (isWin ? Wins += 1 : loss += 1)
-    Sleep(200)
 
     if (WebhookEnabled.Value && (firstWebhook || (A_TickCount - webhookSendTime) >= GetWebhookDelay())) {
+        Sleep(200)
         try {
             SendWebhookWithTime(isWin, stageLength)
             webhookSendTime := A_TickCount
@@ -212,82 +213,81 @@ MonitorEndScreen() {
     }
 
     ; --- Mode Handling ---
-    if (ModeDropdown.Text = "Adventure Mode") {
+    if (ModeDropdown.Text = "Adventure Mode" || ModeDropdown.Text = "Custom") {
         enduresPerRun := 0
     }
 
     if (ModeDropdown.Text = "Story") {
-        HandleStoryMode()
+        HandleMode("story")
     } else if (ModeDropdown.Text = "Ranger Stages") {
         HandleRangerMode()
     } else if (ModeDropdown.Text = "Raid") {
-        HandleStoryMode()
+        HandleMode("raid")
     } else if (ModeDropdown.Text = "Portal") {
-        HandlePortalMode()
+        HandleMode("portal")
     } else if (ModeDropdown.Text = "Infinity Castle") {
-        HandleInfinityCastle()
+        HandleMode("infinity castle")
     } else {
-        HandleDefaultMode()
+        HandleMode("default")
     }
 }
 
-HandleStoryMode() {
+HandleMode(mode) {
     global lastResult
 
+    ; --- Shared: Return to Lobby Check ---
+    if (ShouldReturnToLobby()) {
+        AddToLog("Return to lobby timer reached - returning to lobby to restart")
+        ClickReturnToLobby()
+        CheckLobby()
+        return
+    }
+
+    ; --- Shared: Next Level Progression ---
     if (lastResult = "win" && NextLevelBox.Value && NextLevelBox.Visible) {
         ClickNextLevel()
-    } else if (GetMapForFarming(StoryDropdown.Text) != "no map found" && PortalFarm.Value) {
-        SwitchActiveFarm()
-        Sleep(1500)
-        ClickReturnToLobby()
-        CheckLobby()
-    } else if (ShouldReturnToLobby()) {
-        AddToLog("Return to lobby timer reached - returning to lobby to restart")
-        ClickReturnToLobby()
-        CheckLobby()
-    } else {
-        if (AutoRetry.Value) {
-            AddToLog("Auto Retry enabled - skipping replay click")
-        } else {
-            ClickReplay()
+        return
+    }
+
+    ; --- Story Mode Specific ---
+    if (mode = "story") {
+        if (GetMapForFarming(StoryDropdown.Text) != "no map found" && PortalFarm.Value) {
+            SwitchActiveFarm()
+            Sleep(1500)
+            ClickReturnToLobby()
+            CheckLobby()
+            return
         }
     }
-    return
-}
 
-HandleDefaultMode() {
-    global lastResult
-    if (ShouldReturnToLobby()) {
-        AddToLog("Return to lobby timer reached - returning to lobby to restart")
-        ClickReturnToLobby()
-        CheckLobby()
-    } else if (lastResult = "win" && NextLevelBox.Value && NextLevelBox.Visible) {
-        ClickNextLevel()
-    } else {
-        if (AutoRetry.Value) {
-            AddToLog("Auto Retry enabled - skipping replay click")
-        } else {
+    ; --- Portal Mode Specific ---
+    if (mode = "portal") {
+        if (CanReplay()) {
             ClickReplayPixel()
-        }
-    }
-    return
-}
-
-HandleInfinityCastle() {
-    global lastResult
-    if (ShouldReturnToLobby()) {
-        AddToLog("Return to lobby timer reached - returning to lobby to restart")
-        ClickReturnToLobby()
-        CheckLobby()
-    } else if (lastResult = "win" && NextLevelBox.Value && NextLevelBox.Visible) {
-        ClickNextLevel()
-    } else {
-        if (AutoRetry.Value) {
-            AddToLog("Auto Retry enabled - skipping replay click")
+            return
         } else {
-            ClickReplay()
+            if (GetMapForFarming(PortalDropdown.Text) != "no map found") {
+                SwitchActiveFarm()
+                Sleep(1500)
+                ClickReturnToLobby()
+                CheckLobby()
+                return
+            } else {
+                AddToLog("No map found for farming in Portal mode.")
+                ClickReturnToLobby()
+                CheckLobby()
+                return
+            }
         }
     }
+
+    ; --- Shared: Replay Logic ---
+    if (AutoRetry.Value) {
+        AddToLog("Auto Retry enabled - skipping replay click")
+    } else {
+        ClickReplayPixel()
+    }
+
     return
 }
 
@@ -329,25 +329,6 @@ HandleRangerMode() {
         CheckLobbyRanger() ; call directly, no return
     }
     return
-}
-
-HandlePortalMode() {
-    if (ModeDropdown.Text == "Portal") {
-        if (CanReplay()) {
-            ClickReplay()
-        } else {
-            if (GetMapForFarming(PortalDropdown.Text) != "no map found") {
-                SwitchActiveFarm()
-                Sleep(1500)
-                ClickReturnToLobby()
-                CheckLobby()
-            } else {
-                AddToLog("No map found for farming in Portal mode.")
-                ClickReturnToLobby()
-                CheckLobby() ; call directly, no return
-            }
-        }
-    }
 }
 
 OpenPlayMenu() {
@@ -697,13 +678,6 @@ StartBossEvent() {
     Sleep(1500)
 }
 
-StartPortal() {
-    FixClick(160, 349) ; Click Use Portal
-    Sleep(1000)
-    FixClick(115, 323) ; Start
-    Sleep(2000)
-}
-
 BasicSetup() {
     CloseChat()
     Sleep 300
@@ -912,45 +886,6 @@ CheckLobbyRanger() {
     startingMode := true
 }
 
-CheckLoaded() {
-    global checkForUnitManager
-    startTime := A_TickCount
-    timeout := 120 * 1000 ; Convert to milliseconds
-
-    loop {
-        Sleep(1000)
-
-        if (checkForUnitManager) {
-            if (ok := FindText(&X, &Y, 609, 463, 723, 495, 0.10, 0.20, UnitManagerBack)) {
-                AddToLog("Unit Manager found, game is loaded.")
-                checkForUnitManager := false
-                break
-            }
-        }
-        
-        if (GetFindText().FindText(&X, &Y, 355, 168, 450, 196, 0.10, 0.10, VoteStart)) {
-            AddToLog("Successfully Loaded In: Vote screen was found.")
-            break
-        } else if (PixelGetColor(381, 47, "RGB") = 0x5ED800) {
-            AddToLog("Successfully Loaded In: Base health was found.")
-            break
-        } else if (GetFindText().FindText(&X, &Y, 12, 594, 32, 615, 0.05, 0.10, InGameSettings)) {
-            AddToLog("Successfully Loaded In: Settings cogwheel was found.")
-            break
-        }
-
-        ; Failsafe check
-        if (A_TickCount - startTime > timeout) {
-            AddToLog("Failed to load within 2 minutes. Rejoining the game.")
-            return RejoinPrivateServer()
-        }
-
-        ClickThroughDrops()
-
-        Reconnect()
-    }
-}
-
 StartedGame() {
     global stageStartTime
 
@@ -992,7 +927,7 @@ StartedGame() {
 }
 
 WaitForGameState(mode := "loading") {
-    global checkForUnitManager, stageStartTime, Wins, loss
+    global checkForUnitManager, stageStartTime
 
     inStage := false
     autoAbilityClicking := false
@@ -1091,11 +1026,8 @@ StartSelectedMode() {
             StartBossRush()
         case "Swarm Event":
             StartSwarmEvent()   
-        case "Adventure Mode":
-            startingMode := false
-        case "Custom":
-            CoOpMode()
     }
+    startingMode := false
 }
 
 VoteCheck() {
@@ -1105,11 +1037,6 @@ VoteCheck() {
         CheckForVoteScreen()
         lastVoteCheck := now
     }
-}
-
-CoOpMode() {
-    global startingMode
-    startingMode := false
 }
 
 CanReplay() {

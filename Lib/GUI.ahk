@@ -16,7 +16,7 @@ uiTheme.Push("00ffb3")    ; HighLight
 ;Update Checker
 global repoOwner := "itsRynsRoblox"
 global repoName := "anime-rangers-x"
-global currentVersion := "1.6.1"
+global currentVersion := "1.6.2"
 
 ; Basic Application Info
 global GameTitle := "Ryn's Anime Rangers X "
@@ -370,7 +370,7 @@ global GameSettings := MainUI.Add("GroupBox", "x808 y85 w550 h296 +Center Hidden
 global ModeBorder := MainUI.Add("GroupBox", "x808 y85 w550 h296 +Center Hidden c" uiTheme[1], "Mode Configuration")
 
 global MaxEndureText := MainUI.Add("Text", "x825 y110 h20 +Center Hidden", "Adventure Mode Max Endures")
-global MaxEndures := MainUI.Add("Edit", "x1025 y108.5 w40 cBlack Number +Center Hidden")
+global MaxEndures := MainUI.Add("Edit", "x1025 y108.5 w40 cBlack Number +Center Hidden", "4")
 
 ;--------------SETTINGS;--------------SETTINGS;--------------SETTINGS;--------------SETTINGS;--------------SETTINGS;--------------SETTINGS;--------------SETTINGS
 ;--------------MODE SELECT;--------------MODE SELECT;--------------MODE SELECT;--------------MODE SELECT;--------------MODE SELECT;--------------MODE SELECT

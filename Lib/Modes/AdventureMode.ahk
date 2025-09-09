@@ -14,7 +14,7 @@ HandleEndureOrEvade() {
         } else {
             FixClick(325, 395)
             enduresPerRun++
-            AddToLog(Format("Endured {}/{} times this run " (enduresPerRun == MaxEndures.Value ? "and will evade next time" : ""), enduresPerRun, MaxEndures.Value))
+            AddToLog(Format("Endured {}/{} times this run" (enduresPerRun == MaxEndures.Value ? " and will evade next time" : ""), enduresPerRun, MaxEndures.Value))
         }
         return true
     }

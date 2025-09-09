@@ -105,7 +105,7 @@ AutoRetry=0
 AutoGameSpeed=1
 
 [Adventure Mode]
-MaxEndures=0
+MaxEndures=5
 
 [WebhookSettings]
 WebhookEnabled=0

@@ -78,6 +78,13 @@ PortalMovement() {
     Sleep(500)
 }
 
+StartPortal() {
+    FixClick(160, 349) ; Click Use Portal
+    Sleep(1000)
+    FixClick(115, 323) ; Start
+    Sleep(2000)
+}
+
 Portal() {
     global startingMode
 
